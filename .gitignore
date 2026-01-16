@@ -1,0 +1,64 @@
+.gradle
+.gradle/
+.gradle.*
+
+# IDE
+/.idea/
+/.idea_modules/
+/.vscode/
+*.iml
+*.ipr
+*.iws
+*.classpath
+*.project
+*.factorypath
+
+# Build
+/.settings/
+/build/
+/eclipse/
+/bin/
+/out/
+*.bat
+*.exe
+
+# Minecraft
+/run/
+/config/
+/crash-reports/
+/logs/
+options.txt
+/saves/
+/local/
+/version.json
+/jars/
+usernamecache.json
+banned-ips.json
+banned-players.json
+eula.txt
+ops.json
+server.properties
+servers.dat
+usercache.json
+whitelist.json
+
+# OS
+*.DS_Store
+Thumbs.db
+
+# Gradle
+!gradlew.bat
+addon.local.gradle
+addon.local.gradle.kts
+addon.late.local.gradle
+addon.late.local.gradle.kts
+layout.json
+
+# Libraries
+/libraries/
+
+# MCP/FML
+/mcp/
+/coremods/
+/ForgeModLoader-client-0.log
+/ForgeModLoader.log

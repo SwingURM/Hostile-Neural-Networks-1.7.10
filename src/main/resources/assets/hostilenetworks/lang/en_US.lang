@@ -1,0 +1,211 @@
+# Hostile Neural Networks Language File
+
+# General
+itemGroup.hostilenetworks=Hostile Neural Networks
+
+# Blocks
+tile.sim_chamber.name=Simulation Chamber
+tile.loot_fabricator.name=Loot Fabricator
+
+# Items
+item.blank_data_model.name=Model Framework
+item.deep_learner.name=Deep Learner
+item.prediction_matrix.name=Prediction Matrix
+item.overworld_prediction.name=Generalized Overworld Prediction
+item.nether_prediction.name=Generalized Nether Prediction
+item.end_prediction.name=Generalized Ender Prediction
+item.mob_prediction.name=Mob Prediction
+item.fab_directive.name=Fabrication Directive
+
+# Data Model Variants
+item.data_model.Zombie.name=Zombie Data Model
+item.data_model.Skeleton.name=Skeleton Data Model
+item.data_model.Creeper.name=Creeper Data Model
+item.data_model.Enderman.name=Enderman Data Model
+item.data_model.Blaze.name=Blaze Data Model
+item.data_model.WitherSkeleton.name=Wither Skeleton Data Model
+item.data_model.PigZombie.name=Zombified Piglin Data Model
+item.data_model.Spider.name=Spider Data Model
+item.data_model.Witch.name=Witch Data Model
+item.data_model.Slime.name=Slime Data Model
+
+# Tiers
+hostilenetworks.tier.faulty=Faulty
+hostilenetworks.tier.basic=Basic
+hostilenetworks.tier.advanced=Advanced
+hostilenetworks.tier.superior=Superior
+hostilenetworks.tier.self_aware=Self Aware
+
+# Containers
+container.hostilenetworks.sim_chamber=Simulation Chamber
+container.hostilenetworks.loot_fabricator=Loot Fabricator
+container.hostilenetworks.deep_learner=Deep Learner
+
+# Deep Learner GUI - Empty state
+hostilenetworks.gui.learner_empty.0=No Data Model Found
+hostilenetworks.gui.learner_empty.1=Please insert a Data Model!
+hostilenetworks.gui.learner_empty.2=Your models will be trained
+hostilenetworks.gui.learner_empty.3=when placed in the Deep Learner.
+hostilenetworks.gui.learner_empty.4=
+hostilenetworks.gui.learner_empty.5=In order to train the model
+hostilenetworks.gui.learner_empty.6=you must deliver the killing blow.
+
+# Deep Learner GUI - Model display
+hostilenetworks.gui.name=Name
+hostilenetworks.gui.info=Information
+hostilenetworks.gui.tier=Model Tier: %s
+hostilenetworks.gui.accuracy=Model Accuracy: %s
+hostilenetworks.gui.next_tier=Upgrades to %s in %s %s
+hostilenetworks.gui.kill=kill
+hostilenetworks.gui.kills=kills
+hostilenetworks.gui.stats=Statistics
+hostilenetworks.gui.max_tier=You cannot improve me further
+hostilenetworks.gui.upgrade_disabled=Models cannot be upgraded via kills.
+
+# Sim Chamber GUI
+hostilenetworks.gui.target=Sim Target: %s
+hostilenetworks.gui.data=%s/%s Data collected
+hostilenetworks.gui.energy=%s/%s FE
+hostilenetworks.gui.cost=Model energy cost: %s FE/t
+hostilenetworks.gui.max_data=I am at maximum potential
+hostilenetworks.gui.redstone_control=Redstone: %d
+hostilenetworks.gui.progress=Progress: %d%%
+
+# Redstone Control
+hostilenetworks.gui.redstone.ignored=Redstone: Ignored
+hostilenetworks.gui.redstone.off_when_powered=Redstone: Off When Powered
+hostilenetworks.gui.redstone.on_when_powered=Redstone: On When Powered
+
+# Failure States
+hostilenetworks.fail.none=None
+hostilenetworks.fail.output=Cannot begin simulation\nOutput buffers are occupied
+hostilenetworks.fail.energy=Cannot begin simulation\nSystem energy levels critical
+hostilenetworks.fail.input=Cannot begin simulation\nMissing input: %s
+hostilenetworks.fail.model=Please insert a Data Model to begin the simulation
+hostilenetworks.fail.faulty=Insufficient data in model. Please insert a basic model or better
+hostilenetworks.fail.energy_mid_cycle=Simulation progress paused\nSystem energy levels critical
+hostilenetworks.fail.redstone=Simulation progress paused\nIncorrect redstone signal applied
+
+# Simulation Runtime Text
+hostilenetworks.run.0=> Launching runtime
+hostilenetworks.run.1=> Iteration #%s started
+hostilenetworks.run.2=> Loading model from chip memory
+hostilenetworks.run.3=> Assessing threat level
+hostilenetworks.run.4=> Engaging enemy
+hostilenetworks.run.5=> Sequence prediction
+hostilenetworks.run.6=> Processing results...
+
+# Color Text
+hostilenetworks.color_text.build=Build a Data Model
+hostilenetworks.color_text.shift=SHIFT
+hostilenetworks.color_text.rclick=Right-Click
+hostilenetworks.color_text.hud=HUD
+hostilenetworks.color_text.failed=failed
+hostilenetworks.color_text.success=succeeded
+hostilenetworks.color_text.true=true
+hostilenetworks.color_text.false=false
+
+# Tooltips - Data Model
+hostilenetworks.info.click_to_attune=%s on an entity to %s
+hostilenetworks.info.attunment_disabled=Model attunement is disabled
+hostilenetworks.info.disabled=(Disabled)
+hostilenetworks.info.hold_shift=- Hold %s for more info
+hostilenetworks.info.tier=Tier: %s
+hostilenetworks.info.data=Data Collected: %s
+hostilenetworks.info.dprog=%s/%s
+hostilenetworks.info.dpk=Data Per Kill: %s
+hostilenetworks.info.sim_cost=Simulation Cost: %s
+hostilenetworks.info.rft=%s FE/t
+hostilenetworks.info.rolls=Loot Table Copies: %s
+hostilenetworks.info.player=Player Drops: %s
+hostilenetworks.info.exp=Generates Experience: %s
+hostilenetworks.info.looting=Looting Level: %s
+hostilenetworks.info.subtypes=Variants:
+hostilenetworks.info.sub_list=  - %s
+hostilenetworks.info.no_base_drop=No Base Drop Produced
+
+# DataModel Tooltips
+tooltip.hostilenetworks.data_model.attune=Right-click on an entity to attune
+tooltip.hostilenetworks.data_model.blank_clear=Shift+Right-Click to clear
+tooltip.hostilenetworks.data_model.clear_shift=- Hold SHIFT to clear
+tooltip.hostilenetworks.data_model.invalid=Invalid model: %s
+tooltip.hostilenetworks.data_model.data=Data Collected
+tooltip.hostilenetworks.data_model.tier=Tier
+tooltip.hostilenetworks.data_model.accuracy=Accuracy
+tooltip.hostilenetworks.data_model.broken=BROKEN
+
+# Item name suffix
+item.data_model.name=Data Model
+
+# DeepLearner Tooltips
+tooltip.hostilenetworks.deep_learner.stored=Stored Data Models: %d/%d
+tooltip.hostilenetworks.deep_learner.models=Models:
+tooltip.hostilenetworks.deep_learner.open=Right-click to open GUI
+
+# FabDirective Tooltips
+tooltip.hostilenetworks.fab_directive.empty=Empty directive
+tooltip.hostilenetworks.fab_directive.copy=Right-click Loot Fabricator to copy
+tooltip.hostilenetworks.fab_directive.saved=Saved selections: %d
+tooltip.hostilenetworks.fab_directive.apply=Right-click Loot Fabricator to apply
+item.hostilenetworks.fab_directive.desc=Stores selections from a Loot Fabricator
+item.hostilenetworks.fab_directive.desc2=Right-Click to copy, Shift-Right-Click to apply
+
+# MobPrediction Tooltips
+tooltip.hostilenetworks.prediction.unknown=Unknown prediction
+tooltip.hostilenetworks.prediction.invalid=Invalid model: %s
+tooltip.hostilenetworks.prediction.used=Used in Loot Fabricator
+
+# Messages
+hostilenetworks.msg.attuned=Model Attuned!
+hostilenetworks.msg.reset=Data model reset
+hostilenetworks.msg.multiple_models=Multiple models (%s and %s) matched the target entity. This is a modpack configuration issue.
+hostilenetworks.msg.no_model=No known models exist for this specimen.
+hostilenetworks.msg.built=Successfully constructed a %s Data Model
+
+# HUD
+hostilenetworks.hud.model= Model
+hostilenetworks.hud.kills=%s Remaining
+
+# Commands
+commands.hostilenetworks.usage=/hostilenetworks <subcommand>
+commands.hostilenetworks.give.usage=/hnn give <player> <model> [amount]
+commands.hostilenetworks.generate.usage=/hnn generate <model> [amount]
+
+# Trivia - Vanilla Passives
+hostilenetworks.trivia.glow_squid=Deep in the ocean they stow.\nBlessed by a luminescent glow.\nDare you take it as your own?
+hostilenetworks.trivia.sheep=Masters of color, and all things warm.\nUsually held back, unless blessed by _jeb.
+hostilenetworks.trivia.iron_golem=The mind of a pumpkin,\npiloting a metal frame.\nDefends the village,\nbut not quite tame.
+hostilenetworks.trivia.squid=Found in water, aimlessly so.\nDrifts around without a goal.\nSome wish they would just go.
+hostilenetworks.trivia.mooshroom=Is it a cow or a fungus?\nNot scary, unless you think\nabout The Last of Us.
+hostilenetworks.trivia.chicken="Quack."\nNo, that's not right, try again.\n"Cluck."\nThere we go.
+hostilenetworks.trivia.cow=Provides milk while alive.\nProvides meat while dead.\nThe duality of cows.
+hostilenetworks.trivia.rabbit=The rabbit hops and hops and hops.\nHe does this even through the night.\nNever fights, unless his type is Ninety-Nine.
+hostilenetworks.trivia.polar_bear=A Bear from the Pole,\nquite strange indeed.\nHe is a sight to behold,\nyet he cannot read.
+hostilenetworks.trivia.bat=A well known fact is that\nsome bats are vampiric.\nUnfortunately, it's up to you to find out which.\nTry not to die.
+hostilenetworks.trivia.hoglin=A Hog of incredible size.\nLives in Hell, and can be zombified.
+hostilenetworks.trivia.snow_golem=The mind of a pumpkin, yet again.\nHe probably couldn't count to ten.
+hostilenetworks.trivia.cod=Fish.\n\n\nFiiiiiiish.
+hostilenetworks.trivia.pig=The pig is an interesting case.\nWorse than a cow for drops,\nand worse than a horse for riding.\nMaybe the killing is kindness...
+
+# Trivia - Vanilla Hostiles
+hostilenetworks.trivia.blaze=Bring buckets and watch in despair\nas it evaporates, and everything is\non fire. You are on fire.
+hostilenetworks.trivia.creeper=An inverse architect by trade.\nGenerally misunderstood.
+hostilenetworks.trivia.drowned=An undead man who has\ndefied death again.\nSomehow he learned to use a Trident.
+hostilenetworks.trivia.ender_dragon=Lord of The End, yet keeps no hoard.\nDestroy the crystals, break the cycle.
+hostilenetworks.trivia.enderman=Friendly unless provoked.\nFooled by pumpkins.\nTeleports short distances.
+hostilenetworks.trivia.ghast=If you hear something that sounds\nlike a crying llama, you're probably\nhearing a ghast.
+hostilenetworks.trivia.skeleton=A formidable archer, but may be\nrunning some sort of cheat engine.\nA shield would be useful.
+hostilenetworks.trivia.slime="A Slime Haiku"\nThe bounce\nbounce his bounce\nsquish
+hostilenetworks.trivia.spider=Nocturnal douchebags.\nDrops strands of string for some reason.
+hostilenetworks.trivia.witch=Affinity with potions and concoctions.\nMaybe you should develop an antidote.
+hostilenetworks.trivia.wither_skeleton=A charred skeleton.\nIts bow did not survive the process.\nHunted for their skulls.
+hostilenetworks.trivia.wither=Do not approach this enemy, run!\nToo bad it isn't weak to the sun.
+hostilenetworks.trivia.zombie=They moan in the moonlight.\nDoes not understand the need\nfor personal space.
+hostilenetworks.trivia.guardian=Some sort of mutated pufferfish.\nBeware the beam attack!
+hostilenetworks.trivia.evoker=A powerful spellcaster.\nKnows the secrets of undeath.
+hostilenetworks.trivia.elder_guardian=The largest of the ocean\ncreatures, it lives in great\nunderwater monuments.
+hostilenetworks.trivia.magma_cube=What happens if we give lava life?\nThis, this is what happens.\nThat's why we don't do that.
+hostilenetworks.trivia.phantom=Annoying little beasts who\ninsist you go to sleep.\nThe Insomnia Police.
+hostilenetworks.trivia.shulker=A reinforced, teleporting cannon.\nMakes a nice chest when slain.
+hostilenetworks.trivia.vindicator=An axe-wielding maniac.\nProbably advisable to keep a\nsafe distance.
+hostilenetworks.trivia.zombified_piglin=A poor nether-dweller turned\ninto a zombie.\nHas a lot of gold, though.

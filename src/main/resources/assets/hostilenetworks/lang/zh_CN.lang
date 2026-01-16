@@ -1,0 +1,210 @@
+# Hostile Neural Networks 语言文件 (中文)
+
+# 常规
+itemGroup.hostilenetworks=敌对神经网络
+
+# 方块
+tile.sim_chamber.name=模拟室
+tile.loot_fabricator.name=战利品制造器
+
+# 物品
+item.blank_data_model.name=模型框架
+item.deep_learner.name=深度学习器
+item.prediction_matrix.name=预测矩阵
+item.overworld_prediction.name=通用主世界预测产物
+item.nether_prediction.name=通用下界预测产物
+item.end_prediction.name=通用末地预测产物
+item.mob_prediction.name=生物预测产物
+item.fab_directive.name=制造指令
+
+# 数据模型变体
+item.data_model.Zombie.name=僵尸数据模型
+item.data_model.Skeleton.name=骷髅数据模型
+item.data_model.Creeper.name=苦力怕数据模型
+item.data_model.Enderman.name=末影人数据模型
+item.data_model.Blaze.name=烈焰人数据模型
+item.data_model.WitherSkeleton.name=凋灵骷髅数据模型
+item.data_model.PigZombie.name=僵尸猪人数据模型
+item.data_model.Spider.name=蜘蛛数据模型
+item.data_model.Witch.name=女巫数据模型
+item.data_model.Slime.name=史莱姆数据模型
+
+# 等级
+hostilenetworks.tier.faulty=缺陷
+hostilenetworks.tier.basic=基础
+hostilenetworks.tier.advanced=进阶
+hostilenetworks.tier.superior=超级
+hostilenetworks.tier.self_aware=自我意识
+
+# 容器
+container.hostilenetworks.sim_chamber=模拟室
+container.hostilenetworks.loot_fabricator=战利品制造器
+container.hostilenetworks.deep_learner=深度学习器
+
+# 深度学习器 GUI - 空状态
+hostilenetworks.gui.learner_empty.0=找不到数据模型，
+hostilenetworks.gui.learner_empty.1=请插入数据模型！
+hostilenetworks.gui.learner_empty.2=你的模型将会在
+hostilenetworks.gui.learner_empty.3=深度学习器中进行训练。
+hostilenetworks.gui.learner_empty.4=
+hostilenetworks.gui.learner_empty.5=为了训练模型，
+hostilenetworks.gui.learner_empty.6=你必须击杀一些怪物。
+
+# 深度学习器 GUI - 模型显示
+hostilenetworks.gui.name=名称
+hostilenetworks.gui.info=信息
+hostilenetworks.gui.tier=模型等级：%s
+hostilenetworks.gui.accuracy=模型准确度：%s
+hostilenetworks.gui.next_tier=距升级至%s还差 %s %s
+hostilenetworks.gui.kill=击杀
+hostilenetworks.gui.kills=击杀数
+hostilenetworks.gui.stats=数据
+hostilenetworks.gui.max_tier=无法进一步升级
+hostilenetworks.gui.upgrade_disabled=模型无法通过击杀升级。
+
+# 模拟室 GUI
+hostilenetworks.gui.target=模拟目标：%s
+hostilenetworks.gui.data=%s/%s 数据已收集
+hostilenetworks.gui.energy=%s/%s FE
+hostilenetworks.gui.cost=模型能量消耗：%s FE/t
+hostilenetworks.gui.max_data=数据量达到最大
+hostilenetworks.gui.progress=进度：%d%%
+
+# 红石控制
+hostilenetworks.gui.redstone.ignored=红石：忽略
+hostilenetworks.gui.redstone.off_when_powered=红石：通电时关闭
+hostilenetworks.gui.redstone.on_when_powered=红石：通电时启动
+
+# 失败状态
+hostilenetworks.fail.none=无
+hostilenetworks.fail.output=无法开始模拟\n输出槽已被占用
+hostilenetworks.fail.energy=无法开始模拟\n系统能量不足
+hostilenetworks.fail.input=无法开始模拟\n缺少输入：%s
+hostilenetworks.fail.model=请插入数据模型\n来开始模拟
+hostilenetworks.fail.faulty=模型中的数据无效\n请插入等级为基础或以上\n的数据模型
+hostilenetworks.fail.energy_mid_cycle=模拟进度暂停\n系统能量等级低
+hostilenetworks.fail.redstone=模拟进度暂停\n红石信号不正确
+
+# 模拟运行时文本
+hostilenetworks.run.0=> 启动运行时
+hostilenetworks.run.1=> 开始第 %s 次迭代
+hostilenetworks.run.2=> 从芯片内存加载模型
+hostilenetworks.run.3=> 评估威胁等级
+hostilenetworks.run.4=> 与敌对生物交战
+hostilenetworks.run.5=> 序列预测
+hostilenetworks.run.6=> 处理结果...
+
+# 彩色文本
+hostilenetworks.color_text.build=创建数据模型
+hostilenetworks.color_text.shift=SHIFT
+hostilenetworks.color_text.rclick=鼠标右键
+hostilenetworks.color_text.hud=HUD
+hostilenetworks.color_text.failed=失败
+hostilenetworks.color_text.success=成功
+hostilenetworks.color_text.true=是
+hostilenetworks.color_text.false=否
+
+# 工具提示 - 数据模型
+hostilenetworks.info.click_to_attune=%s 一个生物以 %s
+hostilenetworks.info.attunment_disabled=模型调谐已被禁用
+hostilenetworks.info.disabled=（已禁用）
+hostilenetworks.info.hold_shift=- 按住 %s 查看更多信息
+hostilenetworks.info.tier=等级：%s
+hostilenetworks.info.data=已收集数据：%s
+hostilenetworks.info.dprog=%s/%s
+hostilenetworks.info.dpk=每次击杀获得数据：%s
+hostilenetworks.info.sim_cost=模拟消耗：%s
+hostilenetworks.info.rft=%s FE/t
+hostilenetworks.info.rolls=战利品表副本：%s
+hostilenetworks.info.player=玩家掉落：%s
+hostilenetworks.info.exp=生成经验：%s
+hostilenetworks.info.looting=抢夺等级：%s
+hostilenetworks.info.subtypes=变体：
+hostilenetworks.info.sub_list=  - %s
+hostilenetworks.info.no_base_drop=无基础预测产物掉落
+
+# DataModel 工具提示
+tooltip.hostilenetworks.data_model.attune=鼠标右键生物进行调谐
+tooltip.hostilenetworks.data_model.blank_clear=Shift+鼠标右键清空
+tooltip.hostilenetworks.data_model.clear_shift=- 按住 Shift 清空
+tooltip.hostilenetworks.data_model.invalid=无效模型：%s
+tooltip.hostilenetworks.data_model.data=已收集数据
+tooltip.hostilenetworks.data_model.tier=等级
+tooltip.hostilenetworks.data_model.accuracy=准确度
+tooltip.hostilenetworks.data_model.broken=损坏
+
+# 物品名称后缀
+item.data_model.name=数据模型
+
+# 深度学习器工具提示
+tooltip.hostilenetworks.deep_learner.stored=已存储数据模型：%d/%d
+tooltip.hostilenetworks.deep_learner.models=模型：
+tooltip.hostilenetworks.deep_learner.open=鼠标右键打开界面
+
+# 制造指令工具提示
+tooltip.hostilenetworks.fab_directive.empty=空白指令
+tooltip.hostilenetworks.fab_directive.copy=鼠标右键战利品制造器以复制
+tooltip.hostilenetworks.fab_directive.saved=已保存选择：%d
+tooltip.hostilenetworks.fab_directive.apply=鼠标右键战利品制造器以应用
+item.hostilenetworks.fab_directive.desc=存储战利品制造器的选择
+item.hostilenetworks.fab_directive.desc2=鼠标右键复制，Shift+鼠标右键应用
+
+# 预测产物工具提示
+tooltip.hostilenetworks.prediction.unknown=未知预测
+tooltip.hostilenetworks.prediction.invalid=无效模型：%s
+tooltip.hostilenetworks.prediction.used=已在战利品制造器中使用
+
+# 消息
+hostilenetworks.msg.attuned=模型已调谐！
+hostilenetworks.msg.reset=数据模型已重置
+hostilenetworks.msg.multiple_models=多个模型（%s 和 %s）与目标生物匹配。这是模组包配置问题。
+hostilenetworks.msg.no_model=此物种没有已知的模型
+hostilenetworks.msg.built=成功创建 %s 数据模型
+
+# HUD
+hostilenetworks.hud.model= 模型
+hostilenetworks.hud.kills=%s 剩余
+
+# 命令
+commands.hostilenetworks.usage=/hostilenetworks <子命令>
+commands.hostilenetworks.give.usage=/hnn give <玩家> <模型> [数量]
+commands.hostilenetworks.generate.usage=/hnn generate <模型> [数量]
+
+# 冷知识 - 被动生物
+hostilenetworks.trivia.glow_squid=它们藏在深海里。\n带着发光的光环。\n敢把它们带走吗？
+hostilenetworks.trivia.sheep=色彩大师，所有温暖的事物。\n通常被束缚，除非被_jeb祝福。
+hostilenetworks.trivia.iron_golem=南瓜的思维，\n驾驶着金属框架。\n守护村庄，\n但并不完全温顺。
+hostilenetworks.trivia.squid=漫无目的地在水中。\n四处漂流没有目标。\n有些人希望它们干脆离开。
+hostilenetworks.trivia.mooshroom=它是牛还是蘑菇？\n不可怕，除非你想到\n《最后生还者》。
+hostilenetworks.trivia.chicken="嘎嘎。"\n不对，重新来。\n"咯咯。"\n对了。
+hostilenetworks.trivia.cow=活着时产奶。\n死了提供肉。\n牛的双重性。
+hostilenetworks.trivia.rabbit=兔子跳啊跳，跳啊跳。\n即使在夜里也这样做。\n从不战斗，除非它的类型是九十九。
+hostilenetworks.trivia.polar_bear=来自极地的熊，\n确实很奇怪。\n值得一看，\n但它不会阅读。
+hostilenetworks.trivia.bat=众所周知，\n有些蝙蝠是吸血鬼。\n不幸的是，这要靠你自己去发现。\n尽量不要死。
+hostilenetworks.trivia.hoglin=巨大的猪。\n生活在地狱，可以被僵尸化。
+hostilenetworks.trivia.snow_golem=又是南瓜的思维。\n它可能数不到十。
+hostilenetworks.trivia.cod=鱼。\n\n\n鱼鱼鱼鱼鱼。
+hostilenetworks.trivia.pig=猪是一种有趣的生物。\n掉落不如牛，\n骑行不如马。\n也许杀死是仁慈……
+
+# 冷知识 - 敌对生物
+hostilenetworks.trivia.blaze=给水桶带来绝望，\n看着它蒸发，所有东西都会着火。\n你着火了。
+hostilenetworks.trivia.creeper=反建筑师，\n常常被误解。
+hostilenetworks.trivia.drowned=一个再次违背死亡的亡灵。\n不知怎的，他学会了使用三叉戟。
+hostilenetworks.trivia.ender_dragon=末地之主，但没有宝藏。\n摧毁水晶，打破循环。
+hostilenetworks.trivia.enderman=不惹到就没事。\n会被南瓜欺骗。\n短距离传送。
+hostilenetworks.trivia.ghast=如果你听到像羊驼哭声一样的声音，\n你可能听到的是恶魂。
+hostilenetworks.trivia.skeleton=可怕的弓箭手，\n但可能在运行某种作弊引擎。\n盾牌会很有用。
+hostilenetworks.trivia.slime="《粘液俳句》"\n弹跳\n弹跳的弹跳\n啪嗒
+hostilenetworks.trivia.spider=夜间的混蛋。\n因为某些原因掉落线。
+hostilenetworks.trivia.witch=精通药水。\n也许你应该研制解毒剂。
+hostilenetworks.trivia.wither_skeleton=烧焦的骷髅。\n它的弓没挺过火烧过程。\n因头颅被猎杀。
+hostilenetworks.trivia.wither=不要接近这个敌人，快跑！\n可惜它不害怕阳光。
+hostilenetworks.trivia.zombie=它们在月光下呻吟。\n不了解个人空间的需要。
+hostilenetworks.trivia.guardian=某种变异的河豚。\n小心光束攻击！
+hostilenetworks.trivia.evoker=强大的法师。\n知晓不死的秘密。
+hostilenetworks.trivia.elder_guardian=海洋中最大的生物，\n生活在巨大的海底神殿中。
+hostilenetworks.trivia.magma_cube=如果我们给熔岩生命会怎样？\n这就是结果。\n这就是为什么我们不应该这样做。
+hostilenetworks.trivia.phantom=烦人的小东西，\n坚持让你去睡觉。\n失眠警察。
+hostilenetworks.trivia.shulker=加固的、会传送的大炮。\n死后可以做成漂亮的箱子。
+hostilenetworks.trivia.vindicator=手持斧头的疯子。\n建议保持安全距离。
+hostilenetworks.trivia.zombified_piglin=可怜的下界居民变成了僵尸。\n但有很多金子。
