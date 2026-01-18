@@ -334,9 +334,10 @@ public class DeepLearnerGui extends GuiContainer {
                 // "Name" header (aqua)
                 drawLocalizedString("hostilenetworks.gui.name", left, mainTop, 0x55AAFF);
 
-                // Entity name
-                String entityName = model.getName() != null ? model.getName()
+                // Entity name - use localized name
+                String entityNameKey = model.getName() != null ? model.getName()
                     .getUnformattedText() : model.getEntityId();
+                String entityName = StatCollector.translateToLocal(entityNameKey);
                 drawColoredString(entityName, left, mainTop + lineHeight + 2, 0xFFFFFF);
 
                 // "Information" header (aqua)

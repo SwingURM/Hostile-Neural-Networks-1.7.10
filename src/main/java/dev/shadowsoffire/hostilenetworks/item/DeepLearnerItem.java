@@ -13,6 +13,8 @@ import net.minecraft.world.World;
 
 import dev.shadowsoffire.hostilenetworks.HostileNetworks;
 import dev.shadowsoffire.hostilenetworks.gui.HNNGuiHandler;
+import dev.shadowsoffire.hostilenetworks.util.Constants;
+import dev.shadowsoffire.hostilenetworks.util.NBTKeys;
 
 /**
  * A special item that can hold up to 4 data models and automatically accumulates data from mob kills.
@@ -20,8 +22,7 @@ import dev.shadowsoffire.hostilenetworks.gui.HNNGuiHandler;
  */
 public class DeepLearnerItem extends Item {
 
-    private static final String NBT_KEY_MODELS = "Models";
-    private static final int MAX_MODELS = 4;
+    private static final int MAX_MODELS = Constants.DEEP_LEARNER_SLOTS;
 
     public DeepLearnerItem() {
         setUnlocalizedName("deep_learner");
@@ -34,15 +35,15 @@ public class DeepLearnerItem extends Item {
      */
     public static int getModelCount(ItemStack stack) {
         if (!stack.hasTagCompound() || !stack.getTagCompound()
-            .hasKey(NBT_KEY_MODELS)) {
+            .hasKey(NBTKeys.MODELS)) {
             return 0;
         }
         NBTTagList list = stack.getTagCompound()
-            .getTagList(NBT_KEY_MODELS, 10);
+            .getTagList(NBTKeys.MODELS, 10);
         int count = 0;
         for (int i = 0; i < list.tagCount(); i++) {
             if (!list.getCompoundTagAt(i)
-                .getString("id")
+                .getString(NBTKeys.MODEL_ID)
                 .isEmpty()) {
                 count++;
             }
@@ -55,20 +56,21 @@ public class DeepLearnerItem extends Item {
      */
     public static String getModelAt(ItemStack stack, int slot) {
         if (!stack.hasTagCompound() || !stack.getTagCompound()
-            .hasKey(NBT_KEY_MODELS)) {
+            .hasKey(NBTKeys.MODELS)) {
             return null;
         }
         NBTTagList list = stack.getTagCompound()
-            .getTagList(NBT_KEY_MODELS, 10);
+            .getTagList(NBTKeys.MODELS, 10);
         if (slot >= 0 && slot < list.tagCount()) {
             return list.getCompoundTagAt(slot)
-                .getString("id");
+                .getString(NBTKeys.MODEL_ID);
         }
         return null;
     }
 
     /**
      * Set a data model at a specific slot.
+     * This also initializes the CurrentData to 0 for new models.
      */
     public static void setModelAt(ItemStack stack, int slot, String entityId) {
         if (!stack.hasTagCompound()) {
@@ -78,23 +80,30 @@ public class DeepLearnerItem extends Item {
         NBTTagCompound tag = stack.getTagCompound();
         NBTTagList list;
 
-        if (tag.hasKey(NBT_KEY_MODELS)) {
-            list = tag.getTagList(NBT_KEY_MODELS, 10);
+        if (tag.hasKey(NBTKeys.MODELS)) {
+            list = tag.getTagList(NBTKeys.MODELS, 10);
         } else {
             list = new NBTTagList();
-            tag.setTag(NBT_KEY_MODELS, list);
+            tag.setTag(NBTKeys.MODELS, list);
         }
 
         // Ensure list has enough elements
         while (list.tagCount() <= slot) {
             NBTTagCompound emptyTag = new NBTTagCompound();
-            emptyTag.setString("id", "");
+            emptyTag.setString(NBTKeys.MODEL_ID, "");
+            emptyTag.setInteger(NBTKeys.CURRENT_DATA, 0);
             list.appendTag(emptyTag);
         }
 
         // Set the value at the slot
         list.getCompoundTagAt(slot)
-            .setString("id", entityId);
+            .setString(NBTKeys.MODEL_ID, entityId);
+        // Ensure CurrentData exists
+        if (!list.getCompoundTagAt(slot)
+            .hasKey(NBTKeys.CURRENT_DATA)) {
+            list.getCompoundTagAt(slot)
+                .setInteger(NBTKeys.CURRENT_DATA, 0);
+        }
     }
 
     /**
@@ -109,11 +118,11 @@ public class DeepLearnerItem extends Item {
         NBTTagCompound tag = stack.getTagCompound();
         NBTTagList list;
 
-        if (tag.hasKey(NBT_KEY_MODELS)) {
-            list = tag.getTagList(NBT_KEY_MODELS, 10);
+        if (tag.hasKey(NBTKeys.MODELS)) {
+            list = tag.getTagList(NBTKeys.MODELS, 10);
         } else {
             list = new NBTTagList();
-            tag.setTag(NBT_KEY_MODELS, list);
+            tag.setTag(NBTKeys.MODELS, list);
         }
 
         // Find empty slot
@@ -124,10 +133,13 @@ public class DeepLearnerItem extends Item {
                 while (list.tagCount() <= i) {
                     NBTTagCompound emptyTag = new NBTTagCompound();
                     emptyTag.setString("id", "");
+                    emptyTag.setInteger("CurrentData", 0);
                     list.appendTag(emptyTag);
                 }
                 list.getCompoundTagAt(i)
                     .setString("id", entityId);
+                list.getCompoundTagAt(i)
+                    .setInteger("CurrentData", 0);
                 return true;
             }
         }
@@ -140,12 +152,12 @@ public class DeepLearnerItem extends Item {
      */
     public static void removeModel(ItemStack stack, String entityId) {
         if (!stack.hasTagCompound() || !stack.getTagCompound()
-            .hasKey(NBT_KEY_MODELS)) {
+            .hasKey(NBTKeys.MODELS)) {
             return;
         }
 
         NBTTagList list = stack.getTagCompound()
-            .getTagList(NBT_KEY_MODELS, 10);
+            .getTagList(NBTKeys.MODELS, 10);
         for (int i = 0; i < list.tagCount(); i++) {
             if (entityId.equals(
                 list.getCompoundTagAt(i)
@@ -161,11 +173,11 @@ public class DeepLearnerItem extends Item {
      */
     public static boolean hasModel(ItemStack stack, String entityId) {
         if (!stack.hasTagCompound() || !stack.getTagCompound()
-            .hasKey(NBT_KEY_MODELS)) {
+            .hasKey(NBTKeys.MODELS)) {
             return false;
         }
         NBTTagList list = stack.getTagCompound()
-            .getTagList(NBT_KEY_MODELS, 10);
+            .getTagList(NBTKeys.MODELS, 10);
         for (int i = 0; i < list.tagCount(); i++) {
             if (entityId.equals(
                 list.getCompoundTagAt(i)

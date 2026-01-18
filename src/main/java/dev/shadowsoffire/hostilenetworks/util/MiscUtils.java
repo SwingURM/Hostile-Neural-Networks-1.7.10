@@ -97,4 +97,51 @@ public class MiscUtils {
     public static int secondsToTicks(float seconds) {
         return Math.round(seconds * 20);
     }
+
+    /**
+     * Convert a hex color string (#RRGGBB) to Minecraft color format.
+     * In 1.7.10, hex colors are formatted as §x§r§R§G§B...
+     *
+     * @param hexColor The hex color string (e.g., "#3B622F")
+     * @return The Minecraft color format string, or null if invalid
+     */
+    public static String hexToMinecraftColor(String hexColor) {
+        if (hexColor == null || !hexColor.startsWith("#") || hexColor.length() != 7) {
+            return null;
+        }
+        String hex = hexColor.substring(1); // Remove #
+        // Format: §x§r§R§G§B
+        char colorChar = '\u00A7'; // Section sign (§)
+        return colorChar + "x"
+            + colorChar
+            + hex.charAt(0)
+            + colorChar
+            + hex.charAt(1)
+            + colorChar
+            + hex.charAt(2)
+            + colorChar
+            + hex.charAt(3)
+            + colorChar
+            + hex.charAt(4)
+            + colorChar
+            + hex.charAt(5);
+    }
+
+    /**
+     * Apply color to text, supporting both hex colors and EnumChatFormatting.
+     *
+     * @param text      The text to color
+     * @param hexColor  The hex color string (e.g., "#3B622F"), or null if using EnumChatFormatting
+     * @param chatColor The EnumChatFormatting color to use if hexColor is null
+     * @return The colored text
+     */
+    public static String applyColor(String text, String hexColor, EnumChatFormatting chatColor) {
+        if (hexColor != null && hexColor.startsWith("#")) {
+            String mcColor = hexToMinecraftColor(hexColor);
+            if (mcColor != null) {
+                return mcColor + text;
+            }
+        }
+        return (chatColor != null ? chatColor : EnumChatFormatting.WHITE) + text;
+    }
 }

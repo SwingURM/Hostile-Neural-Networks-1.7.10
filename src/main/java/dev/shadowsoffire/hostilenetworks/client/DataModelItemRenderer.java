@@ -7,7 +7,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
 import net.minecraft.util.ResourceLocation;
 
 import org.lwjgl.opengl.GL11;
@@ -25,12 +24,12 @@ import dev.shadowsoffire.hostilenetworks.item.DataModelItem;
 public class DataModelItemRenderer implements net.minecraftforge.client.IItemRenderer {
 
     private static final ResourceLocation BLANK_MODEL_TEXTURE = new ResourceLocation(
-        HostileNetworks.MODID, "textures/item/blank_data_model.png");
+        HostileNetworks.MODID,
+        "textures/item/blank_data_model.png");
 
     private static final Map<String, ResourceLocation> ENTITY_TEXTURES = new HashMap<String, ResourceLocation>();
 
-    public DataModelItemRenderer() {
-    }
+    public DataModelItemRenderer() {}
 
     /**
      * Get the entity texture for a given entity ID.

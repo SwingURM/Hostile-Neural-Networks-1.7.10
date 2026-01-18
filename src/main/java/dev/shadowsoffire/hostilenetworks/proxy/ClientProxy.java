@@ -1,15 +1,14 @@
 package dev.shadowsoffire.hostilenetworks.proxy;
 
+import net.minecraftforge.client.MinecraftForgeClient;
+
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
-import dev.shadowsoffire.hostilenetworks.HostileConfig;
 import dev.shadowsoffire.hostilenetworks.HostileNetworks;
-import dev.shadowsoffire.hostilenetworks.HostileNetworksEvents;
 import dev.shadowsoffire.hostilenetworks.client.DataModelItemRenderer;
 import dev.shadowsoffire.hostilenetworks.item.HostileItems;
-import net.minecraftforge.client.MinecraftForgeClient;
 
 public class ClientProxy extends CommonProxy {
 

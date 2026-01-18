@@ -216,7 +216,7 @@ public class DataModelInstance {
      */
     public void addKillData() {
         ModelTier tier = getTier();
-        int dataPerKill = model.getOverrideRequiredData() > 0 ? model.getOverrideRequiredData() : tier.getDataPerKill();
+        int dataPerKill = model.getDataPerKill(tier);
         addSimulationData(dataPerKill);
     }
 

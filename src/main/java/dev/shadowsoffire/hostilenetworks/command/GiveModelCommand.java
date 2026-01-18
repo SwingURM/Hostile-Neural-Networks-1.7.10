@@ -5,28 +5,40 @@ import java.util.List;
 
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.EntityList;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 
+import dev.shadowsoffire.hostilenetworks.HostileNetworks;
+import dev.shadowsoffire.hostilenetworks.data.DataModel;
+import dev.shadowsoffire.hostilenetworks.data.DataModelRegistry;
+import dev.shadowsoffire.hostilenetworks.data.ModelTier;
+import dev.shadowsoffire.hostilenetworks.data.ModelTierRegistry;
+import dev.shadowsoffire.hostilenetworks.item.DataModelItem;
 import dev.shadowsoffire.hostilenetworks.item.HostileItems;
 
 /**
- * Command to give a blank data model for a specific entity.
- * Usage: /givemodel <entity> [player]
+ * Enhanced command to give data models with specific tiers.
+ * Syntax: /hnn_givemodel [player] <model> [tier] [data]
+ *
+ * Examples:
+ * /hnn_givemodel Notch zombie - Give zombie data model to Notch (blank)
+ * /hnn_givemodel Notch zombie basic - Give zombie data model with basic tier
+ * /hnn_givemodel Notch zombie superior 500 - Give zombie data model with superior tier and 500 bonus data
+ * /hnn_givemodel zombie advanced - Give advanced zombie model to self
  */
 public class GiveModelCommand extends CommandBase {
 
     @Override
     public String getCommandName() {
-        return "givemodel";
+        return "hnn_givemodel";
     }
 
     @Override
     public String getCommandUsage(ICommandSender sender) {
-        return "givemodel <entity> [player] - Give a blank data model for the specified entity";
+        return "hnn_givemodel [player] <model> [tier] [data] - Give a data model with optional tier and bonus data";
     }
 
     @Override
@@ -37,125 +49,230 @@ public class GiveModelCommand extends CommandBase {
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
         if (args.length < 1) {
-            sender
-                .addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Usage: /givemodel <entity> [player]"));
+            sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Usage: /" + getCommandUsage(sender)));
             return;
         }
 
-        String entityName = args[0];
-        String entityId = findEntityId(entityName);
+        // Parse arguments - first arg could be player name or model ID
+        String playerName = null;
+        String modelId;
+        int argStart = 0;
 
-        if (entityId == null) {
-            sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Entity not found: " + entityName));
-            return;
-        }
-
-        // Determine target player
-        EntityPlayer targetPlayer;
+        // Check if first argument is a player name
+        EntityPlayerMP targetPlayer = null;
         if (args.length >= 2) {
-            targetPlayer = sender.getEntityWorld()
-                .getPlayerEntityByName(args[1]);
-            if (targetPlayer == null) {
-                sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Player not found: " + args[1]));
+            EntityPlayer potentialPlayer = sender.getEntityWorld()
+                .getPlayerEntityByName(args[0]);
+            if (potentialPlayer instanceof EntityPlayerMP) {
+                playerName = args[0];
+                targetPlayer = (EntityPlayerMP) potentialPlayer;
+                argStart = 1;
+            }
+        }
+
+        // If no player specified and sender is player, use sender
+        if (targetPlayer == null && sender instanceof EntityPlayer) {
+            targetPlayer = (EntityPlayerMP) sender;
+        }
+
+        // If still no player, require player name
+        if (targetPlayer == null) {
+            sender.addChatMessage(
+                new ChatComponentText(
+                    EnumChatFormatting.RED + "No player found: "
+                        + (playerName != null ? playerName : "specify a player")));
+            return;
+        }
+
+        // Get model ID
+        if (argStart >= args.length) {
+            sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Model ID required"));
+            return;
+        }
+        modelId = args[argStart];
+
+        // Parse tier (optional, defaults to "faulty")
+        String tierName = "faulty";
+        int dataAmount = -1; // -1 means use tier's required data
+        int bonusData = 0;
+
+        // Check if second argument after model is a tier name
+        if (argStart + 1 < args.length) {
+            String potentialTier = args[argStart + 1];
+            ModelTier tier = ModelTierRegistry.getByName(potentialTier);
+            if (tier != null) {
+                tierName = potentialTier;
+                // Check for bonus data
+                if (argStart + 2 < args.length) {
+                    try {
+                        bonusData = Integer.parseInt(args[argStart + 2]);
+                    } catch (NumberFormatException e) {
+                        sender.addChatMessage(
+                            new ChatComponentText(
+                                EnumChatFormatting.RED + "Invalid bonus data: " + args[argStart + 2]));
+                        return;
+                    }
+                }
+            } else {
+                // Maybe it's a number (bonus data directly)
+                try {
+                    bonusData = Integer.parseInt(potentialTier);
+                } catch (NumberFormatException e) {
+                    sender.addChatMessage(
+                        new ChatComponentText(EnumChatFormatting.RED + "Invalid tier: " + potentialTier));
+                    sender.addChatMessage(
+                        new ChatComponentText(
+                            EnumChatFormatting.GRAY
+                                + "Available tiers: faulty, basic, advanced, superior, self_aware"));
+                    return;
+                }
+            }
+        }
+
+        // Get the model
+        DataModel model = DataModelRegistry.get(modelId.toLowerCase());
+        if (model == null) {
+            // Try capitalized version (e.g., Zombie, Skeleton)
+            model = DataModelRegistry.get(modelId);
+        }
+
+        if (model == null) {
+            // Try to find any model that contains the search term
+            List<String> allModelIds = DataModelRegistry.getIds();
+            String bestMatch = null;
+            for (String id : allModelIds) {
+                if (id.equalsIgnoreCase(modelId)) {
+                    bestMatch = id;
+                    break;
+                }
+            }
+
+            if (bestMatch != null) {
+                model = DataModelRegistry.get(bestMatch);
+            } else {
+                sender
+                    .addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Data model not found: " + modelId));
+                sender.addChatMessage(
+                    new ChatComponentText(
+                        EnumChatFormatting.GRAY + "Available models: "
+                            + String.join(", ", allModelIds.subList(0, Math.min(10, allModelIds.size())))
+                            + (allModelIds.size() > 10 ? "..." : "")));
                 return;
             }
-        } else if (sender instanceof EntityPlayer) {
-            targetPlayer = (EntityPlayer) sender;
-        } else {
+        }
+
+        // Get the tier
+        ModelTier tier = ModelTierRegistry.getByName(tierName);
+        if (tier == null) {
+            sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Invalid tier: " + tierName));
             sender.addChatMessage(
-                new ChatComponentText(EnumChatFormatting.RED + "No player specified and sender is not a player"));
+                new ChatComponentText(
+                    EnumChatFormatting.GRAY + "Available tiers: faulty, basic, advanced, superior, self_aware"));
             return;
         }
+
+        // Calculate data amount
+        int initialData = tier.getRequiredData() + bonusData;
 
         // Create the data model item
         ItemStack modelStack = new ItemStack(HostileItems.data_model);
 
-        // Set the entity ID in NBT
+        // Set NBT data
         modelStack.setTagCompound(new net.minecraft.nbt.NBTTagCompound());
         modelStack.getTagCompound()
-            .setString("EntityId", entityId);
-
-        // Set initial data
+            .setString("EntityId", model.getEntityId());
         modelStack.getTagCompound()
-            .setInteger("CurrentData", 0);
+            .setInteger("CurrentData", initialData);
         modelStack.getTagCompound()
             .setInteger("Iterations", 0);
+
+        // Update damage based on data
+        DataModelItem.updateDamage(modelStack);
 
         // Give the item
         boolean gaveItem = targetPlayer.inventory.addItemStackToInventory(modelStack);
 
+        String message;
         if (gaveItem) {
-            sender.addChatMessage(
-                new ChatComponentText(
-                    EnumChatFormatting.GREEN + "Given data model for "
-                        + entityId
-                        + " to "
-                        + targetPlayer.getCommandSenderName()));
+            message = EnumChatFormatting.GREEN + "Given ";
         } else {
             // Drop at player's position if inventory is full
             targetPlayer.dropPlayerItemWithRandomChoice(modelStack, false);
-            sender.addChatMessage(
-                new ChatComponentText(
-                    EnumChatFormatting.YELLOW + "Inventory full, dropped data model for "
-                        + entityId
-                        + " at "
-                        + targetPlayer.getCommandSenderName()
-                        + "'s feet"));
+            message = EnumChatFormatting.YELLOW + "Inventory full, dropped ";
         }
 
-        // Also give a blank data model for reference
-        ItemStack blankStack = HostileItems.getBlankDataModel();
-        boolean gaveBlank = targetPlayer.inventory.addItemStackToInventory(blankStack);
-        if (!gaveBlank) {
-            targetPlayer.dropPlayerItemWithRandomChoice(blankStack, false);
-        }
-    }
+        sender.addChatMessage(
+            new ChatComponentText(
+                message + EnumChatFormatting.WHITE
+                    + model.getEntityId()
+                    + EnumChatFormatting.GRAY
+                    + " data model ("
+                    + EnumChatFormatting.WHITE
+                    + tier.getDisplayName()
+                    + EnumChatFormatting.GRAY
+                    + " tier, "
+                    + EnumChatFormatting.WHITE
+                    + initialData
+                    + EnumChatFormatting.GRAY
+                    + " data) to "
+                    + EnumChatFormatting.WHITE
+                    + targetPlayer.getCommandSenderName()));
 
-    private String findEntityId(String name) {
-        List<String> entityIds = getAllEntityIds();
-
-        // Check exact match
-        if (entityIds.contains(name)) {
-            return name;
-        }
-
-        // Try case-insensitive match
-        for (String entityId : entityIds) {
-            if (entityId.equalsIgnoreCase(name)) {
-                return entityId;
-            }
-        }
-
-        return null;
-    }
-
-    private List<String> getAllEntityIds() {
-        List<String> ids = new ArrayList<>();
-        try {
-            @SuppressWarnings("unchecked")
-            java.util.Map<String, Class<?>> nameToClassMapping = (java.util.Map<String, Class<?>>) EntityList.class
-                .getDeclaredField("nameToClassMapping")
-                .get(null);
-            ids.addAll(nameToClassMapping.keySet());
-        } catch (Exception e) {
-            // Fallback
-        }
-        return ids;
+        HostileNetworks.LOG.info(
+            "Gave {} data model ({} tier, {} data) to {}",
+            model.getEntityId(),
+            tier.getTierName(),
+            initialData,
+            targetPlayer.getCommandSenderName());
     }
 
     public List<String> addTabCompletionOptions(ICommandSender sender, String[] args, int x, int y, int z) {
         if (args.length == 1) {
-            List<String> ids = getAllEntityIds();
-            return getListOfStringsMatchingLastWord(args, ids.toArray(new String[0]));
-        } else if (args.length == 2) {
+            // Tab complete player names
             List<String> playerNames = new ArrayList<>();
             for (Object player : sender.getEntityWorld().playerEntities) {
                 if (player instanceof EntityPlayer) {
                     playerNames.add(((EntityPlayer) player).getCommandSenderName());
                 }
             }
-            String[] playerNameArray = playerNames.toArray(new String[0]);
-            return getListOfStringsMatchingLastWord(args, playerNameArray);
+            // Also suggest model IDs
+            List<String> modelIds = DataModelRegistry.getIds();
+            ArrayList<String> allOptions = new ArrayList<>(playerNames);
+            allOptions.addAll(modelIds);
+            return getListOfStringsMatchingLastWord(args, allOptions.toArray(new String[0]));
+        } else if (args.length == 2) {
+            // Second arg could be model ID or player name (if first arg is player)
+            String firstArg = args[0];
+            EntityPlayer potentialPlayer = sender.getEntityWorld()
+                .getPlayerEntityByName(firstArg);
+            if (potentialPlayer != null) {
+                // First arg is a player, second arg is model ID
+                return getListOfStringsMatchingLastWord(
+                    args,
+                    DataModelRegistry.getIds()
+                        .toArray(new String[0]));
+            } else {
+                // First arg is model ID, return tier names
+                return getListOfStringsMatchingLastWord(
+                    args,
+                    new String[] { "faulty", "basic", "advanced", "superior", "self_aware" });
+            }
+        } else if (args.length == 3) {
+            // Third arg could be tier name or bonus data
+            String secondArg = args[1];
+            ModelTier tier = ModelTierRegistry.getByName(secondArg);
+            if (tier != null) {
+                // Second arg is a tier, third arg is bonus data
+                return getListOfStringsMatchingLastWord(args, new String[] { "0", "100", "500", "1000", "5000" });
+            } else {
+                // Second arg might be bonus data directly
+                return getListOfStringsMatchingLastWord(
+                    args,
+                    new String[] { "faulty", "basic", "advanced", "superior", "self_aware" });
+            }
+        } else if (args.length == 4) {
+            // Fourth arg is bonus data
+            return getListOfStringsMatchingLastWord(args, new String[] { "0", "100", "500", "1000", "5000" });
         }
         return null;
     }

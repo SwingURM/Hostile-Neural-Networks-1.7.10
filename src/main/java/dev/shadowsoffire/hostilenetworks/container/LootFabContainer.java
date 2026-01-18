@@ -3,10 +3,15 @@ package dev.shadowsoffire.hostilenetworks.container;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
+import net.minecraft.inventory.ICrafting;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 
+import dev.shadowsoffire.hostilenetworks.data.DataModel;
+import dev.shadowsoffire.hostilenetworks.data.DataModelRegistry;
+import dev.shadowsoffire.hostilenetworks.item.MobPredictionItem;
 import dev.shadowsoffire.hostilenetworks.tile.LootFabTileEntity;
+import dev.shadowsoffire.hostilenetworks.util.Constants;
 
 /**
  * Container for the Loot Fabricator.
@@ -14,12 +19,15 @@ import dev.shadowsoffire.hostilenetworks.tile.LootFabTileEntity;
 public class LootFabContainer extends Container {
 
     private final LootFabTileEntity tile;
+    private int localSelection = -1; // Client-side selection for immediate UI feedback
+    private int lastSentSelection = -2; // Last selection sent to clients (-2 = not initialized)
+    private boolean initialized = false; // Track if we've sent initial sync
 
     public LootFabContainer(InventoryPlayer playerInventory, LootFabTileEntity tile) {
         this.tile = tile;
 
         // Slot 0: Mob Prediction (left side)
-        addSlotToContainer(new Slot(tile, LootFabTileEntity.SLOT_PREDICTION, 79, 62) {
+        addSlotToContainer(new Slot(tile, Constants.SLOT_PREDICTION, 79, 62) {
 
             @Override
             public boolean isItemValid(ItemStack stack) {
@@ -31,7 +39,7 @@ public class LootFabContainer extends Container {
         // Positioned at x=100, y=7
         for (int y = 0; y < 4; y++) {
             for (int x = 0; x < 4; x++) {
-                final int slotIndex = LootFabTileEntity.SLOT_OUTPUT + y * 4 + x;
+                final int slotIndex = Constants.SLOT_OUTPUT_START + y * 4 + x;
                 addSlotToContainer(new Slot(tile, slotIndex, 100 + x * 18, 7 + y * 18) {
 
                     @Override
@@ -102,5 +110,115 @@ public class LootFabContainer extends Container {
 
     public int getRuntime() {
         return this.tile.getRuntime();
+    }
+
+    /**
+     * Get the current DataModel from the prediction slot.
+     */
+    public DataModel getCurrentDataModel() {
+        ItemStack predictionStack = this.tile.getStackInSlot(Constants.SLOT_PREDICTION);
+        if (predictionStack != null) {
+            String entityId = MobPredictionItem.getEntityId(predictionStack);
+            if (entityId != null) {
+                return DataModelRegistry.get(entityId);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get the selected drop index for the current prediction.
+     */
+    public int getSelectedDrop() {
+        // Return local selection if set (for optimistic UI updates)
+        if (localSelection >= 0) {
+            DataModel model = getCurrentDataModel();
+            if (model != null && localSelection < model.getFabricatorDrops()
+                .size()) {
+                return localSelection;
+            }
+        }
+        // Fall back to server value
+        DataModel model = getCurrentDataModel();
+        if (model != null) {
+            return this.tile.getSelectedDrop(model);
+        }
+        return -1;
+    }
+
+    /**
+     * Set the local selection for UI feedback (optimistic update).
+     *
+     * @param selection The drop index to select, or -1 to clear
+     */
+    public void setLocalSelection(int selection) {
+        this.localSelection = selection;
+    }
+
+    /**
+     * Handle inventory button clicks for drop selection.
+     *
+     * @param pId The button ID (drop index, or -1 to clear selection)
+     */
+    public boolean clickMenuButton(EntityPlayer player, int pId) {
+        DataModel model = getCurrentDataModel();
+        if (model == null) return false;
+
+        // Validate selection
+        if (pId >= model.getFabricatorDrops()
+            .size()) return false;
+
+        this.tile.setSelection(model, pId);
+        return true;
+    }
+
+    /**
+     * Handle button clicks (1.7.10 GUI button handler).
+     * This is called when the player clicks a GUI button.
+     *
+     * @param p_148326_1_ The button/slot ID
+     * @param p_148326_2_ The value (e.g., drop index)
+     */
+    public void func_148326_e(int p_148326_1_, int p_148326_2_) {
+        // Handle drop selection buttons
+        if (p_148326_1_ == 0) {
+            clickMenuButton(null, p_148326_2_);
+        }
+    }
+
+    /**
+     * Sync selection changes to all clients watching this container.
+     * Called every tick on the server side.
+     */
+    @Override
+    public void detectAndSendChanges() {
+        super.detectAndSendChanges();
+
+        // Get current selection from server
+        int currentSelection = getSelectedDrop();
+
+        // Always sync on first tick (to handle initial open)
+        // Then only sync if selection changed
+        if (!initialized || currentSelection != lastSentSelection) {
+            // Send selection with +1 offset to distinguish -1 from "not sent"
+            // 0 = no selection (-1), 1+ = valid selection (0+)
+            for (ICrafting crafter : (java.util.List<ICrafting>) crafters) {
+                crafter.sendProgressBarUpdate(this, 0, currentSelection + 1);
+            }
+            lastSentSelection = currentSelection;
+            initialized = true;
+        }
+    }
+
+    /**
+     * Receive progress bar updates from the server.
+     * Called on the client side when the server sends updates.
+     */
+    @Override
+    public void updateProgressBar(int id, int data) {
+        if (id == 0) {
+            // Received selection from server (0 means no selection)
+            this.localSelection = data - 1;
+        }
     }
 }

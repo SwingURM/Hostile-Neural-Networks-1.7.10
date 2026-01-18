@@ -59,15 +59,10 @@ public class SimChamberBlock extends BlockContainer {
     @Override
     public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX,
         float hitY, float hitZ) {
-        System.out.println("SimChamberBlock.onBlockActivated called!");
-        System.out.println("  world.isRemote=" + world.isRemote);
-
         if (world.isRemote) {
             return true;
         }
         TileEntity tile = world.getTileEntity(x, y, z);
-        System.out.println("  tile=" + tile);
-        System.out.println("  tile instanceof SimChamberTileEntity=" + (tile instanceof SimChamberTileEntity));
 
         if (tile instanceof SimChamberTileEntity) {
             SimChamberTileEntity simTile = (SimChamberTileEntity) tile;

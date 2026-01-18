@@ -11,6 +11,9 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
 
+import dev.shadowsoffire.hostilenetworks.HostileConfig;
+import dev.shadowsoffire.hostilenetworks.item.MobPredictionItem;
+
 /**
  * Represents a data model that can be used in the Simulation Chamber to produce loot.
  * Data models store information about specific mob types and their drops.
@@ -19,8 +22,10 @@ public class DataModel {
 
     private final String entityId;
     private final List<String> variants;
+    private final String translateKey; // For localized entity name (e.g., "entity.minecraft.zombie")
     private final IChatComponent name;
     private final EnumChatFormatting color;
+    private final String hexColor; // For hex format colors like "#3B622F"
     private final float scale;
     private final float xOffset;
     private final float yOffset;
@@ -32,13 +37,16 @@ public class DataModel {
     private final List<ItemStack> fabricatorDrops;
     private final ModelTier defaultTier;
     private final int defaultDataPerKill;
+    private final int[] dataPerKillByTier; // [faulty, basic, advanced, superior]
     private final int overrideRequiredData;
 
     private DataModel(Builder builder) {
         this.entityId = builder.entityId;
         this.variants = Collections.unmodifiableList(new ArrayList<>(builder.variants));
+        this.translateKey = builder.translateKey;
         this.name = builder.name;
         this.color = builder.color;
+        this.hexColor = builder.hexColor;
         this.scale = builder.scale;
         this.xOffset = builder.xOffset;
         this.yOffset = builder.yOffset;
@@ -50,6 +58,7 @@ public class DataModel {
         this.fabricatorDrops = Collections.unmodifiableList(new ArrayList<>(builder.fabricatorDrops));
         this.defaultTier = builder.defaultTier;
         this.defaultDataPerKill = builder.defaultDataPerKill;
+        this.dataPerKillByTier = builder.dataPerKillByTier.clone();
         this.overrideRequiredData = builder.overrideRequiredData;
     }
 
@@ -61,12 +70,39 @@ public class DataModel {
         return variants;
     }
 
+    /**
+     * Get the translate key for the entity name (e.g., "entity.minecraft.zombie").
+     */
+    public String getTranslateKey() {
+        return translateKey;
+    }
+
     public IChatComponent getName() {
         return name;
     }
 
     public EnumChatFormatting getColor() {
         return color;
+    }
+
+    /**
+     * Get the hex color string (e.g., "#3B622F") if available.
+     * 
+     * @return The hex color string, or null if using EnumChatFormatting
+     */
+    public String getHexColor() {
+        return hexColor;
+    }
+
+    /**
+     * Get the color as a string for text formatting.
+     * Returns hex color code or EnumChatFormatting name.
+     */
+    public String getColorString() {
+        if (hexColor != null) {
+            return hexColor;
+        }
+        return color != null ? color.toString() : "";
     }
 
     public float getScale() {
@@ -119,9 +155,52 @@ public class DataModel {
 
     /**
      * Get the data per kill for a specific tier.
+     * Uses per-tier override if available, otherwise falls back to tier's default.
      */
     public int getDataPerKill(ModelTier tier) {
-        return tier != null ? tier.getDataPerKill() : defaultDataPerKill;
+        if (tier == null) {
+            return defaultDataPerKill;
+        }
+        // If dataPerKillByTier is not set or has all zeros (no custom overrides), use tier's default
+        if (dataPerKillByTier == null) {
+            return tier.getDataPerKill();
+        }
+        int tierIndex = getTierIndex(tier);
+        if (tierIndex >= 0 && tierIndex < dataPerKillByTier.length && dataPerKillByTier[tierIndex] > 0) {
+            return dataPerKillByTier[tierIndex];
+        }
+        // Fall back to tier's default data per kill
+        return tier.getDataPerKill();
+    }
+
+    /**
+     * Get the tier index for ModelTier ordering.
+     * Returns -1 for unknown tiers (will use tier's default).
+     */
+    private int getTierIndex(ModelTier tier) {
+        String name = tier.getTierName();
+        switch (name) {
+            case "faulty":
+                return 0;
+            case "basic":
+                return 1;
+            case "advanced":
+                return 2;
+            case "superior":
+                return 3;
+            default:
+                return -1; // SELF_AWARE and unknown tiers
+        }
+    }
+
+    /**
+     * Create a prediction item for this data model.
+     * The prediction item stores this model's entity ID in NBT.
+     *
+     * @return An ItemStack containing a mob_prediction item with entity ID set
+     */
+    public ItemStack createPredictionItem() {
+        return MobPredictionItem.create(this.entityId);
     }
 
     /**
@@ -140,7 +219,12 @@ public class DataModel {
         tag.setTag("variants", variantsList);
 
         tag.setString("name", name.getUnformattedText());
-        tag.setString("color", color.name());
+        // Store color - prefer hex color, fall back to EnumChatFormatting name
+        if (hexColor != null) {
+            tag.setString("color", hexColor);
+        } else if (color != null) {
+            tag.setString("color", color.name());
+        }
         tag.setFloat("scale", scale);
         tag.setFloat("xOffset", xOffset);
         tag.setFloat("yOffset", yOffset);
@@ -194,9 +278,13 @@ public class DataModel {
             builder.name(new ChatComponentText(nameJson));
         }
 
-        // TODO: Fix HostileConfig.getTierColor for 1.7.10
-        // builder.color(HostileConfig.getTierColor(tag.getString("color")));
-        builder.color(net.minecraft.util.EnumChatFormatting.WHITE);
+        // Handle color - support both hex (#RRGGBB) and color names
+        String colorStr = tag.getString("color");
+        if (colorStr != null && !colorStr.isEmpty()) {
+            builder.color(colorStr);
+        } else {
+            builder.color(EnumChatFormatting.WHITE);
+        }
         builder.scale(tag.getFloat("scale"));
         builder.xOffset(tag.getFloat("xOffset"));
         builder.yOffset(tag.getFloat("yOffset"));
@@ -228,15 +316,18 @@ public class DataModel {
 
     @Override
     public String toString() {
-        return String.format("DataModel[entity=%s, color=%s, simCost=%d]", entityId, color, simCost);
+        return String
+            .format("DataModel[entity=%s, color=%s, hexColor=%s, simCost=%d]", entityId, color, hexColor, simCost);
     }
 
     public static class Builder {
 
         private String entityId;
         private final List<String> variants = new ArrayList<>();
+        private String translateKey; // For localized entity name
         private IChatComponent name;
         private EnumChatFormatting color = EnumChatFormatting.WHITE;
+        private String hexColor = null; // For hex format colors
         private float scale = 1.0f;
         private float xOffset;
         private float yOffset;
@@ -248,6 +339,7 @@ public class DataModel {
         private final List<ItemStack> fabricatorDrops = new ArrayList<>();
         private ModelTier defaultTier;
         private int defaultDataPerKill = 1;
+        private int[] dataPerKillByTier = new int[] { 1, 4, 10, 18 }; // [faulty, basic, advanced, superior]
         private int overrideRequiredData;
 
         public Builder entityId(String entityId) {
@@ -260,6 +352,11 @@ public class DataModel {
             return this;
         }
 
+        public Builder translateKey(String translateKey) {
+            this.translateKey = translateKey;
+            return this;
+        }
+
         public Builder name(IChatComponent name) {
             this.name = name;
             return this;
@@ -267,6 +364,29 @@ public class DataModel {
 
         public Builder color(EnumChatFormatting color) {
             this.color = color;
+            this.hexColor = null;
+            return this;
+        }
+
+        /**
+         * Set color from a string representation.
+         * Supports hex format (#RRGGBB) and color name (e.g., "dark_green", "red").
+         */
+        public Builder color(String colorString) {
+            if (colorString != null && colorString.startsWith("#")) {
+                // Parse hex color
+                try {
+                    Integer.parseInt(colorString.substring(1), 16);
+                    this.hexColor = colorString;
+                    this.color = EnumChatFormatting.WHITE; // Fallback for EnumChatFormatting
+                } catch (NumberFormatException e) {
+                    this.hexColor = null;
+                    this.color = HostileConfig.getTierColor(colorString);
+                }
+            } else {
+                this.hexColor = null;
+                this.color = HostileConfig.getTierColor(colorString);
+            }
             return this;
         }
 
@@ -322,6 +442,18 @@ public class DataModel {
 
         public Builder defaultDataPerKill(int dataPerKill) {
             this.defaultDataPerKill = dataPerKill;
+            return this;
+        }
+
+        /**
+         * Set data per kill for each tier.
+         * 
+         * @param values Array of [faulty, basic, advanced, superior]
+         */
+        public Builder dataPerKillByTier(int[] values) {
+            if (values != null && values.length >= 4) {
+                this.dataPerKillByTier = values.clone();
+            }
             return this;
         }
 

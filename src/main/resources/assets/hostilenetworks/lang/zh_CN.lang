@@ -14,20 +14,10 @@ item.prediction_matrix.name=预测矩阵
 item.overworld_prediction.name=通用主世界预测产物
 item.nether_prediction.name=通用下界预测产物
 item.end_prediction.name=通用末地预测产物
-item.mob_prediction.name=生物预测产物
+item.mob_prediction.name=预测产物
 item.fab_directive.name=制造指令
-
-# 数据模型变体
-item.data_model.Zombie.name=僵尸数据模型
-item.data_model.Skeleton.name=骷髅数据模型
-item.data_model.Creeper.name=苦力怕数据模型
-item.data_model.Enderman.name=末影人数据模型
-item.data_model.Blaze.name=烈焰人数据模型
-item.data_model.WitherSkeleton.name=凋灵骷髅数据模型
-item.data_model.PigZombie.name=僵尸猪人数据模型
-item.data_model.Spider.name=蜘蛛数据模型
-item.data_model.Witch.name=女巫数据模型
-item.data_model.Slime.name=史莱姆数据模型
+item.fab_directive.desc=存储战利品制造器的选择
+item.fab_directive.desc2=鼠标右键复制，Shift+鼠标右键应用
 
 # 等级
 hostilenetworks.tier.faulty=缺陷
@@ -134,25 +124,21 @@ tooltip.hostilenetworks.data_model.accuracy=准确度
 tooltip.hostilenetworks.data_model.broken=损坏
 
 # 物品名称后缀
-item.data_model.name=数据模型
+item.data_model.name=%s 数据模型
 
 # 深度学习器工具提示
 tooltip.hostilenetworks.deep_learner.stored=已存储数据模型：%d/%d
 tooltip.hostilenetworks.deep_learner.models=模型：
 tooltip.hostilenetworks.deep_learner.open=鼠标右键打开界面
 
-# 制造指令工具提示
-tooltip.hostilenetworks.fab_directive.empty=空白指令
-tooltip.hostilenetworks.fab_directive.copy=鼠标右键战利品制造器以复制
-tooltip.hostilenetworks.fab_directive.saved=已保存选择：%d
-tooltip.hostilenetworks.fab_directive.apply=鼠标右键战利品制造器以应用
-item.hostilenetworks.fab_directive.desc=存储战利品制造器的选择
-item.hostilenetworks.fab_directive.desc2=鼠标右键复制，Shift+鼠标右键应用
-
 # 预测产物工具提示
 tooltip.hostilenetworks.prediction.unknown=未知预测
 tooltip.hostilenetworks.prediction.invalid=无效模型：%s
 tooltip.hostilenetworks.prediction.used=已在战利品制造器中使用
+tooltip.hostilenetworks.prediction.dpk=每次击杀获得数据
+tooltip.hostilenetworks.prediction.sim_cost=模拟消耗
+tooltip.hostilenetworks.prediction.subtypes=变体
+tooltip.hostilenetworks.prediction.disabled=（已禁用）
 
 # 消息
 hostilenetworks.msg.attuned=模型已调谐！

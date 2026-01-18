@@ -13,6 +13,7 @@ import net.minecraft.nbt.NBTTagList;
 import dev.shadowsoffire.hostilenetworks.item.DataModelItem;
 import dev.shadowsoffire.hostilenetworks.item.DeepLearnerItem;
 import dev.shadowsoffire.hostilenetworks.item.HostileItems;
+import dev.shadowsoffire.hostilenetworks.util.Constants;
 
 /**
  * Container for the Deep Learner GUI.
@@ -24,7 +25,7 @@ import dev.shadowsoffire.hostilenetworks.item.HostileItems;
  */
 public class DeepLearnerContainer extends Container {
 
-    private static final int DEEP_LEARNER_SLOTS = 4;
+    private static final int DEEP_LEARNER_SLOTS = Constants.DEEP_LEARNER_SLOTS;
     private final EntityPlayer player;
     private final DeepLearnerInventory deepLearnerInv;
     private Consumer<Integer> notifyCallback;

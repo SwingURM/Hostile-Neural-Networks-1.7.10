@@ -5,16 +5,18 @@ import java.io.File;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.common.config.Configuration;
 
+import dev.shadowsoffire.hostilenetworks.util.Constants;
+
 public class HostileConfig {
 
     // Sim Chamber settings
-    public static int simPowerCap = 2000000;
+    public static int simPowerCap = Constants.SIM_POWER_CAP;
     public static int simModelUpgrade = 1;
     public static boolean continuousAccuracy = true;
 
     // Loot Fabricator settings
-    public static int fabPowerCap = 1000000;
-    public static int fabPowerCost = 256;
+    public static int fabPowerCap = Constants.FAB_POWER_CAP;
+    public static int fabPowerCost = Constants.FAB_POWER_COST;
 
     // Deep Learner settings (currently disabled)
     public static boolean killModelUpgrade = true;

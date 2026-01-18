@@ -2,6 +2,7 @@ package dev.shadowsoffire.hostilenetworks.data;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.StatCollector;
 
 /**
  * Represents a tier of data model progression.
@@ -14,13 +15,16 @@ public class ModelTier {
     private final EnumChatFormatting color;
     private final float accuracy;
     private final boolean canSim;
+    private final String tierName;
 
-    public ModelTier(int requiredData, int dataPerKill, EnumChatFormatting color, float accuracy, boolean canSim) {
+    public ModelTier(int requiredData, int dataPerKill, EnumChatFormatting color, float accuracy, boolean canSim,
+        String tierName) {
         this.requiredData = requiredData;
         this.dataPerKill = dataPerKill;
         this.color = color;
         this.accuracy = accuracy;
         this.canSim = canSim;
+        this.tierName = tierName;
     }
 
     public int getRequiredData() {
@@ -65,23 +69,29 @@ public class ModelTier {
     }
 
     /**
-     * Get the display name of this tier (e.g., "Faulty", "Basic", etc.).
+     * Get the tier name identifier (without color formatting).
+     * Used for registry and configuration.
      */
-    public String getDisplayName() {
-        return getDisplayNameFromData(requiredData);
+    public String getTierName() {
+        return tierName;
     }
 
     /**
-     * Get the display name from required data threshold.
-     * Must match ModelTierRegistry values:
-     * FAULTY: 0, BASIC: 6, ADVANCED: 42, SUPERIOR: 354, SELF_AWARE: 1000
+     * Get the display name of this tier with localization support.
+     * e.g., "缺陷" for Chinese, "Faulty" for English.
      */
-    public static String getDisplayNameFromData(int requiredData) {
-        if (requiredData == 0) return "Faulty";
-        if (requiredData < 42) return "Basic";
-        if (requiredData < 354) return "Advanced";
-        if (requiredData < 1000) return "Superior";
-        return "Self Aware";
+    public String getDisplayName() {
+        String name = tierName != null ? tierName : "unknown";
+        String key = "hostilenetworks.tier." + name;
+        String localized = StatCollector.translateToLocal(key);
+        if (!localized.equals(key)) {
+            return localized;
+        }
+        // Fallback to capitalize first letter
+        return name.substring(0, 1)
+            .toUpperCase()
+            + name.substring(1)
+                .replace("_", " ");
     }
 
     /**
@@ -111,18 +121,13 @@ public class ModelTier {
      */
     public static ModelTier fromNBT(NBTTagCompound tag) {
         // TODO: Fix HostileConfig.getTierColor for 1.7.10
-        // return new ModelTier(
-        // tag.getInteger("requiredData"),
-        // tag.getInteger("dataPerKill"),
-        // HostileConfig.getTierColor(tag.getString("color")),
-        // tag.getFloat("accuracy"),
-        // tag.getBoolean("canSim"));
         return new ModelTier(
             tag.getInteger("requiredData"),
             tag.getInteger("dataPerKill"),
             net.minecraft.util.EnumChatFormatting.WHITE,
             tag.getFloat("accuracy"),
-            tag.getBoolean("canSim"));
+            tag.getBoolean("canSim"),
+            null);
     }
 
     @Override

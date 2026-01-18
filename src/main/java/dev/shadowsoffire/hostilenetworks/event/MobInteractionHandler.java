@@ -1,200 +1,162 @@
 package dev.shadowsoffire.hostilenetworks.event;
 
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.StatCollector;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
 
-import cpw.mods.fml.common.eventhandler.EventPriority;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import dev.shadowsoffire.hostilenetworks.HostileConfig;
 import dev.shadowsoffire.hostilenetworks.HostileNetworks;
 import dev.shadowsoffire.hostilenetworks.data.DataModel;
 import dev.shadowsoffire.hostilenetworks.data.DataModelRegistry;
 import dev.shadowsoffire.hostilenetworks.data.ModelTier;
 import dev.shadowsoffire.hostilenetworks.data.ModelTierRegistry;
-import dev.shadowsoffire.hostilenetworks.item.DataModelItem;
 import dev.shadowsoffire.hostilenetworks.item.DeepLearnerItem;
-import dev.shadowsoffire.hostilenetworks.item.HostileItems;
 
 /**
- * Handles player interaction with mobs for data model attuning and killing.
+ * Handles player interaction with mobs for data model attuning and kill tracking.
+ * Only updates data models stored inside DeepLearner items, matching original HNN behavior.
  */
 public class MobInteractionHandler {
 
     /**
-     * Called when a player right-clicks an entity.
-     * If holding a blank data model and clicking a valid mob, attune the model.
-     * The blank model is replaced with a proper DataModelItem.
+     * Handle mob death events to accumulate data for data models in player's DeepLearner items.
      */
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public void onEntityInteract(net.minecraftforge.event.entity.player.EntityInteractEvent event) {
-        EntityPlayer player = event.entityPlayer;
-        Entity target = event.target;
-
-        if (player == null || target == null) return;
-
-        ItemStack heldItem = player.getHeldItem();
-        if (heldItem == null) return;
-
-        // Check if holding a blank data model (damage=0, no NBT)
-        if (heldItem.getItem() instanceof DataModelItem && DataModelItem.isBlank(heldItem)) {
-            // Get entity ID from EntityList
-            String entityId = (String) EntityList.getEntityString(target);
-            if (entityId == null) {
-                entityId = target.getClass()
-                    .getSimpleName();
-            }
-
-            DataModel model = DataModelRegistry.get(entityId);
-            if (model != null) {
-                // Attune the data model - replace blank with real data model
-                if (!player.worldObj.isRemote) {
-                    // Create a new DataModelItem with the entity ID
-                    ItemStack newModel = new ItemStack(HostileItems.data_model);
-                    if (!newModel.hasTagCompound()) {
-                        newModel.setTagCompound(new NBTTagCompound());
-                    }
-                    newModel.getTagCompound()
-                        .setString("EntityId", entityId);
-                    newModel.getTagCompound()
-                        .setInteger("CurrentData", 0);
-                    newModel.getTagCompound()
-                        .setInteger("Iterations", 0);
-
-                    // Replace the held item
-                    player.inventory.mainInventory[player.inventory.currentItem] = newModel;
-
-                    String mobName = model.getName()
-                        .getUnformattedText();
-                    player.addChatMessage(
-                        new ChatComponentText(
-                            EnumChatFormatting.GREEN + StatCollector.translateToLocal("hostilenetworks.msg.attuned")
-                                + " "
-                                + mobName));
-                }
-                event.setCanceled(true);
-            }
-        }
-    }
-
-    /**
-     * Called when a player kills an entity.
-     * Add data to attuned data models inside Deep Learners in inventory.
-     * Data is NOT added to standalone data models in inventory.
-     */
-    @SubscribeEvent(priority = EventPriority.HIGH)
-    public void onLivingDeath(LivingDeathEvent event) {
-        // Only process on server side
-        if (event.entityLiving.worldObj.isRemote) return;
-
-        if (!(event.source.getEntity() instanceof EntityPlayer)) return;
-
-        EntityPlayer player = (EntityPlayer) event.source.getEntity();
-        Entity living = event.entityLiving;
-
-        // Get entity ID from EntityList
-        String entityId = (String) EntityList.getEntityString(living);
-        if (entityId == null) {
-            entityId = living.getClass()
-                .getSimpleName();
-        }
-
-        DataModel model = DataModelRegistry.get(entityId);
-        if (model == null) return;
-
-        // Check if kill model upgrade is enabled
+    public static void onLivingDeath(EntityLivingBase killed, EntityPlayer killer) {
         if (!HostileConfig.killModelUpgrade) return;
+        if (!(killer instanceof EntityPlayerMP)) return;
 
-        int dataPerKill = getDataPerKillForModel(model);
+        // Get entity type ID from the killed mob
+        String killedEntityId = EntityList.getEntityString(killed);
+        HostileNetworks.LOG
+            .debug("[HNN] Mob kill: entity={}, killer={}", killedEntityId, killer.getCommandSenderName());
 
-        // Find Deep Learners in player's inventory and update their models
-        updateDeepLearners(player, entityId, dataPerKill);
+        if (killedEntityId == null || killedEntityId.isEmpty()) {
+            return;
+        }
 
-        // Also check Curios if loaded (curios integration would be added separately)
-    }
-
-    /**
-     * Update all Deep Learners in player's inventory.
-     * Deep Learner stores model entity IDs in its NBT, and the actual data
-     * is stored in the DataModelItem stacks in the player's inventory.
-     */
-    private void updateDeepLearners(EntityPlayer player, String entityId, int dataPerKill) {
-        // Check main inventory for Deep Learners
-        for (int i = 0; i < player.inventory.mainInventory.length; i++) {
-            ItemStack stack = player.inventory.mainInventory[i];
+        // Find all DeepLearner items in player's inventory and update matching models
+        for (ItemStack stack : killer.inventory.mainInventory) {
             if (stack != null && stack.getItem() instanceof DeepLearnerItem) {
-                updateDeepLearnerModels(stack, entityId, dataPerKill);
+                updateDeepLearnerFromKill(stack, killedEntityId);
             }
         }
-
-        // Check offhand
-        ItemStack offhand = player.getEquipmentInSlot(1);
-        if (offhand != null && offhand.getItem() instanceof DeepLearnerItem) {
-            updateDeepLearnerModels(offhand, entityId, dataPerKill);
-        }
     }
 
     /**
-     * Update the models stored in a Deep Learner's NBT.
+     * Normalize entity ID to handle different naming conventions.
+     * Maps 1.7.10 entity names to standardized format.
      */
-    private void updateDeepLearnerModels(ItemStack deepLearner, String entityId, int dataPerKill) {
-        if (!deepLearner.hasTagCompound()) return;
+    private static String normalizeEntityId(String entityId) {
+        // Check if there's a known mapping (e.g., LavaSlime -> magma_cube)
+        if ("LavaSlime".equals(entityId)) return "magma_cube";
+        if ("VillagerGolem".equals(entityId)) return "iron_golem";
+        if ("SnowMan".equals(entityId)) return "snow_golem";
+        if ("EnderDragon".equals(entityId)) return "ender_dragon";
+        if ("WitherBoss".equals(entityId)) return "wither";
+        if ("MushroomCow".equals(entityId)) return "mooshroom";
+        return entityId;
+    }
 
-        NBTTagCompound tag = deepLearner.getTagCompound();
-        if (!tag.hasKey("Models")) return;
+    /**
+     * Update models stored in a DeepLearner item when a mob is killed.
+     * DeepLearner stores entity IDs, we need to find and update the corresponding ItemStack models.
+     */
+    private static void updateDeepLearnerFromKill(ItemStack deepLearnerStack, String killedEntityId) {
+        if (!deepLearnerStack.hasTagCompound()) {
+            return;
+        }
+
+        NBTTagCompound tag = deepLearnerStack.getTagCompound();
+        if (!tag.hasKey("Models")) {
+            return;
+        }
 
         NBTTagList modelList = tag.getTagList("Models", 10);
-        boolean modified = false;
 
-        for (int i = 0; i < modelList.tagCount(); i++) {
+        // Normalize the entity ID
+        String normalizedId = normalizeEntityId(killedEntityId);
+        String lowerCaseId = killedEntityId.toLowerCase();
+
+        for (int i = 0; i < modelList.tagCount() && i < 4; i++) {
             NBTTagCompound modelTag = modelList.getCompoundTagAt(i);
             String modelEntityId = modelTag.getString("id");
 
-            // Skip empty slots
-            if (modelEntityId == null || modelEntityId.isEmpty()) continue;
-
-            // Check if this model matches the killed entity
-            if (!entityId.equals(modelEntityId)) continue;
-
-            // Get current data and update it
-            int currentData = modelTag.getInteger("CurrentData");
-            int iterations = modelTag.getInteger("Iterations");
-
-            DataModel dataModel = DataModelRegistry.get(modelEntityId);
-            if (dataModel == null) continue;
-
-            ModelTier tier = ModelTierRegistry.getTier(currentData);
-
-            // Only add data if at or above the tier's required data
-            if (currentData >= tier.getRequiredData() || tier == ModelTierRegistry.FAULTY) {
-                int newData = currentData + dataPerKill;
-                modelTag.setInteger("CurrentData", newData);
-                modelTag.setInteger("Iterations", iterations + 1);
-                modified = true;
+            if (modelEntityId.isEmpty()) {
+                continue;
             }
-        }
 
-        if (modified) {
-            tag.setTag("Models", modelList);
+            // Check if the killed entity matches this model
+            boolean matches = false;
+
+            // Direct match with various formats
+            if (modelEntityId.equalsIgnoreCase(normalizedId) || modelEntityId.equalsIgnoreCase(lowerCaseId)
+                || modelEntityId.equalsIgnoreCase(killedEntityId)) {
+                matches = true;
+            }
+
+            // Check if the killed entity is a variant of this model
+            if (!matches) {
+                DataModel model = DataModelRegistry.get(modelEntityId);
+                if (model != null) {
+                    for (String variant : model.getVariants()) {
+                        if (variant.equalsIgnoreCase(normalizedId) || variant.equalsIgnoreCase(lowerCaseId)) {
+                            matches = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!matches) {
+                continue;
+            }
+
+            // Get current data from NBT - DeepLearner stores model data in its NBT
+            int currentData = getModelDataFromNBT(modelTag);
+            ModelTier tier = ModelTierRegistry.getTier(currentData);
+            DataModel model = DataModelRegistry.get(modelEntityId);
+
+            if (model == null) {
+                continue;
+            }
+
+            int dataPerKill = model.getDataPerKill(tier);
+            int newData = currentData + dataPerKill;
+
+            HostileNetworks.LOG.debug(
+                "[HNN] DeepLearner: {} + {} = {} (tier={})",
+                currentData,
+                dataPerKill,
+                newData,
+                tier.getDisplayName());
+
+            // Update the data in NBT
+            setModelDataInNBT(modelTag, newData);
         }
     }
 
     /**
-     * Get the data per kill for a model based on its tier.
+     * Get current data value from DeepLearner's model NBT.
      */
-    private int getDataPerKillForModel(DataModel model) {
-        // Use the tier's data per kill value
-        // Note: We need to get the tier based on some criteria, or use model's default
-        if (model.getOverrideRequiredData() > 0) {
-            return model.getOverrideRequiredData();
-        }
-        return model.getDefaultDataPerKill();
+    private static int getModelDataFromNBT(NBTTagCompound modelTag) {
+        return modelTag.hasKey("CurrentData") ? modelTag.getInteger("CurrentData") : 0;
+    }
+
+    /**
+     * Set data value in DeepLearner's model NBT.
+     */
+    private static void setModelDataInNBT(NBTTagCompound modelTag, int data) {
+        modelTag.setInteger("CurrentData", data);
+    }
+
+    /**
+     * Check if right-click attuning is enabled.
+     */
+    public static boolean isAttuningEnabled() {
+        return HostileConfig.rightClickToAttune;
     }
 }

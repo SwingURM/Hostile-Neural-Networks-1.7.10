@@ -17,18 +17,6 @@ item.end_prediction.name=Generalized Ender Prediction
 item.mob_prediction.name=Mob Prediction
 item.fab_directive.name=Fabrication Directive
 
-# Data Model Variants
-item.data_model.Zombie.name=Zombie Data Model
-item.data_model.Skeleton.name=Skeleton Data Model
-item.data_model.Creeper.name=Creeper Data Model
-item.data_model.Enderman.name=Enderman Data Model
-item.data_model.Blaze.name=Blaze Data Model
-item.data_model.WitherSkeleton.name=Wither Skeleton Data Model
-item.data_model.PigZombie.name=Zombified Piglin Data Model
-item.data_model.Spider.name=Spider Data Model
-item.data_model.Witch.name=Witch Data Model
-item.data_model.Slime.name=Slime Data Model
-
 # Tiers
 hostilenetworks.tier.faulty=Faulty
 hostilenetworks.tier.basic=Basic
@@ -135,7 +123,7 @@ tooltip.hostilenetworks.data_model.accuracy=Accuracy
 tooltip.hostilenetworks.data_model.broken=BROKEN
 
 # Item name suffix
-item.data_model.name=Data Model
+item.data_model.name=%s Data Model
 
 # DeepLearner Tooltips
 tooltip.hostilenetworks.deep_learner.stored=Stored Data Models: %d/%d
@@ -209,3 +197,9 @@ hostilenetworks.trivia.phantom=Annoying little beasts who\ninsist you go to slee
 hostilenetworks.trivia.shulker=A reinforced, teleporting cannon.\nMakes a nice chest when slain.
 hostilenetworks.trivia.vindicator=An axe-wielding maniac.\nProbably advisable to keep a\nsafe distance.
 hostilenetworks.trivia.zombified_piglin=A poor nether-dweller turned\ninto a zombie.\nHas a lot of gold, though.
+
+# Loot Fabricator GUI
+hostilenetworks.gui.energy=Energy: %s / %s
+hostilenetworks.gui.fab_cost=Cost: %s FE/tick
+hostilenetworks.gui.clear=Clear Selection
+hostilenetworks.gui.fab_select=Select Output

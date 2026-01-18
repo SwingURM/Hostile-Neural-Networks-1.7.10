@@ -12,14 +12,13 @@ import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.StatCollector;
 
 import dev.shadowsoffire.hostilenetworks.tile.LootFabTileEntity;
+import dev.shadowsoffire.hostilenetworks.util.NBTKeys;
 
 /**
  * An item that stores Loot Fabricator output selections.
  * Can be used to copy/transfer configurations between fabricators.
  */
 public class FabDirectiveItem extends Item {
-
-    private static final String NBT_KEY_SELECTIONS = "Selections";
 
     public FabDirectiveItem() {
         setUnlocalizedName("fab_directive");
@@ -34,13 +33,13 @@ public class FabDirectiveItem extends Item {
         Map<Integer, Integer> selections = new HashMap<>();
 
         if (stack.hasTagCompound() && stack.getTagCompound()
-            .hasKey(NBT_KEY_SELECTIONS)) {
+            .hasKey(NBTKeys.SELECTIONS)) {
             NBTTagList list = stack.getTagCompound()
-                .getTagList(NBT_KEY_SELECTIONS, 10);
+                .getTagList(NBTKeys.SELECTIONS, 10);
             for (int i = 0; i < list.tagCount(); i++) {
                 NBTTagCompound tag = list.getCompoundTagAt(i);
-                int slot = tag.getInteger("Slot");
-                int dropIndex = tag.getInteger("DropIndex");
+                int slot = tag.getInteger(NBTKeys.SLOT);
+                int dropIndex = tag.getInteger(NBTKeys.DROP_INDEX);
                 selections.put(slot, dropIndex);
             }
         }
@@ -59,13 +58,13 @@ public class FabDirectiveItem extends Item {
         NBTTagList list = new NBTTagList();
         for (Map.Entry<Integer, Integer> entry : selections.entrySet()) {
             NBTTagCompound tag = new NBTTagCompound();
-            tag.setInteger("Slot", entry.getKey());
-            tag.setInteger("DropIndex", entry.getValue());
+            tag.setInteger(NBTKeys.SLOT, entry.getKey());
+            tag.setInteger(NBTKeys.DROP_INDEX, entry.getValue());
             list.appendTag(tag);
         }
 
         stack.getTagCompound()
-            .setTag(NBT_KEY_SELECTIONS, list);
+            .setTag(NBTKeys.SELECTIONS, list);
     }
 
     /**
@@ -89,22 +88,26 @@ public class FabDirectiveItem extends Item {
 
     /**
      * Add tooltip information.
+     * Matches the original HNN format.
      */
     @Override
     public void addInformation(ItemStack stack, EntityPlayer player, java.util.List tooltip, boolean advanced) {
-        Map<Integer, Integer> selections = getSelections(stack);
-        if (selections.isEmpty()) {
-            tooltip.add(
-                EnumChatFormatting.GRAY
-                    + StatCollector.translateToLocal("tooltip.hostilenetworks.fab_directive.empty"));
-            tooltip.add(
-                EnumChatFormatting.GRAY + StatCollector.translateToLocal("tooltip.hostilenetworks.fab_directive.copy"));
-        } else {
-            String savedKey = StatCollector.translateToLocal("tooltip.hostilenetworks.fab_directive.saved");
-            tooltip.add(EnumChatFormatting.GRAY + String.format(savedKey, selections.size()));
-            tooltip.add(
-                EnumChatFormatting.GRAY
-                    + StatCollector.translateToLocal("tooltip.hostilenetworks.fab_directive.apply"));
+        // Original HNN uses item.{modid}.{item_id}.desc format
+        String baseKey = this.getUnlocalizedName(stack);
+        if (baseKey.startsWith("item.")) {
+            baseKey = baseKey.substring(5); // Remove "item." prefix
+        }
+
+        // Add desc line
+        String desc = StatCollector.translateToLocal(baseKey + ".desc");
+        if (!desc.equals(baseKey + ".desc")) {
+            tooltip.add(EnumChatFormatting.GRAY + desc);
+        }
+
+        // Add desc2 line
+        String desc2 = StatCollector.translateToLocal(baseKey + ".desc2");
+        if (!desc2.equals(baseKey + ".desc2")) {
+            tooltip.add(EnumChatFormatting.GRAY + desc2);
         }
     }
 }
