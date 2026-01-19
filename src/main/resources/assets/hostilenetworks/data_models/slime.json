@@ -10,7 +10,7 @@
         "color": "#7BCA62"
     },
     "display": {
-        "scale": 2.0
+        "scale": 0.6
     },
     "sim_cost": 128,
     "input": {

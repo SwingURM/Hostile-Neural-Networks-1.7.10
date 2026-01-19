@@ -8,7 +8,9 @@
         "translate": "entity.minecraft.pig",
         "color": "#EEA5A4"
     },
-    "display": {},
+    "display": {
+        "scale": 0.4
+    },
     "sim_cost": 64,
     "input": {
         "item": "hostilenetworks:prediction_matrix"

@@ -6,14 +6,7 @@
         "color": "#3B6269"
     },
     "display": {
-        "nbt": {
-            "HandItems": [
-                {
-                    "id": "minecraft:trident"
-                },
-                {}
-            ]
-        }
+        "scale": 0.4
     },
     "sim_cost": 128,
     "input": {

@@ -6,7 +6,7 @@
         "color": "#CC2200"
     },
     "display": {
-        "scale": 2.0
+        "scale": 0.6
     },
     "sim_cost": 256,
     "input": {

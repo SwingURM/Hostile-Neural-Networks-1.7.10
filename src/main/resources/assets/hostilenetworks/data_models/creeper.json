@@ -22,7 +22,9 @@
         "translate": "entity.minecraft.creeper",
         "color": "#70DC5D"
     },
-    "display": {},
+    "display": {
+        "scale": 0.4
+    },
     "sim_cost": 128,
     "input": {
         "item": "hostilenetworks:prediction_matrix"

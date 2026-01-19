@@ -5,7 +5,10 @@
         "translate": "entity.minecraft.guardian",
         "color": "#6A9583"
     },
-    "display": {},
+    "display": {
+        "scale": 0.4,
+        "y_offset": 0.5
+    },
     "sim_cost": 256,
     "input": {
         "item": "hostilenetworks:prediction_matrix"

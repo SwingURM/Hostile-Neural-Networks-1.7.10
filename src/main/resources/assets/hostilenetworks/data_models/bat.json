@@ -11,7 +11,10 @@
         "translate": "entity.minecraft.bat",
         "color": "#964B00"
     },
-    "display": {},
+    "display": {
+        "y_offset": -0.3,
+        "scale": 1.0
+    },
     "sim_cost": 64,
     "input": {
         "item": "hostilenetworks:prediction_matrix"

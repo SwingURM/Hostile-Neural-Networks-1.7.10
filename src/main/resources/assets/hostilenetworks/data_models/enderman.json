@@ -25,7 +25,8 @@
         "color": "#161616"
     },
     "display": {
-        "scale": 0.75
+        "scale": 0.3,
+        "y_offset": 0.3
     },
     "sim_cost": 512,
     "input": {

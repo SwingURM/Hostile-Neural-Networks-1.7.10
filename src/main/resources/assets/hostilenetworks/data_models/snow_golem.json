@@ -5,7 +5,9 @@
         "translate": "entity.minecraft.snow_golem",
         "color": "#FFFFFF"
     },
-    "display": {},
+    "display": {
+        "scale": 0.4
+    },
     "sim_cost": 64,
     "input": {
         "item": "hostilenetworks:prediction_matrix"

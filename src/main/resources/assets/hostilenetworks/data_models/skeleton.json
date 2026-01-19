@@ -8,7 +8,9 @@
         "translate": "entity.minecraft.skeleton",
         "color": "#BCBCBC"
     },
-    "display": {},
+    "display": {
+        "scale": 0.4
+    },
     "sim_cost": 128,
     "input": {
         "item": "hostilenetworks:prediction_matrix"

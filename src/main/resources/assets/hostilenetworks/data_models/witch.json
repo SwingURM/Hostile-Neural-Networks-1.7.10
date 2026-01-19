@@ -6,7 +6,7 @@
         "color": "#361758"
     },
     "display": {
-        "scale": 0.8
+        "scale": 0.35
     },
     "sim_cost": 256,
     "input": {

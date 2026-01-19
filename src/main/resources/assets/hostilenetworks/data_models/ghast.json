@@ -9,8 +9,8 @@
         "color": "#F0F0F0"
     },
     "display": {
-        "y_offset": 4.0,
-        "scale": 0.25
+        "y_offset": 0.3,
+        "scale": 0.1
     },
     "sim_cost": 256,
     "input": {

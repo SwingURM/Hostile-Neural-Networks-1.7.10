@@ -22,25 +22,13 @@ import com.google.gson.JsonParser;
 import dev.shadowsoffire.hostilenetworks.HostileNetworks;
 import dev.shadowsoffire.hostilenetworks.item.HostileItems;
 import dev.shadowsoffire.hostilenetworks.util.Constants;
+import dev.shadowsoffire.hostilenetworks.util.EntityIdUtils;
 
 /**
  * Registry for DataModel objects.
  * Maps entity IDs to their corresponding data models.
  */
 public class DataModelRegistry {
-
-    // Maps datapack entity IDs to Minecraft 1.7.10 entity names (for EntityList and translation)
-    // Some entities have different internal names in 1.7.10
-    private static final java.util.Map<String, String> ENTITY_ID_MAP = new java.util.HashMap<>();
-    static {
-        // Entities with different internal names in Minecraft 1.7.10
-        ENTITY_ID_MAP.put("magma_cube", "LavaSlime");
-        ENTITY_ID_MAP.put("iron_golem", "VillagerGolem");
-        ENTITY_ID_MAP.put("snow_golem", "SnowMan");
-        ENTITY_ID_MAP.put("ender_dragon", "EnderDragon");
-        ENTITY_ID_MAP.put("wither", "WitherBoss");
-        ENTITY_ID_MAP.put("mooshroom", "MushroomCow");
-    }
 
     private static final Map<String, DataModel> MODELS = new HashMap<>();
     private static final Map<String, List<DataModel>> ENTITY_TO_MODELS = new HashMap<>();
@@ -60,7 +48,7 @@ public class DataModelRegistry {
         addEntityMapping(entityId, model);
 
         // Also add EntityList capitalized name mapping (e.g., magma_cube -> LavaSlime)
-        String capitalizedEntityId = getCapitalizedEntityId(entityId);
+        String capitalizedEntityId = EntityIdUtils.getCapitalizedName(entityId);
         if (!capitalizedEntityId.equals(entityId)) {
             addEntityMapping(capitalizedEntityId, model);
         }
@@ -68,32 +56,11 @@ public class DataModelRegistry {
         for (String variant : model.getVariants()) {
             addEntityMapping(variant, model);
             // Also add capitalized variant mapping
-            String capitalizedVariant = getCapitalizedEntityId(variant);
+            String capitalizedVariant = EntityIdUtils.getCapitalizedName(variant);
             if (!capitalizedVariant.equals(variant)) {
                 addEntityMapping(capitalizedVariant, model);
             }
         }
-    }
-
-    /**
-     * Get the EntityList capitalized name for an entity ID.
-     * e.g., "magma_cube" -> "LavaSlime", "zombie" -> "Zombie"
-     */
-    private static String getCapitalizedEntityId(String entityId) {
-        // Check if there's a reverse mapping in ENTITY_ID_MAP
-        for (java.util.Map.Entry<String, String> entry : ENTITY_ID_MAP.entrySet()) {
-            if (entry.getKey()
-                .equals(entityId)) {
-                return entry.getValue(); // e.g., "magma_cube" -> "LavaSlime"
-            }
-            if (entry.getValue()
-                .equals(entityId)) {
-                return entityId; // Already capitalized
-            }
-        }
-        // Default capitalization: first letter uppercase
-        return entityId.substring(0, 1)
-            .toUpperCase() + entityId.substring(1);
     }
 
     private static void addEntityMapping(String entityId, DataModel model) {
@@ -292,17 +259,8 @@ public class DataModelRegistry {
                 entityId = entityId.substring("minecraft:".length());
             }
 
-            // Map to Minecraft 1.7.10 entity name (e.g., magma_cube -> LavaSlime)
-            String mappedEntityId = ENTITY_ID_MAP.getOrDefault(entityId, entityId);
-
-            // EntityList uses capitalized names, but mapped entities already have correct case
-            String capitalizedEntityId;
-            if (ENTITY_ID_MAP.containsKey(entityId)) {
-                capitalizedEntityId = mappedEntityId; // Already correct (LavaSlime)
-            } else {
-                capitalizedEntityId = mappedEntityId.substring(0, 1)
-                    .toUpperCase() + mappedEntityId.substring(1);
-            }
+            // Get the capitalized entity name for EntityList lookup (handles 1.7.10 name differences)
+            String capitalizedEntityId = EntityIdUtils.getCapitalizedName(entityId);
 
             // Skip entities that don't exist in Minecraft 1.7.10
             if (!EntityList.stringToClassMapping.containsKey(capitalizedEntityId)) {
@@ -428,6 +386,32 @@ public class DataModelRegistry {
                 }
             }
 
+            // Parse display settings for item rendering
+            float scale = 1.0f;
+            float xOffset = 0.0f;
+            float yOffset = 0.0f;
+            float zOffset = 0.0f;
+
+            if (json.has("display")) {
+                JsonObject displayObj = json.getAsJsonObject("display");
+                if (displayObj.has("scale")) {
+                    scale = displayObj.get("scale")
+                        .getAsFloat();
+                }
+                if (displayObj.has("x_offset")) {
+                    xOffset = displayObj.get("x_offset")
+                        .getAsFloat();
+                }
+                if (displayObj.has("y_offset")) {
+                    yOffset = displayObj.get("y_offset")
+                        .getAsFloat();
+                }
+                if (displayObj.has("z_offset")) {
+                    zOffset = displayObj.get("z_offset")
+                        .getAsFloat();
+                }
+            }
+
             // Build the model
             DataModel.Builder builder = new DataModel.Builder().entityId(entityId)
                 .translateKey(entityTranslateName)
@@ -435,7 +419,11 @@ public class DataModelRegistry {
                 .simCost(simCost)
                 .defaultTier(tier)
                 .baseDrop(baseDrop)
-                .dataPerKillByTier(dataPerKillByTier);
+                .dataPerKillByTier(dataPerKillByTier)
+                .scale(scale)
+                .xOffset(xOffset)
+                .yOffset(yOffset)
+                .zOffset(zOffset);
 
             // Set color - prefer hex color
             if (hexColor != null) {

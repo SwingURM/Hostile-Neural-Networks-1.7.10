@@ -7,7 +7,9 @@
         "translate": "entity.minecraft.hoglin",
         "color": "#E8A074"
     },
-    "display": {},
+    "display": {
+        "scale": 0.4
+    },
     "sim_cost": 256,
     "input": {
         "item": "hostilenetworks:prediction_matrix"

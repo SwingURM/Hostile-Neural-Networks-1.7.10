@@ -7,7 +7,9 @@
         "translate": "entity.minecraft.zombified_piglin",
         "color": "#3B992F"
     },
-    "display": {},
+    "display": {
+        "scale": 0.4
+    },
     "sim_cost": 256,
     "input": {
         "item": "hostilenetworks:prediction_matrix"

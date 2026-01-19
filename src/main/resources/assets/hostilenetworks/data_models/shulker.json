@@ -5,7 +5,10 @@
         "translate": "entity.minecraft.shulker",
         "color": "#976797"
     },
-    "display": {},
+    "display": {
+        "scale": 0.4,
+        "y_offset": 0.3
+    },
     "sim_cost": 512,
     "input": {
         "item": "hostilenetworks:prediction_matrix"

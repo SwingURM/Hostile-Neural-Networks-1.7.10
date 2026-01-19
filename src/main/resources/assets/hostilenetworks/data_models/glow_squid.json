@@ -6,7 +6,8 @@
         "color": "#32A1A1"
     },
     "display": {
-        "y_offset": 1.0
+        "scale": 0.3,
+        "y_offset": 0.5
     },
     "sim_cost": 32,
     "input": {

@@ -2,6 +2,7 @@ package dev.shadowsoffire.hostilenetworks.item;
 
 import java.util.List;
 
+import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
@@ -12,6 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.IIcon;
 import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
 
@@ -36,11 +38,31 @@ public class DataModelItem extends Item {
 
     private static final Logger LOGGER = LogManager.getLogger(HostileNetworks.MODID);
 
+    /** Icons for blank and attuned data models */
+    private IIcon blankIcon;
+    private IIcon attunedIcon;
+
     public DataModelItem() {
         setUnlocalizedName("data_model");
-        setTextureName("hostilenetworks:data_model");
+        setTextureName("hostilenetworks:blank_data_model"); // Default to blank texture
         setMaxStackSize(1);
         setHasSubtypes(true);
+    }
+
+    @Override
+    public void registerIcons(IIconRegister register) {
+        this.blankIcon = register.registerIcon("hostilenetworks:blank_data_model");
+        this.attunedIcon = register.registerIcon("hostilenetworks:data_model");
+    }
+
+    @Override
+    public IIcon getIcon(ItemStack stack, int renderPass) {
+        return DataModelItem.isBlank(stack) ? this.blankIcon : this.attunedIcon;
+    }
+
+    @Override
+    public IIcon getIconFromDamage(int damage) {
+        return damage == 0 ? this.blankIcon : this.attunedIcon;
     }
 
     /**

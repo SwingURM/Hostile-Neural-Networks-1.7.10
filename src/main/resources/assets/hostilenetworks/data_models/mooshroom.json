@@ -5,7 +5,9 @@
         "translate": "entity.minecraft.mooshroom",
         "color": "#A81012"
     },
-    "display": {},
+    "display": {
+        "scale": 0.4
+    },
     "sim_cost": 64,
     "input": {
         "item": "hostilenetworks:prediction_matrix"

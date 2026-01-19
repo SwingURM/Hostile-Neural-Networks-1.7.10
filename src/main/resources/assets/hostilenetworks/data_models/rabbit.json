@@ -7,7 +7,9 @@
         "translate": "entity.minecraft.rabbit",
         "color": "#947D62"
     },
-    "display": {},
+    "display": {
+        "scale": 0.4
+    },
     "sim_cost": 64,
     "input": {
         "item": "hostilenetworks:prediction_matrix"

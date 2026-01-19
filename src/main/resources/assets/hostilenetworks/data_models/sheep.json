@@ -8,6 +8,7 @@
         "color": "rainbow"
     },
     "display": {
+        "scale": 0.4,
         "nbt": {
             "CustomName": "{\"text\":\"jeb_\"}"
         }

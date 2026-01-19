@@ -6,8 +6,8 @@
         "color": "#CC00CC"
     },
     "display": {
-        "y_offset": 0.5,
-        "scale": 0.25
+        "scale": 0.25,
+        "y_offset": 0.5
     },
     "sim_cost": 4096,
     "input": {

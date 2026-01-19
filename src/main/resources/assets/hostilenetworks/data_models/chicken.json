@@ -7,7 +7,9 @@
         "translate": "entity.minecraft.chicken",
         "color": "#F0EAD6"
     },
-    "display": {},
+    "display": {
+        "scale": 0.4
+    },
     "sim_cost": 64,
     "input": {
         "item": "hostilenetworks:prediction_matrix"
