@@ -1,13 +1,22 @@
 package dev.shadowsoffire.hostilenetworks.client;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
+
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
+import net.minecraft.entity.monster.EntitySlime;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL11;
 
 import cpw.mods.fml.relauncher.Side;
@@ -33,10 +42,30 @@ import dev.shadowsoffire.hostilenetworks.util.EntityIdUtils;
 public class DataModelItemRenderer implements net.minecraftforge.client.IItemRenderer {
 
     private static final double DEFAULT_SCALE = 0.4;
-    private static final double ENDER_DRAGON_SCALE = 0.15;
-    private static final double WITHER_SCALE = 0.2;
-    private static final double GHAST_SCALE = 0.25;
-    private static final double LARGE_MOB_SCALE = 0.3;
+
+    // Base cube dimensions for the pedestal
+    private static final float BASE_MIN = 0.2F;
+    private static final float BASE_MAX = 0.8F;
+    private static final float BASE_HEIGHT = 0.2F;
+
+    // Position adjustments for different render types
+    private static final double EQUIPPED_OFFSET_X = 0.5;
+    private static final double EQUIPPED_OFFSET_Y = 0.7;
+    private static final double EQUIPPED_OFFSET_Z = 0.5;
+    private static final double INVENTORY_OFFSET_Y = -0.1;
+
+    // Entity rendering position on top of base
+    private static final double ENTITY_Y_OFFSET = BASE_HEIGHT;
+    private static final float ENTITY_ROTATION = 270.0F;
+
+    private static final Logger LOG = LogManager.getLogger("hostilenetworks");
+
+    /**
+     * Cache for entities used in trophy rendering.
+     * Prevents flickering for slime and magma cube entities which have random sizes.
+     * Following the OpenBlocks trophy pattern.
+     */
+    private static final Map<String, Entity> ENTITY_CACHE = new HashMap<>();
 
     @Override
     public boolean handleRenderType(ItemStack item, ItemRenderType type) {
@@ -62,9 +91,9 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
             // Handle position adjustments for different render types
             // Following OpenBlocks ItemRendererTrophy pattern
             if (type == ItemRenderType.EQUIPPED || type == ItemRenderType.EQUIPPED_FIRST_PERSON) {
-                GL11.glTranslated(+0.5, +0.7, +0.5);
+                GL11.glTranslated(EQUIPPED_OFFSET_X, EQUIPPED_OFFSET_Y, EQUIPPED_OFFSET_Z);
             } else if (type == ItemRenderType.INVENTORY) {
-                GL11.glTranslated(0, -0.1, 0);
+                GL11.glTranslated(0, INVENTORY_OFFSET_Y, 0);
             }
 
             // Render the base/pedestal cube
@@ -75,45 +104,18 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
             if (entityId != null) {
                 DataModel model = DataModelRegistry.get(entityId);
                 if (model != null) {
-                    double scale = getScaleForEntity(entityId);
-                    // Render entity on top of the base (base top is at y=0.2)
-                    renderTrophy(entityId, 0, 0.2, 0, 270, scale);
+                    // Get scale from DataModel JSON, with fallback to default
+                    double scale = model.getScale() > 0 ? model.getScale() : DEFAULT_SCALE;
+                    // Render entity on top of the base
+                    renderTrophy(entityId, 0, ENTITY_Y_OFFSET, 0, ENTITY_ROTATION, scale);
                 }
             }
         }
     }
 
     /**
-     * Get the appropriate scale for rendering an entity.
-     * Uses the internal Minecraft 1.7.10 name for lookup.
-     */
-    private double getScaleForEntity(String entityId) {
-        // Convert to internal name for consistent lookup
-        String internalName = EntityIdUtils.getInternalName(entityId);
-        switch (internalName) {
-            case "EnderDragon":
-                return ENDER_DRAGON_SCALE;
-            case "WitherBoss":
-            case "Wither":
-                return WITHER_SCALE;
-            case "Ghast":
-                return GHAST_SCALE;
-            case "Enderman":
-            case "VillagerGolem":
-            case "SnowMan":
-            case "MushroomCow":
-            case "Blaze":
-            case "LavaSlime":
-                return LARGE_MOB_SCALE;
-            default:
-                return DEFAULT_SCALE;
-        }
-    }
-
-    /**
      * Render a simple cube as the base/pedestal.
      * Similar to how OpenBlocks trophy renders its base.
-     * OpenBlocks trophy size: 0.2f, 0, 0.2f, 0.8f, 0.2f, 0.8f (flat base)
      */
     private void renderBaseCube() {
         Tessellator tessellator = Tessellator.instance;
@@ -124,53 +126,52 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
 
         GL11.glPushMatrix();
         GL11.glRotatef(90.0F, 0.0F, 1.0F, 0.0F);
-        // Translate to center the flat base (0.2 to 0.8 = 0.6 wide, centered in 1.0 unit)
-        // Base size: 0.6 x 0.2 x 0.6 (W x H x D), positioned at y=0
+        // Translate to center the flat base
         GL11.glTranslatef(-0.5F, 0.0F, -0.5F);
 
         tessellator.startDrawingQuads();
 
-        // Down face (bottom of the base) - offset y by 0.2 for the thickness
+        // Down face (bottom of the base)
         tessellator.setNormal(0.0F, -1.0F, 0.0F);
-        tessellator.addVertex(0.2D, 0.0D, 0.2D);
-        tessellator.addVertex(0.8D, 0.0D, 0.2D);
-        tessellator.addVertex(0.8D, 0.0D, 0.8D);
-        tessellator.addVertex(0.2D, 0.0D, 0.8D);
+        tessellator.addVertex(BASE_MIN, 0.0D, BASE_MIN);
+        tessellator.addVertex(BASE_MAX, 0.0D, BASE_MIN);
+        tessellator.addVertex(BASE_MAX, 0.0D, BASE_MAX);
+        tessellator.addVertex(BASE_MIN, 0.0D, BASE_MAX);
 
         // Up face (top of the base)
         tessellator.setNormal(0.0F, 1.0F, 0.0F);
-        tessellator.addVertex(0.2D, 0.2D, 0.8D);
-        tessellator.addVertex(0.8D, 0.2D, 0.8D);
-        tessellator.addVertex(0.8D, 0.2D, 0.2D);
-        tessellator.addVertex(0.2D, 0.2D, 0.2D);
+        tessellator.addVertex(BASE_MIN, BASE_HEIGHT, BASE_MAX);
+        tessellator.addVertex(BASE_MAX, BASE_HEIGHT, BASE_MAX);
+        tessellator.addVertex(BASE_MAX, BASE_HEIGHT, BASE_MIN);
+        tessellator.addVertex(BASE_MIN, BASE_HEIGHT, BASE_MIN);
 
         // South face
         tessellator.setNormal(0.0F, 0.0F, -1.0F);
-        tessellator.addVertex(0.2D, 0.0D, 0.2D);
-        tessellator.addVertex(0.2D, 0.2D, 0.2D);
-        tessellator.addVertex(0.8D, 0.2D, 0.2D);
-        tessellator.addVertex(0.8D, 0.0D, 0.2D);
+        tessellator.addVertex(BASE_MIN, 0.0D, BASE_MIN);
+        tessellator.addVertex(BASE_MIN, BASE_HEIGHT, BASE_MIN);
+        tessellator.addVertex(BASE_MAX, BASE_HEIGHT, BASE_MIN);
+        tessellator.addVertex(BASE_MAX, 0.0D, BASE_MIN);
 
         // North face
         tessellator.setNormal(0.0F, 0.0F, 1.0F);
-        tessellator.addVertex(0.8D, 0.0D, 0.8D);
-        tessellator.addVertex(0.8D, 0.2D, 0.8D);
-        tessellator.addVertex(0.2D, 0.2D, 0.8D);
-        tessellator.addVertex(0.2D, 0.0D, 0.8D);
+        tessellator.addVertex(BASE_MAX, 0.0D, BASE_MAX);
+        tessellator.addVertex(BASE_MAX, BASE_HEIGHT, BASE_MAX);
+        tessellator.addVertex(BASE_MIN, BASE_HEIGHT, BASE_MAX);
+        tessellator.addVertex(BASE_MIN, 0.0D, BASE_MAX);
 
         // West face
         tessellator.setNormal(-1.0F, 0.0F, 0.0F);
-        tessellator.addVertex(0.2D, 0.0D, 0.8D);
-        tessellator.addVertex(0.2D, 0.2D, 0.8D);
-        tessellator.addVertex(0.2D, 0.2D, 0.2D);
-        tessellator.addVertex(0.2D, 0.0D, 0.2D);
+        tessellator.addVertex(BASE_MIN, 0.0D, BASE_MAX);
+        tessellator.addVertex(BASE_MIN, BASE_HEIGHT, BASE_MAX);
+        tessellator.addVertex(BASE_MIN, BASE_HEIGHT, BASE_MIN);
+        tessellator.addVertex(BASE_MIN, 0.0D, BASE_MIN);
 
         // East face
         tessellator.setNormal(1.0F, 0.0F, 0.0F);
-        tessellator.addVertex(0.8D, 0.0D, 0.2D);
-        tessellator.addVertex(0.8D, 0.2D, 0.2D);
-        tessellator.addVertex(0.8D, 0.2D, 0.8D);
-        tessellator.addVertex(0.8D, 0.0D, 0.8D);
+        tessellator.addVertex(BASE_MAX, 0.0D, BASE_MIN);
+        tessellator.addVertex(BASE_MAX, BASE_HEIGHT, BASE_MIN);
+        tessellator.addVertex(BASE_MAX, BASE_HEIGHT, BASE_MAX);
+        tessellator.addVertex(BASE_MAX, 0.0D, BASE_MAX);
 
         tessellator.draw();
         GL11.glPopMatrix();
@@ -192,13 +193,11 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
         GL11.glPushMatrix();
         GL11.glTranslated(x, y, z);
         GL11.glRotatef(rotationY, 0, 1, 0);
-
-        final double ratio = scale;
-        GL11.glScaled(ratio, ratio, ratio);
+        GL11.glScaled(scale, scale, scale);
 
         World renderWorld = getRenderWorld();
         if (renderWorld != null) {
-            net.minecraft.client.renderer.entity.Render renderer = RenderManager.instance.getEntityRenderObject(entity);
+            Render renderer = RenderManager.instance.getEntityRenderObject(entity);
             if (renderer != null && renderer.getFontRendererFromRenderManager() != null) {
                 GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
                 enableLightmap();
@@ -227,6 +226,12 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
     }
 
     private Entity createEntity(String entityId) {
+        // Check cache first to prevent flickering for slime and magma cube
+        Entity cachedEntity = ENTITY_CACHE.get(entityId);
+        if (cachedEntity != null) {
+            return cachedEntity;
+        }
+
         World world = getRenderWorld();
         if (world == null) {
             return null;
@@ -238,11 +243,51 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
         for (String name : namesToTry) {
             entity = EntityList.createEntityByName(name, world);
             if (entity != null) {
-                return entity;
+                break;
             }
         }
 
-        return null;
+        if (entity != null) {
+            // Fix for slime and magma cube flickering - set fixed size
+            // Following OpenBlocks TrophyHandler pattern using reflection
+            String internalName = EntityIdUtils.getInternalName(entityId);
+            if ("slime".equals(internalName) || "LavaSlime".equals(internalName)) {
+                if (entity instanceof EntitySlime) {
+                    setFixedSlimeSize(entity);
+                }
+            }
+
+            ENTITY_CACHE.put(entityId, entity);
+        }
+
+        return entity;
+    }
+
+    /**
+     * Set slime size to a fixed value of 1 to prevent flickering.
+     * Uses reflection to access the protected setSlimeSize method.
+     */
+    private void setFixedSlimeSize(Entity entity) {
+        // Try method first
+        try {
+            Method setSlimeSize = EntitySlime.class.getDeclaredMethod("setSlimeSize", int.class);
+            setSlimeSize.setAccessible(true);
+            setSlimeSize.invoke(entity, 1);
+            return;
+        } catch (NoSuchMethodException e) {
+            // Method not found, try field
+        } catch (Exception e) {
+            LOG.warn("Failed to call setSlimeSize on slime entity", e);
+        }
+
+        // Fallback: set field directly
+        try {
+            Field slimeSizeField = EntitySlime.class.getDeclaredField("slimeSize");
+            slimeSizeField.setAccessible(true);
+            slimeSizeField.set(entity, 1);
+        } catch (Exception e) {
+            LOG.warn("Failed to set slimeSize field on slime entity", e);
+        }
     }
 
     private String[] createEntityNameVariants(String entityId) {

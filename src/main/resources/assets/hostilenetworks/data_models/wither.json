@@ -6,7 +6,7 @@
         "color": "#343434"
     },
     "display": {
-        "scale": 0.4,
+        "scale": 0.2,
         "y_offset": 0.0
     },
     "sim_cost": 2560,
