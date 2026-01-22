@@ -5,10 +5,14 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.client.renderer.entity.RenderManager;
+import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.util.IIcon;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.monster.EntitySlime;
@@ -43,9 +47,6 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
 
     private static final double DEFAULT_SCALE = 0.4;
 
-    // Base cube dimensions for the pedestal
-    private static final float BASE_MIN = 0.2F;
-    private static final float BASE_MAX = 0.8F;
     private static final float BASE_HEIGHT = 0.2F;
 
     // Position adjustments for different render types
@@ -55,8 +56,8 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
     private static final double INVENTORY_OFFSET_Y = -0.1;
 
     // Entity rendering position on top of base
-    private static final double ENTITY_Y_OFFSET = BASE_HEIGHT;
-    private static final float ENTITY_ROTATION = 270.0F;
+    private static final double ENTITY_Y_OFFSET = 0.25;
+    private static final float ENTITY_ROTATION = 90.0F;
 
     private static final Logger LOG = LogManager.getLogger("hostilenetworks");
 
@@ -66,6 +67,21 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
      * Following the OpenBlocks trophy pattern.
      */
     private static final Map<String, Entity> ENTITY_CACHE = new HashMap<>();
+
+    /**
+     * Get the blank icon from DataModelItem's private blankIcon field.
+     */
+    private static IIcon getBlankIcon(ItemStack stack) {
+        try {
+            DataModelItem item = (DataModelItem) stack.getItem();
+            Field blankIconField = DataModelItem.class.getDeclaredField("blankIcon");
+            blankIconField.setAccessible(true);
+            return (IIcon) blankIconField.get(item);
+        } catch (Exception e) {
+            LOG.warn("Failed to get blank icon from DataModelItem", e);
+            return null;
+        }
+    }
 
     @Override
     public boolean handleRenderType(ItemStack item, ItemRenderType type) {
@@ -92,12 +108,18 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
             // Following OpenBlocks ItemRendererTrophy pattern
             if (type == ItemRenderType.EQUIPPED || type == ItemRenderType.EQUIPPED_FIRST_PERSON) {
                 GL11.glTranslated(EQUIPPED_OFFSET_X, EQUIPPED_OFFSET_Y, EQUIPPED_OFFSET_Z);
+                // Rotate base 180 degrees for hand view
+                GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
             } else if (type == ItemRenderType.INVENTORY) {
                 GL11.glTranslated(0, INVENTORY_OFFSET_Y, 0);
+                // Extra 90 degree rotation for inventory view
+                GL11.glRotatef(90.0F, 0.0F, 1.0F, 0.0F);
+                // Rotate base 180 degrees
+                GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
             }
 
             // Render the base/pedestal cube
-            renderBaseCube();
+            renderBasePlate(stack);
 
             // Render the entity on top of the base
             String entityId = DataModelItem.getEntityId(stack);
@@ -114,70 +136,70 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
     }
 
     /**
-     * Render a simple cube as the base/pedestal.
-     * Similar to how OpenBlocks trophy renders its base.
+     * Render the base plate using blank_data_model texture with 3D thickness.
+     * Uses ItemRenderer.renderItemIn2D to create the thickness effect.
      */
-    private void renderBaseCube() {
-        Tessellator tessellator = Tessellator.instance;
+    private void renderBasePlate(ItemStack stack) {
+        IIcon icon = getBlankIcon(stack);
 
-        // Disable texture and set color to light gray
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glColor4f(0.7F, 0.7F, 0.7F, 1.0F);
+        if (icon != null) {
+            GL11.glPushMatrix();
 
-        GL11.glPushMatrix();
-        GL11.glRotatef(90.0F, 0.0F, 1.0F, 0.0F);
-        // Translate to center the flat base
-        GL11.glTranslatef(-0.5F, 0.0F, -0.5F);
+            // OpenGL applies transformations in reverse order (last one first)
+            // We want: position at (0, 0.1, 0), then rotate 90deg around X, then center
 
-        tessellator.startDrawingQuads();
+            // Center first (will be applied last)
+            GL11.glTranslatef(-0.5F, 0.0F, -0.5F);
 
-        // Down face (bottom of the base)
-        tessellator.setNormal(0.0F, -1.0F, 0.0F);
-        tessellator.addVertex(BASE_MIN, 0.0D, BASE_MIN);
-        tessellator.addVertex(BASE_MAX, 0.0D, BASE_MIN);
-        tessellator.addVertex(BASE_MAX, 0.0D, BASE_MAX);
-        tessellator.addVertex(BASE_MIN, 0.0D, BASE_MAX);
+            // Rotate 90 deg around X axis (will be applied second)
+            // This rotates the XY plane to XZ plane, so thickness is along Y
+            GL11.glRotatef(90.0F, 1.0F, 0.0F, 0.0F);
 
-        // Up face (top of the base)
-        tessellator.setNormal(0.0F, 1.0F, 0.0F);
-        tessellator.addVertex(BASE_MIN, BASE_HEIGHT, BASE_MAX);
-        tessellator.addVertex(BASE_MAX, BASE_HEIGHT, BASE_MAX);
-        tessellator.addVertex(BASE_MAX, BASE_HEIGHT, BASE_MIN);
-        tessellator.addVertex(BASE_MIN, BASE_HEIGHT, BASE_MIN);
+            // Position below entity at Y=0.1 (will be applied first)
+            GL11.glTranslated(0, 0.1, 0);
 
-        // South face
-        tessellator.setNormal(0.0F, 0.0F, -1.0F);
-        tessellator.addVertex(BASE_MIN, 0.0D, BASE_MIN);
-        tessellator.addVertex(BASE_MIN, BASE_HEIGHT, BASE_MIN);
-        tessellator.addVertex(BASE_MAX, BASE_HEIGHT, BASE_MIN);
-        tessellator.addVertex(BASE_MAX, 0.0D, BASE_MIN);
+            // Bind the items texture atlas
+            Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.locationItemsTexture);
 
-        // North face
-        tessellator.setNormal(0.0F, 0.0F, 1.0F);
-        tessellator.addVertex(BASE_MAX, 0.0D, BASE_MAX);
-        tessellator.addVertex(BASE_MAX, BASE_HEIGHT, BASE_MAX);
-        tessellator.addVertex(BASE_MIN, BASE_HEIGHT, BASE_MAX);
-        tessellator.addVertex(BASE_MIN, 0.0D, BASE_MAX);
+            // Use ItemRenderer.renderItemIn2D to create 3D thickness effect
+            float u1 = icon.getMinU();
+            float v1 = icon.getMinV();
+            float u2 = icon.getMaxU();
+            float v2 = icon.getMaxV();
+            int width = icon.getIconWidth();
+            int height = icon.getIconHeight();
 
-        // West face
-        tessellator.setNormal(-1.0F, 0.0F, 0.0F);
-        tessellator.addVertex(BASE_MIN, 0.0D, BASE_MAX);
-        tessellator.addVertex(BASE_MIN, BASE_HEIGHT, BASE_MAX);
-        tessellator.addVertex(BASE_MIN, BASE_HEIGHT, BASE_MIN);
-        tessellator.addVertex(BASE_MIN, 0.0D, BASE_MIN);
+            // 0.0625F = 1 pixel thickness (1/16 = 0.0625 in Minecraft units)
+            ItemRenderer.renderItemIn2D(
+                Tessellator.instance,
+                u2, v1, u1, v2,
+                width, height,
+                0.0625F
+            );
 
-        // East face
-        tessellator.setNormal(1.0F, 0.0F, 0.0F);
-        tessellator.addVertex(BASE_MAX, 0.0D, BASE_MIN);
-        tessellator.addVertex(BASE_MAX, BASE_HEIGHT, BASE_MIN);
-        tessellator.addVertex(BASE_MAX, BASE_HEIGHT, BASE_MAX);
-        tessellator.addVertex(BASE_MAX, 0.0D, BASE_MAX);
+            GL11.glPopMatrix();
+        } else {
+            // Fallback: render a simple gray quad
+            GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+            try {
+                Tessellator tessellator = Tessellator.instance;
 
-        tessellator.draw();
-        GL11.glPopMatrix();
+                GL11.glDisable(GL11.GL_CULL_FACE);
+                GL11.glDisable(GL11.GL_LIGHTING);
+                GL11.glColor3f(0.5F, 0.5F, 0.5F);
 
-        // Restore GL state
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
+                tessellator.startDrawingQuads();
+                tessellator.setNormal(0.0F, 1.0F, 0.0F);
+                tessellator.addVertex(-0.5, 0.0, -0.5);
+                tessellator.addVertex(0.5, 0.0, -0.5);
+                tessellator.addVertex(0.5, 0.0, 0.5);
+                tessellator.addVertex(-0.5, 0.0, 0.5);
+                tessellator.draw();
+            } finally {
+                GL11.glPopAttrib();
+            }
+        }
+
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
@@ -191,6 +213,9 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
         }
 
         GL11.glPushMatrix();
+        // OpenGL applies in reverse order: translate -> rotate -> scale
+        // So we write: scale first, then rotate, then translate
+        // This keeps the entity centered at origin before transformation
         GL11.glTranslated(x, y, z);
         GL11.glRotatef(rotationY, 0, 1, 0);
         GL11.glScaled(scale, scale, scale);
