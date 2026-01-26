@@ -201,10 +201,14 @@ public class DeepLearnerItem extends Item {
             tooltip.add(
                 EnumChatFormatting.GRAY
                     + StatCollector.translateToLocal("tooltip.hostilenetworks.deep_learner.models"));
+            String listPrefix = StatCollector.translateToLocal("tooltip.hostilenetworks.list_prefix");
+            if (listPrefix.equals("tooltip.hostilenetworks.list_prefix")) {
+                listPrefix = "  - %s";
+            }
             for (int i = 0; i < MAX_MODELS; i++) {
                 String entityId = getModelAt(stack, i);
                 if (entityId != null && !entityId.isEmpty()) {
-                    tooltip.add(EnumChatFormatting.WHITE + "  - " + entityId);
+                    tooltip.add(EnumChatFormatting.WHITE + String.format(listPrefix, entityId));
                 }
             }
         }

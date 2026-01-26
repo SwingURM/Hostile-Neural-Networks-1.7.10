@@ -181,8 +181,18 @@ public class DeepLearnerGui extends GuiContainer {
         // Left button: guiLeft - 27, guiTop + 105
         // Right button: guiLeft - 1, guiTop + 105
         int btnY = this.guiTop + 105;
-        this.btnLeft = new GuiButton(0, this.guiLeft - 27, btnY, 24, 20, "<");
-        this.btnRight = new GuiButton(1, this.guiLeft - 1, btnY, 24, 20, ">");
+
+        String prevText = StatCollector.translateToLocal("hostilenetworks.gui.nav.previous");
+        if (prevText.equals("hostilenetworks.gui.nav.previous")) {
+            prevText = "<";
+        }
+        String nextText = StatCollector.translateToLocal("hostilenetworks.gui.nav.next");
+        if (nextText.equals("hostilenetworks.gui.nav.next")) {
+            nextText = ">";
+        }
+
+        this.btnLeft = new GuiButton(0, this.guiLeft - 27, btnY, 24, 20, prevText);
+        this.btnRight = new GuiButton(1, this.guiLeft - 1, btnY, 24, 20, nextText);
 
         this.buttonList.add(this.btnLeft);
         this.buttonList.add(this.btnRight);

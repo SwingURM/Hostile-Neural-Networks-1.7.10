@@ -208,7 +208,11 @@ public class SimChamberGui extends GuiContainer {
                 fontRendererObj.drawString(tierText, 40, 9 + fontRendererObj.FONT_HEIGHT + 3, 0xFFFFFF);
 
                 // Accuracy
-                String accuracyText = String.format("%.2f%%", model.getAccuracy() * 100);
+                String accuracyFormat = StatCollector.translateToLocal("hostilenetworks.gui.accuracy");
+                if (accuracyFormat.equals("hostilenetworks.gui.accuracy")) {
+                    accuracyFormat = "Model Accuracy: %s";
+                }
+                String accuracyText = String.format(accuracyFormat, String.format("%.2f%%", model.getAccuracy() * 100));
                 int tierColor = model.getTier().getColor() != null ?
                     model.getTier().getColor().hashCode() & 0xFFFFFF : 0xFFFFFF;
                 fontRendererObj.drawString(accuracyText, 40, 9 + (fontRendererObj.FONT_HEIGHT + 3) * 2, tierColor);
@@ -256,12 +260,20 @@ public class SimChamberGui extends GuiContainer {
                         DataModelInstance model = DataModelItem.getDataModelInstance(modelStack);
                         if (model != null && model.isValid()) {
                             ItemStack expectedInput = model.getModel().getInputItem();
-                            errorMsg = StatCollector.translateToLocal("hostilenetworks.fail.input") + " " + expectedInput.getDisplayName();
+                            String inputError = StatCollector.translateToLocal("hostilenetworks.fail.input");
+                            if (inputError.equals("hostilenetworks.fail.input")) {
+                                inputError = "Cannot begin simulation\nMissing input: %s";
+                            }
+                            errorMsg = String.format(inputError, expectedInput.getDisplayName());
                         }
                     }
                 }
 
-                this.statusLines.add(EnumChatFormatting.OBFUSCATED + "ERROR");
+                String errorLabel = StatCollector.translateToLocal("hostilenetworks.status.error");
+                if (errorLabel.equals("hostilenetworks.status.error")) {
+                    errorLabel = "ERROR";
+                }
+                this.statusLines.add(EnumChatFormatting.OBFUSCATED + errorLabel);
                 this.statusLines.add(errorMsg);
                 this.runtimeTextLoaded = false;
             }
@@ -274,11 +286,31 @@ public class SimChamberGui extends GuiContainer {
                 iterations = DataModelItem.getIterations(modelStack);
             }
 
-            this.statusLines.add(StatCollector.translateToLocal("hostilenetworks.run.0") + " " + iterations);
-            this.statusLines.add(EnumChatFormatting.GOLD + "v" + HostileNetworks.VERSION);
+            String run0Text = StatCollector.translateToLocal("hostilenetworks.run.0");
+            if (run0Text.equals("hostilenetworks.run.0")) {
+                run0Text = "> Launching runtime";
+            }
+            this.statusLines.add(run0Text);
+            String versionKey = StatCollector.translateToLocal("hostilenetworks.status.version");
+            if (versionKey.equals("hostilenetworks.status.version")) {
+                versionKey = "Version %s";
+            }
+            this.statusLines.add(EnumChatFormatting.GOLD + String.format(versionKey, HostileNetworks.VERSION));
+
+            // Handle run.1 which has %s placeholder for iterations
+            String run1Text = StatCollector.translateToLocal("hostilenetworks.run.1");
+            if (run1Text.equals("hostilenetworks.run.1")) {
+                run1Text = "> Iteration #%s started";
+            }
+            this.statusLines.add(String.format(run1Text, iterations));
 
             for (int i = 2; i < 6; i++) {
-                this.statusLines.add(StatCollector.translateToLocal("hostilenetworks.run." + i) + " " + iterations);
+                String runKey = "hostilenetworks.run." + i;
+                String runText = StatCollector.translateToLocal(runKey);
+                if (runText.equals(runKey)) {
+                    runText = runKey;
+                }
+                this.statusLines.add(String.format(runText, iterations));
             }
 
             String resultKey = this.container.didPredictionSucceed() ? "hostilenetworks.color_text.success" : "hostilenetworks.color_text.failed";
@@ -328,15 +360,21 @@ public class SimChamberGui extends GuiContainer {
         if (mouseX >= left + 211 && mouseX <= left + 217 &&
             mouseY >= top + 48 && mouseY <= top + 135) {
             List<String> tooltip = new ArrayList<>();
-            tooltip.add(EnumChatFormatting.WHITE + StatCollector.translateToLocal("hostilenetworks.gui.energy") +
-                " " + this.container.getSyncedEnergy() + "/" + HostileConfig.simPowerCap);
+            String energyText = StatCollector.translateToLocal("hostilenetworks.gui.energy");
+            if (energyText.equals("hostilenetworks.gui.energy")) {
+                energyText = "Energy: %s / %s";
+            }
+            tooltip.add(String.format(energyText, this.container.getSyncedEnergy(), HostileConfig.simPowerCap));
 
             ItemStack modelStack = this.tile.getStackInSlot(0);
             if (modelStack != null && modelStack.getItem() instanceof DataModelItem) {
                 DataModelInstance model = DataModelItem.getDataModelInstance(modelStack);
                 if (model != null && model.isValid()) {
-                    tooltip.add(StatCollector.translateToLocal("hostilenetworks.gui.cost") +
-                        " " + model.getModel().getSimCost());
+                    String costText = StatCollector.translateToLocal("hostilenetworks.gui.cost");
+                    if (costText.equals("hostilenetworks.gui.cost")) {
+                        costText = "Model energy cost: %s FE/t";
+                    }
+                    tooltip.add(String.format(costText, model.getModel().getSimCost()));
                 }
             }
 
@@ -354,9 +392,13 @@ public class SimChamberGui extends GuiContainer {
                     List<String> tooltip = new ArrayList<>();
                     ModelTier tier = model.getTier();
                     if (!tier.isMax()) {
-                        tooltip.add(StatCollector.translateToLocal("hostilenetworks.gui.data") + " " +
-                            (model.getCurrentData() - model.getTierData()) + "/" +
-                            (model.getNextTierData() - model.getTierData()));
+                        String dataText = StatCollector.translateToLocal("hostilenetworks.gui.data");
+                        if (dataText.equals("hostilenetworks.gui.data")) {
+                            dataText = "%s/%s Data collected";
+                        }
+                        tooltip.add(String.format(dataText,
+                            model.getCurrentData() - model.getTierData(),
+                            model.getNextTierData() - model.getTierData()));
                     } else {
                         tooltip.add(EnumChatFormatting.RED + StatCollector.translateToLocal("hostilenetworks.gui.max_data"));
                     }

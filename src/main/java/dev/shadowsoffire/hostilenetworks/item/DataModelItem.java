@@ -503,9 +503,11 @@ public class DataModelItem extends Item {
                     format = "%s on an entity to %s";
                 }
                 // Build single line with colors: WHITE rclick + GRAY middle + GOLD build
+                String rawResult = String.format(format, rclick, build);
+                // Apply colors: rclick=WHITE, middle=GRAY, build=GOLD
                 String result = EnumChatFormatting.WHITE + rclick
                     + EnumChatFormatting.GRAY
-                    + " on an entity to "
+                    + rawResult.substring(rclick.length(), rawResult.length() - build.length())
                     + EnumChatFormatting.GOLD
                     + build;
                 tooltip.add(result);
@@ -611,12 +613,16 @@ public class DataModelItem extends Item {
                 subtypesKey = "Variants";
             }
             tooltip.add(EnumChatFormatting.WHITE + subtypesKey);
+            String listPrefix = StatCollector.translateToLocal("tooltip.hostilenetworks.list_prefix");
+            if (listPrefix.equals("tooltip.hostilenetworks.list_prefix")) {
+                listPrefix = "  - %s";
+            }
             for (String variant : variants) {
                 String variantName = StatCollector.translateToLocal("entity." + variant + ".name");
                 if (variantName.equals("entity." + variant + ".name")) {
                     variantName = variant;
                 }
-                tooltip.add(EnumChatFormatting.GREEN + "  - " + variantName);
+                tooltip.add(EnumChatFormatting.GREEN + String.format(listPrefix, variantName));
             }
         }
     }

@@ -151,6 +151,17 @@ hostilenetworks.msg.multiple_models=多个模型（%s 和 %s）与目标生物�
 hostilenetworks.msg.no_model=此物种没有已知的模型
 hostilenetworks.msg.built=成功创建 %s 数据模型
 
+# Simulation Status
+hostilenetworks.status.error=错误
+hostilenetworks.status.version=版本 %s
+
+# GUI Navigation
+hostilenetworks.gui.nav.previous=<
+hostilenetworks.gui.nav.next=>
+
+# Debug Messages (testing features)
+hostilenetworks.debug.energy_added=已添加 100000 RF。当前：%s/%s
+
 # HUD
 hostilenetworks.hud.model= 模型
 hostilenetworks.hud.kills=%s 剩余
@@ -159,6 +170,47 @@ hostilenetworks.hud.kills=%s 剩余
 commands.hostilenetworks.usage=/hostilenetworks <子命令>
 commands.hostilenetworks.give.usage=/hnn give <玩家> <模型> [数量]
 commands.hostilenetworks.generate.usage=/hnn generate <模型> [数量]
+
+# hnn_genmodel 命令
+commands.hnn_genmodel.usage=hnn_genmodel <generate_model|update_model|generate_all|datafix> [参数]
+commands.hnn_genmodel.unknown_subcommand=未知子命令：%s
+commands.hnn_genmodel.available_subcommands=可用命令：generate_model, update_model, generate_all, datafix
+commands.hnn_genmodel.generate_model.usage=用法：/hnn_genmodel generate_model <生物> [最大堆叠数]
+commands.hnn_genmodel.entity_not_found=未找到生物：%s
+commands.hnn_genmodel.invalid_stack_size=无效的最大堆叠数，使用默认值：%s
+commands.hnn_genmodel.generated=已生成 %s 的数据模型
+commands.hnn_genmodel.update_model.usage=用法：/hnn_genmodel update_model <数据模型> [最大堆叠数]
+commands.hnn_genmodel.model_not_found=未找到数据模型：%s
+commands.hnn_genmodel.available_models=可用模型：%s
+commands.hnn_genmodel.updated=已更新 %s 的数据模型
+commands.hnn_genmodel.generate_all.usage=用法：/hnn_genmodel generate_all [最大堆叠数]
+commands.hnn_genmodel.generated_all=已生成 %s 个数据模型文件
+commands.hnn_genmodel.datafix=数据修复功能需要文件访问权限。
+commands.hnn_genmodel.datafix.help=请手动将 JSON 文件更新到当前模式。
+commands.hnn_genmodel.datafix.schema=当前模式字段：entity, variants, name, sim_cost, input, base_drop, trivia, fabricator_drops
+commands.hnn_genmodel.failed_write=写入文件失败：%s
+commands.hnn_genmodel.help.title=== 敌对神经网络模型生成器 ===
+commands.hnn_genmodel.help.generate_model=为指定生物生成数据模型 JSON
+commands.hnn_genmodel.help.update_model=更新现有的数据模型 JSON
+commands.hnn_genmodel.help.generate_all=为所有有数据模型的生物生成 JSON 文件
+commands.hnn_genmodel.datafix_command=/hnn_genmodel datafix
+commands.hnn_genmodel.help.datafix=数据修复现有 JSON 文件（信息性）
+
+# hnn_givemodel 命令
+commands.hnn_givemodel.usage=hnn_givemodel [玩家] <模型> [等级] [数据] - 给予带有可选等级和奖励数据的数据模型
+commands.hnn_givemodel.player_not_found=未找到玩家：%s
+commands.hnn_givemodel.player_not_found.specify=请指定玩家
+commands.hnn_givemodel.model_required=需要模型 ID
+commands.hnn_givemodel.invalid_bonus_data=无效的奖励数据：%s
+commands.hnn_givemodel.invalid_tier=无效的等级：%s
+commands.hnn_givemodel.available_tiers=可用等级：faulty, basic, advanced, superior, self_aware
+commands.hnn_givemodel.model_not_found=未找到数据模型：%s
+commands.hnn_givemodel.model_list=可用模型：%s
+commands.hnn_givemodel.given=已给予
+commands.hnn_givemodel.inventory_full=背包已满，已掉落
+commands.hnn_givemodel.data_model= 数据模型 (
+commands.hnn_givemodel.tier= 等级，
+commands.hnn_givemodel.data_suffix= 数据) 给予
 
 # 冷知识 - 被动生物
 hostilenetworks.trivia.glow_squid=它们藏在深海里。\n带着发光的光环。\n敢把它们带走吗？
@@ -198,3 +250,13 @@ hostilenetworks.trivia.phantom=烦人的小东西，\n坚持让你去睡觉。\n
 hostilenetworks.trivia.shulker=加固的、会传送的大炮。\n死后可以做成漂亮的箱子。
 hostilenetworks.trivia.vindicator=手持斧头的疯子。\n建议保持安全距离。
 hostilenetworks.trivia.zombified_piglin=可怜的下界居民变成了僵尸。\n但有很多金子。
+
+# Loot Fabricator GUI
+hostilenetworks.gui.energy=能量：%s / %s
+hostilenetworks.gui.fab_cost=消耗：%s FE/tick
+hostilenetworks.gui.clear=清除选择
+hostilenetworks.gui.fab_select=选择输出
+hostilenetworks.gui.item_count=x%s
+
+# 工具提示前缀
+tooltip.hostilenetworks.list_prefix=  - %s

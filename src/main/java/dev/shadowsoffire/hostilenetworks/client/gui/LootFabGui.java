@@ -222,7 +222,11 @@ public class LootFabGui extends GuiContainer {
 
                     // Show count if more than 1
                     if (hoverStack.stackSize > 1) {
-                        tooltip.add("x" + hoverStack.stackSize);
+                        String countText = StatCollector.translateToLocal("hostilenetworks.gui.item_count");
+                        if (countText.equals("hostilenetworks.gui.item_count")) {
+                            countText = "x%s";
+                        }
+                        tooltip.add(String.format(countText, hoverStack.stackSize));
                     }
 
                     this.drawHoveringText(tooltip, mouseX - this.guiLeft, mouseY - this.guiTop, this.mc.fontRenderer);
@@ -250,8 +254,11 @@ public class LootFabGui extends GuiContainer {
                     ((LootFabContainer) this.inventorySlots).getSyncedEnergy(),
                     HostileConfig.fabPowerCap);
                 tooltip.add(energyText);
-                tooltip.add(
-                    StatCollector.translateToLocal("hostilenetworks.gui.fab_cost") + " " + HostileConfig.fabPowerCost);
+                String fabCostText = StatCollector.translateToLocal("hostilenetworks.gui.fab_cost");
+                if (fabCostText.equals("hostilenetworks.gui.fab_cost")) {
+                    fabCostText = "Cost: %s FE/tick";
+                }
+                tooltip.add(String.format(fabCostText, HostileConfig.fabPowerCost));
                 this.drawHoveringText(tooltip, mouseX - this.guiLeft, mouseY - this.guiTop, this.mc.fontRenderer);
             }
         }

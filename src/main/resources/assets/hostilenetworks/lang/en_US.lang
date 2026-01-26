@@ -154,6 +154,17 @@ hostilenetworks.msg.multiple_models=Multiple models (%s and %s) matched the targ
 hostilenetworks.msg.no_model=No known models exist for this specimen.
 hostilenetworks.msg.built=Successfully constructed a %s Data Model
 
+# Simulation Status
+hostilenetworks.status.error=ERROR
+hostilenetworks.status.version=Version %s
+
+# GUI Navigation
+hostilenetworks.gui.nav.previous=<
+hostilenetworks.gui.nav.next=>
+
+# Debug Messages (testing features)
+hostilenetworks.debug.energy_added=Added 100000 RF. Current: %s/%s
+
 # HUD
 hostilenetworks.hud.model= Model
 hostilenetworks.hud.kills=%s Remaining
@@ -162,6 +173,47 @@ hostilenetworks.hud.kills=%s Remaining
 commands.hostilenetworks.usage=/hostilenetworks <subcommand>
 commands.hostilenetworks.give.usage=/hnn give <player> <model> [amount]
 commands.hostilenetworks.generate.usage=/hnn generate <model> [amount]
+
+# hnn_genmodel command
+commands.hnn_genmodel.usage=hnn_genmodel <generate_model|update_model|generate_all|datafix> [args]
+commands.hnn_genmodel.unknown_subcommand=Unknown subcommand: %s
+commands.hnn_genmodel.available_subcommands=Available: generate_model, update_model, generate_all, datafix
+commands.hnn_genmodel.generate_model.usage=Usage: /hnn_genmodel generate_model <entity> [max_stack_size]
+commands.hnn_genmodel.entity_not_found=Entity not found: %s
+commands.hnn_genmodel.invalid_stack_size=Invalid max_stack_size, using default: %s
+commands.hnn_genmodel.generated=Generated data model for %s
+commands.hnn_genmodel.update_model.usage=Usage: /hnn_genmodel update_model <data_model> [max_stack_size]
+commands.hnn_genmodel.model_not_found=Data model not found: %s
+commands.hnn_genmodel.available_models=Available: %s
+commands.hnn_genmodel.updated=Updated data model for %s
+commands.hnn_genmodel.generate_all.usage=Usage: /hnn_genmodel generate_all [max_stack_size]
+commands.hnn_genmodel.generated_all=Generated %s data model files
+commands.hnn_genmodel.datafix=Datafix functionality requires file access.
+commands.hnn_genmodel.datafix.help=Please manually update your JSON files to the current schema.
+commands.hnn_genmodel.datafix.schema=Current schema fields: entity, variants, name, sim_cost, input, base_drop, trivia, fabricator_drops
+commands.hnn_genmodel.failed_write=Failed to write file: %s
+commands.hnn_genmodel.help.title=== Hostile Neural Networks Model Generator ===
+commands.hnn_genmodel.help.generate_model=Generate a data model JSON for the specified entity
+commands.hnn_genmodel.help.update_model=Update an existing data model JSON
+commands.hnn_genmodel.help.generate_all=Generate JSON files for all mob entities with data models
+commands.hnn_genmodel.datafix_command=/hnn_genmodel datafix
+commands.hnn_genmodel.help.datafix=Datafix existing JSON files (informational)
+
+# hnn_givemodel command
+commands.hnn_givemodel.usage=hnn_givemodel [player] <model> [tier] [data] - Give a data model with optional tier and bonus data
+commands.hnn_givemodel.player_not_found=No player found: %s
+commands.hnn_givemodel.player_not_found.specify=specify a player
+commands.hnn_givemodel.model_required=Model ID required
+commands.hnn_givemodel.invalid_bonus_data=Invalid bonus data: %s
+commands.hnn_givemodel.invalid_tier=Invalid tier: %s
+commands.hnn_givemodel.available_tiers=Available tiers: faulty, basic, advanced, superior, self_aware
+commands.hnn_givemodel.model_not_found=Data model not found: %s
+commands.hnn_givemodel.model_list=Available models: %s
+commands.hnn_givemodel.given=Given
+commands.hnn_givemodel.inventory_full=Inventory full, dropped
+commands.hnn_givemodel.data_model= data model (
+commands.hnn_givemodel.tier= tier,
+commands.hnn_givemodel.data_suffix= data) to
 
 # Trivia - Vanilla Passives
 hostilenetworks.trivia.glow_squid=Deep in the ocean they stow.\nBlessed by a luminescent glow.\nDare you take it as your own?
@@ -207,3 +259,7 @@ hostilenetworks.gui.energy=Energy: %s / %s
 hostilenetworks.gui.fab_cost=Cost: %s FE/tick
 hostilenetworks.gui.clear=Clear Selection
 hostilenetworks.gui.fab_select=Select Output
+hostilenetworks.gui.item_count=x%s
+
+# Tooltip prefixes
+tooltip.hostilenetworks.list_prefix=  - %s

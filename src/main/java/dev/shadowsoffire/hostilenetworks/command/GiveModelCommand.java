@@ -9,7 +9,9 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.StatCollector;
 
 import dev.shadowsoffire.hostilenetworks.HostileNetworks;
 import dev.shadowsoffire.hostilenetworks.data.DataModel;
@@ -49,7 +51,7 @@ public class GiveModelCommand extends CommandBase {
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
         if (args.length < 1) {
-            sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Usage: /" + getCommandUsage(sender)));
+            sender.addChatMessage(new ChatComponentTranslation("commands.hnn_givemodel.usage"));
             return;
         }
 
@@ -77,16 +79,16 @@ public class GiveModelCommand extends CommandBase {
 
         // If still no player, require player name
         if (targetPlayer == null) {
+            String playerDisplay = playerName != null ? playerName : StatCollector.translateToLocal("commands.hnn_givemodel.player_not_found.specify");
             sender.addChatMessage(
-                new ChatComponentText(
-                    EnumChatFormatting.RED + "No player found: "
-                        + (playerName != null ? playerName : "specify a player")));
+                new ChatComponentTranslation(
+                    "commands.hnn_givemodel.player_not_found", playerDisplay));
             return;
         }
 
         // Get model ID
         if (argStart >= args.length) {
-            sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Model ID required"));
+            sender.addChatMessage(new ChatComponentTranslation("commands.hnn_givemodel.model_required"));
             return;
         }
         modelId = args[argStart];
@@ -108,8 +110,8 @@ public class GiveModelCommand extends CommandBase {
                         bonusData = Integer.parseInt(args[argStart + 2]);
                     } catch (NumberFormatException e) {
                         sender.addChatMessage(
-                            new ChatComponentText(
-                                EnumChatFormatting.RED + "Invalid bonus data: " + args[argStart + 2]));
+                            new ChatComponentTranslation(
+                                "commands.hnn_givemodel.invalid_bonus_data", args[argStart + 2]));
                         return;
                     }
                 }
@@ -119,11 +121,9 @@ public class GiveModelCommand extends CommandBase {
                     bonusData = Integer.parseInt(potentialTier);
                 } catch (NumberFormatException e) {
                     sender.addChatMessage(
-                        new ChatComponentText(EnumChatFormatting.RED + "Invalid tier: " + potentialTier));
+                        new ChatComponentTranslation("commands.hnn_givemodel.invalid_tier", potentialTier));
                     sender.addChatMessage(
-                        new ChatComponentText(
-                            EnumChatFormatting.GRAY
-                                + "Available tiers: faulty, basic, advanced, superior, self_aware"));
+                        new ChatComponentTranslation("commands.hnn_givemodel.available_tiers"));
                     return;
                 }
             }
@@ -150,13 +150,13 @@ public class GiveModelCommand extends CommandBase {
             if (bestMatch != null) {
                 model = DataModelRegistry.get(bestMatch);
             } else {
+                String modelList = allModelIds.size() > 10
+                    ? String.join(", ", allModelIds.subList(0, 10)) + "..."
+                    : String.join(", ", allModelIds);
                 sender
-                    .addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Data model not found: " + modelId));
+                    .addChatMessage(new ChatComponentTranslation("commands.hnn_givemodel.model_not_found", modelId));
                 sender.addChatMessage(
-                    new ChatComponentText(
-                        EnumChatFormatting.GRAY + "Available models: "
-                            + String.join(", ", allModelIds.subList(0, Math.min(10, allModelIds.size())))
-                            + (allModelIds.size() > 10 ? "..." : "")));
+                    new ChatComponentTranslation("commands.hnn_givemodel.model_list", modelList));
                 return;
             }
         }
@@ -164,10 +164,9 @@ public class GiveModelCommand extends CommandBase {
         // Get the tier
         ModelTier tier = ModelTierRegistry.getByName(tierName);
         if (tier == null) {
-            sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Invalid tier: " + tierName));
+            sender.addChatMessage(new ChatComponentTranslation("commands.hnn_givemodel.invalid_tier", tierName));
             sender.addChatMessage(
-                new ChatComponentText(
-                    EnumChatFormatting.GRAY + "Available tiers: faulty, basic, advanced, superior, self_aware"));
+                new ChatComponentTranslation("commands.hnn_givemodel.available_tiers"));
             return;
         }
 
@@ -192,31 +191,24 @@ public class GiveModelCommand extends CommandBase {
         // Give the item
         boolean gaveItem = targetPlayer.inventory.addItemStackToInventory(modelStack);
 
-        String message;
-        if (gaveItem) {
-            message = EnumChatFormatting.GREEN + "Given ";
-        } else {
-            // Drop at player's position if inventory is full
-            targetPlayer.dropPlayerItemWithRandomChoice(modelStack, false);
-            message = EnumChatFormatting.YELLOW + "Inventory full, dropped ";
-        }
+        // Build the success/failure message
+        ChatComponentText message = new ChatComponentText("");
+        ChatComponentTranslation prefix = new ChatComponentTranslation(
+            gaveItem ? "commands.hnn_givemodel.given" : "commands.hnn_givemodel.inventory_full");
+        prefix.getChatStyle().setColor(gaveItem ? EnumChatFormatting.GREEN : EnumChatFormatting.YELLOW);
+        message.appendSibling(prefix);
 
-        sender.addChatMessage(
-            new ChatComponentText(
-                message + EnumChatFormatting.WHITE
-                    + model.getEntityId()
-                    + EnumChatFormatting.GRAY
-                    + " data model ("
-                    + EnumChatFormatting.WHITE
-                    + tier.getDisplayName()
-                    + EnumChatFormatting.GRAY
-                    + " tier, "
-                    + EnumChatFormatting.WHITE
-                    + initialData
-                    + EnumChatFormatting.GRAY
-                    + " data) to "
-                    + EnumChatFormatting.WHITE
-                    + targetPlayer.getCommandSenderName()));
+        message.appendText(" ");
+        message.appendText(model.getEntityId());
+
+        message.appendSibling(new ChatComponentTranslation("commands.hnn_givemodel.data_model"));
+        message.appendText(tier.getDisplayName());
+        message.appendSibling(new ChatComponentTranslation("commands.hnn_givemodel.tier"));
+        message.appendText(String.valueOf(initialData));
+        message.appendSibling(new ChatComponentTranslation("commands.hnn_givemodel.data_suffix"));
+        message.appendText(targetPlayer.getCommandSenderName());
+
+        sender.addChatMessage(message);
 
         HostileNetworks.LOG.info(
             "Gave {} data model ({} tier, {} data) to {}",
