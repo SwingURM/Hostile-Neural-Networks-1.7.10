@@ -40,8 +40,8 @@ dependencies {
     // GTNHLib for utility functions
     api("com.github.GTNewHorizons:GTNHLib:0.7.0:dev")
 
-    // CoFH Lib for energy API
-    compileOnly('curse.maven:cofh-lib-220333:2388748')
+    // CoFH Lib for energy API (RF power support)
+    implementation("curse.maven:cofh-lib-220333:2388748")
 
     // Hodgeposse for mixins and fixes
     compileOnly("com.github.GTNewHorizons:Hodgepodge:2.7.3:dev")
@@ -50,4 +50,8 @@ dependencies {
     compileOnly("com.github.GTNewHorizons:ModularUI2:2.3.4-1.7.10:dev") {
         transitive = false
     }
+
+    // EnderIO + EnderCore for testing energy system (only in dev runs)
+    runtimeOnlyNonPublishable(project.files("endercore-0.5.4-pre.jar"))
+    runtimeOnlyNonPublishable(project.files("EnderIO-2.10.16-pre.jar"))
 }

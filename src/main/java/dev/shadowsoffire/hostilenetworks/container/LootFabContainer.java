@@ -26,6 +26,13 @@ public class LootFabContainer extends Container {
     public LootFabContainer(InventoryPlayer playerInventory, LootFabTileEntity tile) {
         this.tile = tile;
 
+        // Initialize synced values with tile's current state
+        this.syncedEnergy = tile.getEnergyStored();
+        this.syncedProgress = tile.getProgress();
+        this.lastEnergySync = this.syncedEnergy;
+        this.lastProgressSync = this.syncedProgress;
+        this.lastSentSelection = -2;
+
         // Slot 0: Mob Prediction (left side)
         addSlotToContainer(new Slot(tile, Constants.SLOT_PREDICTION, 79, 62) {
 
@@ -105,11 +112,13 @@ public class LootFabContainer extends Container {
     }
 
     public int getEnergyStored() {
-        return this.tile.getEnergyStored();
+        // Use synced value for client, tile value for server
+        return this.syncedEnergy;
     }
 
     public int getRuntime() {
-        return this.tile.getRuntime();
+        // Use synced value for client, tile value for server
+        return this.syncedProgress;
     }
 
     /**
@@ -187,27 +196,77 @@ public class LootFabContainer extends Container {
     }
 
     /**
-     * Sync selection changes to all clients watching this container.
+     * Sync selection, energy, and progress to all clients watching this container.
      * Called every tick on the server side.
      */
     @Override
     public void detectAndSendChanges() {
         super.detectAndSendChanges();
 
-        // Get current selection from server
-        int currentSelection = getSelectedDrop();
+        // Always sync on first tick (ensure initial sync)
+        if (!initialized) {
+            // Sync selection
+            int currentSelection = getSelectedDrop();
+            for (ICrafting crafter : (java.util.List<ICrafting>) crafters) {
+                crafter.sendProgressBarUpdate(this, 0, currentSelection + 1);
+                crafter.sendProgressBarUpdate(this, 1, this.tile.getEnergyStored());
+                crafter.sendProgressBarUpdate(this, 2, this.tile.getProgress());
+            }
+            lastSentSelection = currentSelection;
+            lastEnergySync = this.tile.getEnergyStored();
+            lastProgressSync = this.tile.getProgress();
+            initialized = true;
+            return;
+        }
 
-        // Always sync on first tick (to handle initial open)
-        // Then only sync if selection changed
-        if (!initialized || currentSelection != lastSentSelection) {
-            // Send selection with +1 offset to distinguish -1 from "not sent"
-            // 0 = no selection (-1), 1+ = valid selection (0+)
+        // Sync selection (progress bar ID 0)
+        int currentSelection = getSelectedDrop();
+        if (currentSelection != lastSentSelection) {
             for (ICrafting crafter : (java.util.List<ICrafting>) crafters) {
                 crafter.sendProgressBarUpdate(this, 0, currentSelection + 1);
             }
             lastSentSelection = currentSelection;
-            initialized = true;
         }
+
+        // Sync energy (progress bar ID 1)
+        int currentEnergy = this.tile.getEnergyStored();
+        if (currentEnergy != lastEnergySync) {
+            for (ICrafting crafter : (java.util.List<ICrafting>) crafters) {
+                crafter.sendProgressBarUpdate(this, 1, currentEnergy);
+            }
+            lastEnergySync = currentEnergy;
+        }
+
+        // Sync progress (progress bar ID 2)
+        int currentProgress = this.tile.getProgress();
+        if (currentProgress != lastProgressSync) {
+            for (ICrafting crafter : (java.util.List<ICrafting>) crafters) {
+                crafter.sendProgressBarUpdate(this, 2, currentProgress);
+            }
+            lastProgressSync = currentProgress;
+        }
+    }
+
+    // Cached values for energy and progress sync (server side)
+    private int lastEnergySync = -1;
+    private int lastProgressSync = -1;
+
+    // Synced values (client side stores received values here)
+    private int syncedEnergy;
+    private int syncedProgress;
+
+    /**
+     * Get the synced energy value (works on both client and server).
+     */
+    public int getSyncedEnergy() {
+        return syncedEnergy;
+    }
+
+    /**
+     * Get the synced progress value (works on both client and server).
+     */
+    public int getSyncedProgress() {
+        return syncedProgress;
     }
 
     /**
@@ -219,6 +278,12 @@ public class LootFabContainer extends Container {
         if (id == 0) {
             // Received selection from server (0 means no selection)
             this.localSelection = data - 1;
+        } else if (id == 1) {
+            // Received energy from server
+            this.syncedEnergy = data;
+        } else if (id == 2) {
+            // Received progress from server
+            this.syncedProgress = data;
         }
     }
 }

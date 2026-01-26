@@ -3,6 +3,10 @@
 # General
 itemGroup.hostilenetworks=Hostile Neural Networks
 
+# NEI Recipe Categories
+nei.recipe.sim_chamber=Simulation Chamber
+nei.recipe.loot_fabricator=Loot Fabricator
+
 # Blocks
 tile.sim_chamber.name=Simulation Chamber
 tile.loot_fabricator.name=Loot Fabricator
@@ -14,7 +18,6 @@ item.prediction_matrix.name=Prediction Matrix
 item.overworld_prediction.name=Generalized Overworld Prediction
 item.nether_prediction.name=Generalized Nether Prediction
 item.end_prediction.name=Generalized Ender Prediction
-item.mob_prediction.name=Mob Prediction
 item.fab_directive.name=Fabrication Directive
 
 # Tiers
@@ -124,6 +127,7 @@ tooltip.hostilenetworks.data_model.broken=BROKEN
 
 # Item name suffix
 item.data_model.name=%s Data Model
+item.mob_prediction.name=%s Mob Prediction
 
 # DeepLearner Tooltips
 tooltip.hostilenetworks.deep_learner.stored=Stored Data Models: %d/%d

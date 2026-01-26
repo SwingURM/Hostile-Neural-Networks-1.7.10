@@ -10,6 +10,9 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 
+import cofh.api.energy.IEnergyReceiver;
+import net.minecraftforge.common.util.ForgeDirection;
+
 import dev.shadowsoffire.hostilenetworks.HostileConfig;
 import dev.shadowsoffire.hostilenetworks.HostileNetworks;
 import dev.shadowsoffire.hostilenetworks.data.DataModel;
@@ -22,9 +25,9 @@ import dev.shadowsoffire.hostilenetworks.util.Constants;
 
 /**
  * TileEntity for the Simulation Chamber machine.
- * Simplified version for 1.7.10 without CoFH energy.
+ * Implements IEnergyReceiver to receive power from RF conduits (EnderIO, Thermal Expansion, etc.)
  */
-public class SimChamberTileEntity extends TileEntity implements IInventory, ISidedInventory {
+public class SimChamberTileEntity extends TileEntity implements IInventory, ISidedInventory, IEnergyReceiver {
 
     // Random number generator for simulation
     private static final Random RANDOM = new Random();
@@ -41,7 +44,7 @@ public class SimChamberTileEntity extends TileEntity implements IInventory, ISid
     // Redstone control
     private RedstoneState redstoneState = RedstoneState.IGNORED;
 
-    // Energy stored (simple int, no CoFH)
+    // Energy stored - implements CoFH IEnergyReceiver for RF power input
     private int energyStored = 0;
 
     public SimChamberTileEntity() {
@@ -128,7 +131,9 @@ public class SimChamberTileEntity extends TileEntity implements IInventory, ISid
             } else if (this.hasPowerFor(model)) {
                 if (this.redstoneState.matches(worldObj.isBlockIndirectlyGettingPowered(xCoord, yCoord, zCoord))) {
                     this.failState = FailureState.NONE;
-                    if (--this.runtime == 0) {
+                    this.runtime--;
+                    this.markDirty(); // Sync runtime to client
+                    if (this.runtime == 0) {
                         // Complete simulation
                         HostileNetworks.LOG
                             .debug("[SimChamber] Completed simulation: {} (+1 data)", model.getEntityId());
@@ -301,6 +306,40 @@ public class SimChamberTileEntity extends TileEntity implements IInventory, ISid
         this.energyStored = Math.min(this.energyStored + amount, HostileConfig.simPowerCap);
     }
 
+    // ==================== IEnergyReceiver ====================
+
+    @Override
+    public int receiveEnergy(ForgeDirection from, int maxReceive, boolean simulate) {
+        if (from == ForgeDirection.UNKNOWN) {
+            return 0;
+        }
+        int space = getMaxEnergyStored() - energyStored;
+        if (space <= 0) {
+            return 0;
+        }
+        int toReceive = Math.min(maxReceive, space);
+        if (!simulate) {
+            energyStored += toReceive;
+            this.markDirty();
+        }
+        return toReceive;
+    }
+
+    @Override
+    public int getEnergyStored(ForgeDirection from) {
+        return this.energyStored;
+    }
+
+    @Override
+    public int getMaxEnergyStored(ForgeDirection from) {
+        return HostileConfig.simPowerCap;
+    }
+
+    @Override
+    public boolean canConnectEnergy(ForgeDirection from) {
+        return from != ForgeDirection.UNKNOWN;
+    }
+
     // ==================== IInventory ====================
 
     @Override
@@ -464,6 +503,10 @@ public class SimChamberTileEntity extends TileEntity implements IInventory, ISid
 
     public int getPredictedSuccess() {
         return this.predictionSuccess;
+    }
+
+    public boolean didPredictionSucceed() {
+        return this.predictionSuccess > 0;
     }
 
     public FailureState getFailState() {

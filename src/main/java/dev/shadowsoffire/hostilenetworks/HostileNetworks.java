@@ -11,6 +11,7 @@ import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
 import dev.shadowsoffire.hostilenetworks.proxy.CommonProxy;
+import net.minecraft.util.ResourceLocation;
 
 @Mod(
     modid = HostileNetworks.MODID,
@@ -30,6 +31,13 @@ public class HostileNetworks {
 
     @Instance(MODID)
     public static HostileNetworks instance;
+
+    /**
+     * Creates a ResourceLocation for the given path.
+     */
+    public static ResourceLocation loc(String path) {
+        return new ResourceLocation(MODID, path);
+    }
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {

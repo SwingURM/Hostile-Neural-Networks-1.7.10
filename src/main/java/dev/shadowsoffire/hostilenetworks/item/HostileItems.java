@@ -32,22 +32,18 @@ public class HostileItems {
     public static void init() {
         data_model = registerItem(new DataModelItem(), "data_model");
         prediction_matrix = registerItem(
-            new Item().setUnlocalizedName("prediction_matrix")
-                .setTextureName("hostilenetworks:prediction_matrix"),
+            new PredictionMatrixItem(),
             "prediction_matrix");
 
         // Register prediction items - these can be dynamically used based on JSON base_drop.id
         overworld_prediction = registerItem(
-            new Item().setUnlocalizedName("overworld_prediction")
-                .setTextureName("hostilenetworks:overworld_prediction"),
+            new OverworldPredictionItem(),
             "overworld_prediction");
         nether_prediction = registerItem(
-            new Item().setUnlocalizedName("nether_prediction")
-                .setTextureName("hostilenetworks:nether_prediction"),
+            new NetherPredictionItem(),
             "nether_prediction");
         end_prediction = registerItem(
-            new Item().setUnlocalizedName("end_prediction")
-                .setTextureName("hostilenetworks:end_prediction"),
+            new EndPredictionItem(),
             "end_prediction");
 
         // Map prediction types for dynamic lookup

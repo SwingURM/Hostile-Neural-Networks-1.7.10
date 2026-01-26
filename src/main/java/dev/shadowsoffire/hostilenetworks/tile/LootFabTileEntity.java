@@ -12,6 +12,9 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 
+import cofh.api.energy.IEnergyReceiver;
+import net.minecraftforge.common.util.ForgeDirection;
+
 import dev.shadowsoffire.hostilenetworks.HostileConfig;
 import dev.shadowsoffire.hostilenetworks.data.DataModel;
 import dev.shadowsoffire.hostilenetworks.data.DataModelRegistry;
@@ -22,8 +25,9 @@ import dev.shadowsoffire.hostilenetworks.util.Constants;
 /**
  * TileEntity for the Loot Fabricator machine.
  * Uses mob predictions to craft specific drops based on player selection.
+ * Implements IEnergyReceiver to receive power from RF conduits (EnderIO, Thermal Expansion, etc.)
  */
-public class LootFabTileEntity extends TileEntity implements IInventory, ISidedInventory {
+public class LootFabTileEntity extends TileEntity implements IInventory, ISidedInventory, IEnergyReceiver {
 
     // Inventory - use constants for slot indices
     private final ItemStack[] inventory = new ItemStack[Constants.LOOT_FAB_INVENTORY_SIZE];
@@ -33,7 +37,7 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
     private int progress = 0;
     private boolean isCrafting = false;
 
-    // Energy stored (simple int, no CoFH)
+    // Energy stored - implements CoFH IEnergyReceiver for RF power input
     private int energyStored = 0;
 
     // Saved selections: maps entity ID -> selected drop index
@@ -70,9 +74,12 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
 
                     // Check if output space is available
                     if (hasOutputSpace()) {
+                        // Check if we have enough energy to start this tick
                         if (this.energyStored >= HostileConfig.fabPowerCost) {
                             // Start crafting - 60 ticks (3 seconds) to complete
                             this.progress++;
+                            this.energyStored -= HostileConfig.fabPowerCost;
+                            this.markDirty(); // Sync progress and energy to client
 
                             if (this.progress >= 60) {
                                 // Craft the selected drop
@@ -85,7 +92,6 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
                                     if (this.inventory[Constants.SLOT_PREDICTION].stackSize <= 0) {
                                         this.inventory[Constants.SLOT_PREDICTION] = null;
                                     }
-                                    this.energyStored -= HostileConfig.fabPowerCost;
                                     this.markDirty();
                                 }
                             }
@@ -94,6 +100,7 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
                             this.isCrafting = false;
                         }
                     } else {
+                        this.progress = 0;
                         this.isCrafting = false;
                     }
                 } else {
@@ -214,6 +221,40 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
 
     public void receiveEnergy(int amount) {
         this.energyStored = Math.min(this.energyStored + amount, HostileConfig.fabPowerCap);
+    }
+
+    // ==================== IEnergyReceiver ====================
+
+    @Override
+    public int receiveEnergy(ForgeDirection from, int maxReceive, boolean simulate) {
+        if (from == ForgeDirection.UNKNOWN) {
+            return 0;
+        }
+        int space = getMaxEnergyStored() - energyStored;
+        if (space <= 0) {
+            return 0;
+        }
+        int toReceive = Math.min(maxReceive, space);
+        if (!simulate) {
+            energyStored += toReceive;
+            this.markDirty();
+        }
+        return toReceive;
+    }
+
+    @Override
+    public int getEnergyStored(ForgeDirection from) {
+        return this.energyStored;
+    }
+
+    @Override
+    public int getMaxEnergyStored(ForgeDirection from) {
+        return HostileConfig.fabPowerCap;
+    }
+
+    @Override
+    public boolean canConnectEnergy(ForgeDirection from) {
+        return from != ForgeDirection.UNKNOWN;
     }
 
     /**

@@ -69,10 +69,10 @@ public class LootFabBlock extends BlockContainer {
             // Right-click with diamond to add energy (for testing)
             ItemStack held = player.getHeldItem();
             if (held != null && held.getItem() == net.minecraft.init.Items.diamond) {
-                fabTile.receiveEnergy(1000);
+                fabTile.receiveEnergy(100000);
                 player.addChatMessage(
                     new net.minecraft.util.ChatComponentText(
-                        "Added 1000 RF. Current: " + fabTile.getEnergyStored() + "/" + fabTile.getMaxEnergyStored()));
+                        "Added 100000 RF. Current: " + fabTile.getEnergyStored() + "/" + fabTile.getMaxEnergyStored()));
                 return true;
             }
 

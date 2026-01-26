@@ -3,6 +3,10 @@
 # 常规
 itemGroup.hostilenetworks=敌对神经网络
 
+# NEI 配方分类
+nei.recipe.sim_chamber=模拟室
+nei.recipe.loot_fabricator=战利品制造器
+
 # 方块
 tile.sim_chamber.name=模拟室
 tile.loot_fabricator.name=战利品制造器
@@ -14,7 +18,6 @@ item.prediction_matrix.name=预测矩阵
 item.overworld_prediction.name=通用主世界预测产物
 item.nether_prediction.name=通用下界预测产物
 item.end_prediction.name=通用末地预测产物
-item.mob_prediction.name=预测产物
 item.fab_directive.name=制造指令
 item.fab_directive.desc=存储战利品制造器的选择
 item.fab_directive.desc2=鼠标右键复制，Shift+鼠标右键应用
@@ -125,6 +128,7 @@ tooltip.hostilenetworks.data_model.broken=损坏
 
 # 物品名称后缀
 item.data_model.name=%s 数据模型
+item.mob_prediction.name=%s 预测产物
 
 # 深度学习器工具提示
 tooltip.hostilenetworks.deep_learner.stored=已存储数据模型：%d/%d

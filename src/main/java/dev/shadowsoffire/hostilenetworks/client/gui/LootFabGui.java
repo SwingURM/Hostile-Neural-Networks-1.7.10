@@ -40,7 +40,8 @@ public class LootFabGui extends GuiContainer {
 
     public LootFabGui(net.minecraft.entity.player.InventoryPlayer playerInventory, LootFabTileEntity tile) {
         super(new LootFabContainer(playerInventory, tile));
-        this.tile = tile;
+        // Use tile from container to ensure correct reference
+        this.tile = (LootFabTileEntity) ((LootFabContainer) this.inventorySlots).getSlot(0).inventory;
         this.xSize = 176;
         this.ySize = 178;
     }
@@ -110,13 +111,24 @@ public class LootFabGui extends GuiContainer {
         // Main panel (176x83)
         drawTexturedModalRect(left, top, 0, 0, 176, 83);
 
-        // Energy bar (7px wide, at left side)
-        int energyHeight = (int) (53F * this.tile.getEnergyStored() / this.tile.getMaxEnergyStored());
-        drawTexturedModalRect(left + 6, top + 10 + 53 - energyHeight, 0, 83, 7, energyHeight);
+        // Energy bar (7px wide, at left side) - draws filled bar from bottom
+        // Full energy = full bar (53px), empty energy = no bar
+        LootFabContainer container = (LootFabContainer) this.inventorySlots;
+        int energyStored = container.getSyncedEnergy();
+        int maxEnergy = this.tile.getMaxEnergyStored();
+        int energyHeight = (int) (53F * energyStored / maxEnergy);
+        if (energyHeight > 0) {
+            // Draw from bottom: y = top + 10 + (53 - height)
+            drawTexturedModalRect(left + 6, top + 10 + 53 - energyHeight, 0, 83 + 53 - energyHeight, 7, energyHeight);
+        }
 
-        // Progress bar (6px wide) - 60 ticks = full bar
-        int progHeight = (int) (35F * this.tile.getProgress() / 60F);
-        drawTexturedModalRect(left + 84, top + 23 + 35 - progHeight, 7, 83, 6, progHeight);
+        // Progress bar (6px wide) - draws filled bar from bottom
+        // When progress=0, bar is empty; when progress=60, bar is full (35px)
+        int progress = container.getSyncedProgress();
+        int progressHeight = (int) (35F * progress / 60F);
+        if (progressHeight > 0) {
+            drawTexturedModalRect(left + 84, top + 23 + 35 - progressHeight, 7, 83 + 35 - progressHeight, 6, progressHeight);
+        }
 
         // Player inventory background
         mc.getTextureManager()
@@ -235,7 +247,7 @@ public class LootFabGui extends GuiContainer {
                 List<String> tooltip = new ArrayList<>();
                 String energyText = String.format(
                     StatCollector.translateToLocal("hostilenetworks.gui.energy"),
-                    this.tile.getEnergyStored(),
+                    ((LootFabContainer) this.inventorySlots).getSyncedEnergy(),
                     HostileConfig.fabPowerCap);
                 tooltip.add(energyText);
                 tooltip.add(

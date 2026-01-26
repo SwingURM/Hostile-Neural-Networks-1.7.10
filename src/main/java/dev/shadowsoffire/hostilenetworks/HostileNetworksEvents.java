@@ -18,6 +18,7 @@ import cpw.mods.fml.relauncher.Side;
 import dev.shadowsoffire.hostilenetworks.block.HostileBlocks;
 import dev.shadowsoffire.hostilenetworks.command.GenerateModelCommand;
 import dev.shadowsoffire.hostilenetworks.command.GiveModelCommand;
+import dev.shadowsoffire.hostilenetworks.compatibility.nei.NEIHostileNetworksConfig;
 import dev.shadowsoffire.hostilenetworks.data.DataModelRegistry;
 import dev.shadowsoffire.hostilenetworks.event.MobInteractionHandler;
 import dev.shadowsoffire.hostilenetworks.gui.HNNGuiHandler;
@@ -58,6 +59,9 @@ public class HostileNetworksEvents {
         MinecraftForge.EVENT_BUS.register(new MobInteractionHandler());
         MinecraftForge.EVENT_BUS.register(new HostileNetworksEvents());
         HostileNetworks.LOG.info("Registered event handlers for LivingDeathEvent");
+
+        // Register NEI integration if NEI is present
+        NEIHostileNetworksConfig.registerIfNEILoaded();
 
         HostileNetworks.LOG.info("Hostile Neural Networks initialization complete");
     }

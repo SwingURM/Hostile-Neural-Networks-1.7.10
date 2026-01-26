@@ -100,6 +100,73 @@ public class MobPredictionItem extends Item {
     }
 
     /**
+     * Get the unlocalized name for the prediction item.
+     * Returns "item.mob_prediction.name" so NEI can find the translation with %s format.
+     */
+    @Override
+    public String getUnlocalizedName(ItemStack stack) {
+        return "item.mob_prediction.name";
+    }
+
+    /**
+     * Get item display name with entity name.
+     */
+    @Override
+    public String getItemStackDisplayName(ItemStack stack) {
+        String entityId = getEntityId(stack);
+        if (entityId == null) {
+            // No entity ID, return base name (fallback for NEI)
+            String baseName = StatCollector.translateToLocal("item.mob_prediction");
+            if (baseName.equals("item.mob_prediction")) {
+                return "Mob Prediction";
+            }
+            return baseName;
+        }
+
+        // Get entity name
+        DataModel model = DataModelRegistry.get(entityId);
+        String entityName = getEntityDisplayName(stack);
+
+        // Use translation key with %s format
+        String predictionName = StatCollector.translateToLocal("item.mob_prediction.name");
+        if (predictionName.equals("item.mob_prediction.name")) {
+            // Fallback if translation not found
+            return entityName + " Mob Prediction";
+        }
+        return String.format(predictionName, entityName);
+    }
+
+    /**
+     * Get the entity display name from the prediction item.
+     */
+    private String getEntityDisplayName(ItemStack stack) {
+        String entityId = getEntityId(stack);
+        if (entityId == null) {
+            return "Unknown";
+        }
+
+        DataModel model = DataModelRegistry.get(entityId);
+        if (model != null) {
+            String translateKey = model.getTranslateKey();
+            String entityName = StatCollector.translateToLocal(translateKey);
+            if (!entityName.equals(translateKey)) {
+                return entityName;
+            }
+        }
+
+        // Fallback: use entity ID
+        String shortEntityId = entityId;
+        if (shortEntityId.contains(":")) {
+            shortEntityId = shortEntityId.substring(shortEntityId.indexOf(":") + 1);
+        }
+        // Capitalize first letter
+        if (!shortEntityId.isEmpty()) {
+            shortEntityId = shortEntityId.substring(0, 1).toUpperCase() + shortEntityId.substring(1);
+        }
+        return shortEntityId;
+    }
+
+    /**
      * Get the entity ID from this prediction item.
      */
     public static String getEntityId(ItemStack stack) {
@@ -133,53 +200,8 @@ public class MobPredictionItem extends Item {
     }
 
     /**
-     * Get the display name for this prediction item.
-     * Format matches original: "Zombie Prediction"
-     */
-    @Override
-    public String getItemStackDisplayName(ItemStack stack) {
-        String entityId = getEntityId(stack);
-        if (entityId == null) {
-            String broken = StatCollector.translateToLocal("tooltip.hostilenetworks.data_model.broken");
-            if (broken.equals("tooltip.hostilenetworks.data_model.broken")) {
-                broken = "BROKEN";
-            }
-            return EnumChatFormatting.OBFUSCATED + broken
-                + EnumChatFormatting.RESET
-                + " "
-                + StatCollector.translateToLocal(getUnlocalizedName(stack) + ".name");
-        }
-
-        DataModel model = getDataModel(stack);
-        if (model == null) {
-            String broken = StatCollector.translateToLocal("tooltip.hostilenetworks.data_model.broken");
-            if (broken.equals("tooltip.hostilenetworks.data_model.broken")) {
-                broken = "BROKEN";
-            }
-            return EnumChatFormatting.OBFUSCATED + broken
-                + EnumChatFormatting.RESET
-                + " "
-                + StatCollector.translateToLocal(getUnlocalizedName(stack) + ".name");
-        }
-
-        // Get the entity name
-        String entityName = model.getName()
-            .getUnformattedText();
-        String entityNameLocalized = StatCollector.translateToLocal(entityName);
-        if (entityNameLocalized.equals(entityName)) {
-            entityNameLocalized = StatCollector.translateToLocal("entity." + entityId + ".name");
-            if (entityNameLocalized.equals("entity." + entityId + ".name")) {
-                entityNameLocalized = entityId;
-            }
-        }
-
-        // Original format: "Zombie Prediction" (no color, space + suffix)
-        String suffix = StatCollector.translateToLocal(getUnlocalizedName(stack) + ".name");
-        return entityNameLocalized + " " + suffix;
-    }
-
-    /**
      * Add sub-items for each entity data model variant (for NEI visibility).
+     * Creates a mapping of entity IDs to damage values.
      */
     @Override
     public void getSubItems(Item item, CreativeTabs tab, List<ItemStack> list) {
@@ -188,19 +210,28 @@ public class MobPredictionItem extends Item {
         for (String entityId : DataModelRegistry.getIds()) {
             DataModel model = DataModelRegistry.get(entityId);
             if (model != null) {
-                ItemStack predictionStack = create(entityId);
-                predictionStack.setItemDamage(damage++);
+                ItemStack predictionStack = create(entityId, damage++);
                 list.add(predictionStack);
             }
         }
     }
 
     /**
-     * Create a prediction item for a specific entity.
+     * Create a prediction item for a specific entity with a specific damage value.
+     * Uses damage value matching getSubItems() for proper NEI display.
      */
-    public static ItemStack create(String entityId) {
-        ItemStack stack = new ItemStack(HostileItems.mob_prediction);
+    public static ItemStack create(String entityId, int damage) {
+        ItemStack stack = new ItemStack(HostileItems.mob_prediction, 1, damage);
         setEntityId(stack, entityId);
         return stack;
+    }
+
+    /**
+     * Create a prediction item for a specific entity (default damage 1).
+     */
+    public static ItemStack create(String entityId) {
+        // Get damage value matching getSubItems() - index in registry + 1
+        int damage = DataModelRegistry.getIds().indexOf(entityId) + 1;
+        return create(entityId, damage);
     }
 }

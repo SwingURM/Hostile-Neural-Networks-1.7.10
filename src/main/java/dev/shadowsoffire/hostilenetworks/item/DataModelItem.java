@@ -70,7 +70,7 @@ public class DataModelItem extends Item {
      * A blank model has no NBT tag, or has NBT but no EntityId.
      */
     public static boolean isBlank(ItemStack stack) {
-        if (!stack.hasTagCompound()) {
+        if (stack == null || !stack.hasTagCompound()) {
             return true;
         }
         // Has NBT but no EntityId = blank (unattuned)
@@ -80,24 +80,24 @@ public class DataModelItem extends Item {
 
     /**
      * Get the unlocalized name for the data model.
-     * Note: The actual display name is determined by getItemStackDisplayName() which
-     * formats the name using the entity name from translation.
+     * Returns a base translation key that exists in the language file.
+     * NEI will use getItemStackDisplayName() for the actual display name.
      */
     @Override
     public String getUnlocalizedName(ItemStack stack) {
         if (isBlank(stack)) {
-            return "item.blank_data_model.name";
+            return "item.blank_data_model";
         }
-        return "item.data_model.name";
+        return "item.data_model";
     }
 
     /**
-     * Get the item display name with entity name.
+     * Get item display name with entity name.
      */
     @Override
     public String getItemStackDisplayName(ItemStack stack) {
         if (isBlank(stack)) {
-            // Return the blank model name from language file
+            // Use translation key for blank model
             String blankName = StatCollector.translateToLocal("item.blank_data_model.name");
             if (blankName.equals("item.blank_data_model.name")) {
                 blankName = "Model Framework";
@@ -107,72 +107,79 @@ public class DataModelItem extends Item {
 
         String entityId = getEntityId(stack);
         if (entityId == null) {
-            // Unattuned but has NBT - show as blank
-            String blankName = StatCollector.translateToLocal("item.blank_data_model.name");
-            if (blankName.equals("item.blank_data_model.name")) {
-                blankName = "Model Framework";
+            // No entity ID, return base name (fallback for NEI)
+            String baseName = StatCollector.translateToLocal("item.data_model");
+            if (baseName.equals("item.data_model")) {
+                return "Data Model";
             }
-            return blankName;
+            return baseName;
         }
 
+        // Get entity name
         DataModel model = getDataModel(stack);
-        if (model == null) {
-            String brokenText = StatCollector.translateToLocal("tooltip.hostilenetworks.data_model.broken");
-            if (brokenText.equals("tooltip.hostilenetworks.data_model.broken")) {
-                brokenText = "BROKEN";
-            }
-            String dataModelSuffix = StatCollector.translateToLocal("item.data_model.name");
-            if (dataModelSuffix.equals("item.data_model.name")) {
-                dataModelSuffix = "Data Model";
-            }
-            return EnumChatFormatting.OBFUSCATED + brokenText + EnumChatFormatting.RESET + " " + dataModelSuffix;
-        }
+        String entityName = getEntityDisplayNameForModel(model);
 
-        // Get localized entity name using the translate key
-        String translateKey = model.getTranslateKey();
-        String entityName = StatCollector.translateToLocal(translateKey);
-
-        if (entityName.equals(translateKey)) {
-            // Fallback: try "entity.{EntityId}.name" format (Minecraft 1.7.10)
-            // Strip namespace prefix from entityId
-            String shortEntityId = entityId;
-            if (entityId.contains(":")) {
-                shortEntityId = entityId.substring(entityId.indexOf(":") + 1);
-            }
-            // Capitalize first letter - Minecraft 1.7.10 uses "entity.Enderman.name"
-            String capitalized = shortEntityId.substring(0, 1)
-                .toUpperCase() + shortEntityId.substring(1);
-            String fallbackKey = "entity." + capitalized + ".name";
-            entityName = StatCollector.translateToLocal(fallbackKey);
-        }
-
-        // Get the data model suffix and format with entity name
+        // Use translation key with %s format
         String dataModelName = StatCollector.translateToLocal("item.data_model.name");
         if (dataModelName.equals("item.data_model.name")) {
-            // Fallback if translation not found - use String.format with %s placeholder
-            dataModelName = "%s Data Model";
+            // Fallback if translation not found
+            return entityName + " Data Model";
         }
-
-        String result = String.format(dataModelName, entityName);
-        return result;
+        return String.format(dataModelName, entityName);
     }
 
     /**
      * Get the entity ID from this item's NBT.
      */
     public static String getEntityId(ItemStack stack) {
-        if (stack.hasTagCompound()) {
-            return stack.getTagCompound()
-                .getString(NBTKeys.ENTITY_ID);
+        if (stack == null || !stack.hasTagCompound()) {
+            return null;
+        }
+        return stack.getTagCompound()
+            .getString(NBTKeys.ENTITY_ID);
+    }
+
+    /**
+     * Get entity ID from an ItemStack for NEI recipe handling.
+     * Also checks for display.Name NBT as fallback for NEI cloning.
+     */
+    public static String getEntityIdFromStack(ItemStack stack) {
+        NBTTagCompound tag = getTagCompound(stack);
+        if (tag == null) return null;
+
+        // Try standard NBT first
+        if (tag.hasKey(NBTKeys.ENTITY_ID)) {
+            return tag.getString(NBTKeys.ENTITY_ID);
         }
         return null;
+    }
+
+    /**
+     * Create a data model ItemStack for a specific entity ID.
+     * Used by NEI recipe handlers.
+     * Returns ItemStack with damage value matching getSubItems() for proper NEI display.
+     */
+    public static ItemStack createForEntity(String entityId) {
+        DataModel model = DataModelRegistry.get(entityId);
+        if (model == null) return null;
+
+        // Get damage value matching getSubItems() - index in registry + 1
+        int damage = DataModelRegistry.getIds().indexOf(entityId) + 1;
+        ItemStack stack = new ItemStack(HostileItems.data_model, 1, damage);
+        NBTTagCompound tag = new NBTTagCompound();
+        tag.setString(NBTKeys.ENTITY_ID, entityId);
+        tag.setInteger(NBTKeys.CURRENT_DATA, 0);
+        tag.setInteger(NBTKeys.ITERATIONS, 0);
+
+        stack.setTagCompound(tag);
+        return stack;
     }
 
     /**
      * Check if this item is attuned (has a valid entity ID in NBT).
      */
     public static boolean isAttuned(ItemStack stack) {
-        return stack.hasTagCompound() && stack.getTagCompound()
+        return stack != null && stack.hasTagCompound() && stack.getTagCompound()
             .hasKey(NBTKeys.ENTITY_ID);
     }
 
@@ -180,11 +187,11 @@ public class DataModelItem extends Item {
      * Get the current data amount from this item's NBT.
      */
     public static int getCurrentData(ItemStack stack) {
-        if (stack.hasTagCompound()) {
-            return stack.getTagCompound()
-                .getInteger(NBTKeys.CURRENT_DATA);
+        if (stack == null || !stack.hasTagCompound()) {
+            return 0;
         }
-        return 0;
+        return stack.getTagCompound()
+            .getInteger(NBTKeys.CURRENT_DATA);
     }
 
     /**
@@ -223,11 +230,11 @@ public class DataModelItem extends Item {
      * Get the iteration count from this item's NBT.
      */
     public static int getIterations(ItemStack stack) {
-        if (stack.hasTagCompound()) {
-            return stack.getTagCompound()
-                .getInteger(NBTKeys.ITERATIONS);
+        if (stack == null || !stack.hasTagCompound()) {
+            return 0;
         }
-        return 0;
+        return stack.getTagCompound()
+            .getInteger(NBTKeys.ITERATIONS);
     }
 
     /**
@@ -427,7 +434,7 @@ public class DataModelItem extends Item {
         updateDamage(stack);
 
         // Show success message
-        String entityName = getEntityDisplayName(model);
+        String entityName = getEntityDisplayNameForModel(model);
         String builtMsg = StatCollector.translateToLocal("hostilenetworks.msg.built");
         if (builtMsg.equals("hostilenetworks.msg.built")) {
             builtMsg = "Built Data Model for ";
@@ -438,9 +445,10 @@ public class DataModelItem extends Item {
     }
 
     /**
-     * Get the display name for a DataModel.
+     * Get the entity display name for a DataModel.
+     * Public method for use by NEI recipe handlers.
      */
-    private static String getEntityDisplayName(DataModel model) {
+    public static String getEntityDisplayNameForModel(DataModel model) {
         String translateKey = model.getTranslateKey();
         String entityName = StatCollector.translateToLocal(translateKey);
 
@@ -461,6 +469,13 @@ public class DataModelItem extends Item {
         }
 
         return entityName;
+    }
+
+    /**
+     * Get the NBTTagCompound from an ItemStack, handling null stack.
+     */
+    private static NBTTagCompound getTagCompound(ItemStack stack) {
+        return stack != null && stack.hasTagCompound() ? stack.getTagCompound() : null;
     }
 
     /**
@@ -632,7 +647,6 @@ public class DataModelItem extends Item {
                     .setInteger(NBTKeys.CURRENT_DATA, 0);
                 modelStack.getTagCompound()
                     .setInteger(NBTKeys.ITERATIONS, 0);
-                modelStack.setItemDamage(0);
                 list.add(modelStack);
             }
         }

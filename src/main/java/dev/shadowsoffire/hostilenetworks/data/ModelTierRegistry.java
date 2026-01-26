@@ -258,6 +258,14 @@ public class ModelTierRegistry {
     }
 
     /**
+     * Get the next tier after the given tier (alias for getNextTier).
+     * Used for cycling through tiers in NEI display.
+     */
+    public static ModelTier next(ModelTier current) {
+        return getNextTier(current);
+    }
+
+    /**
      * Get the data required to reach the next tier.
      */
     public static int getDataToNextTier(ModelTier current, int currentData) {
