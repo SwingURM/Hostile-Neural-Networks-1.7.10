@@ -1,0 +1,78 @@
+# Made in Blockbench 5.0.7
+# Combined materials for both Loot Fabricator and Sim Chamber
+
+# Loot Fabricator materials
+newmtl m_8aaa5dc9-f503-b550-c102-4f4f17feb92d
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ks 0.0 0.0 0.0
+d 1.0
+illum 1
+map_Kd textures/block/color_stripes.png
+
+newmtl m_4d7eb0a4-9fca-2ce4-6462-169f06dff817
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ks 0.0 0.0 0.0
+d 1.0
+illum 1
+map_Kd textures/block/machine_base_v2.png
+
+newmtl m_cb4e7ddc-374e-b0c3-69b8-13d2d353c739
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ks 0.0 0.0 0.0
+d 1.0
+illum 1
+map_Kd textures/block/machine_base_up.png
+
+newmtl m_00fd968e-f13e-de72-44e6-3ddbe1f8dd47
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ks 0.0 0.0 0.0
+d 1.0
+illum 1
+map_Kd textures/block/loot_fabricator_north.png
+
+newmtl m_604e6426-c34f-7c1f-e17c-c23651bd62cf
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ks 0.0 0.0 0.0
+d 1.0
+illum 1
+map_Kd textures/block/machine_base_v2.png
+
+# Sim Chamber materials
+newmtl m_5ec913a9-2a56-5084-7a95-4522a2aeb4c7
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ks 0.0 0.0 0.0
+d 1.0
+illum 1
+map_Kd textures/block/color_stripes.png
+
+newmtl m_6798e48f-20a7-90cb-4974-1aa8f84cb29a
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ks 0.0 0.0 0.0
+d 1.0
+illum 1
+map_Kd textures/block/machine_base_up.png
+
+newmtl m_80e66fcf-189b-5e52-ea5f-0abd59c55811
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ks 0.0 0.0 0.0
+d 1.0
+illum 1
+map_Kd textures/block/simulation_chamber_north.png
+
+newmtl m_cf819e85-9c4c-014a-0d68-9f5df4495cfe
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ks 0.0 0.0 0.0
+d 1.0
+illum 1
+map_Kd textures/block/machine_base.png
+
+newmtl none

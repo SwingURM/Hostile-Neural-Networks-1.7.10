@@ -1,12 +1,17 @@
 package dev.shadowsoffire.hostilenetworks.proxy;
 
+import cpw.mods.fml.client.registry.ClientRegistry;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
 import dev.shadowsoffire.hostilenetworks.HostileNetworks;
 import dev.shadowsoffire.hostilenetworks.client.DataModelItemRenderer;
+import dev.shadowsoffire.hostilenetworks.client.render.MachineTESR;
 import dev.shadowsoffire.hostilenetworks.item.HostileItems;
+import dev.shadowsoffire.hostilenetworks.tile.LootFabTileEntity;
+import dev.shadowsoffire.hostilenetworks.tile.SimChamberTileEntity;
+import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraftforge.client.MinecraftForgeClient;
 
 public class ClientProxy extends CommonProxy {
@@ -22,6 +27,11 @@ public class ClientProxy extends CommonProxy {
 
         // Register custom item renderer for DataModelItem
         MinecraftForgeClient.registerItemRenderer(HostileItems.data_model, new DataModelItemRenderer());
+
+        // Register TileEntitySpecialRenderers for machines
+        TileEntitySpecialRenderer machineTESR = new MachineTESR();
+        ClientRegistry.bindTileEntitySpecialRenderer(LootFabTileEntity.class, machineTESR);
+        ClientRegistry.bindTileEntitySpecialRenderer(SimChamberTileEntity.class, machineTESR);
 
         // Note: NEI integration is handled in HostileNetworksEvents.init()
         // which checks for NEI presence and registers handlers accordingly.

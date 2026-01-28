@@ -58,6 +58,16 @@ public class LootFabBlock extends BlockContainer {
         return false;
     }
 
+    /**
+     * Returns the render type for TESR rendering.
+     * Return -1 to use TileEntitySpecialRenderer.
+     */
+    @Override
+    @SideOnly(Side.CLIENT)
+    public int getRenderType() {
+        return -1; // Special render type for TESR
+    }
+
     @Override
     public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX,
         float hitY, float hitZ) {
