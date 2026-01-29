@@ -1,7 +1,5 @@
 package dev.shadowsoffire.hostilenetworks.client.gui;
 
-import java.text.DecimalFormat;
-
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.entity.player.EntityPlayer;
@@ -30,18 +28,34 @@ import dev.shadowsoffire.hostilenetworks.item.DataModelItem;
  */
 public class DeepLearnerGui extends GuiContainer {
 
+    // Color constants matching the original mod
+    private static final int COLOR_AQUA = 0x62D8FF;
+    private static final int COLOR_WHITE = 0xFFFFFF;
+    private static final int COLOR_RED = 0xFF0000;  // EnumChatFormatting.RED
+
     private static final ResourceLocation GUI_TEXTURE = new ResourceLocation(
         HostileNetworks.MODID,
         "textures/gui/deep_learner.png");
     private static final ResourceLocation PLAYER_TEXTURE = new ResourceLocation(
         HostileNetworks.MODID,
         "textures/gui/default_gui.png");
+    // DeepLearner buttons sprite sheet: [left][right][left_hovered][right_hovered] = 96x24
+    private static final ResourceLocation WIDGET_TEXTURE = new ResourceLocation(
+        HostileNetworks.MODID,
+        "textures/gui/sprites/widget/deep_learner_buttons.png");
+    private static final int WIDGET_WIDTH = 96;
+    private static final int WIDGET_HEIGHT = 24;
+    // Button positions in sprite sheet
+    private static final int BTN_LEFT_U = 0;
+    private static final int BTN_LEFT_HOVERED_U = 48;
+    private static final int BTN_RIGHT_U = 24;
+    private static final int BTN_RIGHT_HOVERED_U = 72;
+    private static final int BTN_V = 0;
 
     // Match original dimensions
     private static final int WIDTH = 338;
     private static final int HEIGHT = 235;
 
-    private final EntityPlayer player;
     private final DeepLearnerContainer container;
 
     // Model display state
@@ -49,18 +63,16 @@ public class DeepLearnerGui extends GuiContainer {
     private int selectedModelIndex = 0;
     private int numModels = 0;
     private boolean emptyText = true;
-    private static final DecimalFormat accuracyFormat = new DecimalFormat("##.##%");
 
     // Navigation buttons
-    private GuiButton btnLeft;
-    private GuiButton btnRight;
+    private ImageButton btnLeft;
+    private ImageButton btnRight;
 
     // Stats display values
     private String[] statArray = new String[3];
 
     public DeepLearnerGui(InventoryPlayer playerInventory, EntityPlayer player) {
         super(new DeepLearnerContainer(playerInventory, player));
-        this.player = player;
         this.container = (DeepLearnerContainer) this.inventorySlots;
 
         this.xSize = WIDTH;
@@ -164,7 +176,6 @@ public class DeepLearnerGui extends GuiContainer {
 
         DataModel model = instance.getModel();
         ModelTier tier = instance.getTier();
-        ModelTier nextTier = ModelTierRegistry.getNextTier(tier);
 
         // Stats: Health/2, Armor/2, XP reward
         // Note: In 1.7.10, we'll use placeholder values since entity attributes aren't easily accessible
@@ -182,17 +193,12 @@ public class DeepLearnerGui extends GuiContainer {
         // Right button: guiLeft - 1, guiTop + 105
         int btnY = this.guiTop + 105;
 
-        String prevText = StatCollector.translateToLocal("hostilenetworks.gui.nav.previous");
-        if (prevText.equals("hostilenetworks.gui.nav.previous")) {
-            prevText = "<";
-        }
-        String nextText = StatCollector.translateToLocal("hostilenetworks.gui.nav.next");
-        if (nextText.equals("hostilenetworks.gui.nav.next")) {
-            nextText = ">";
-        }
-
-        this.btnLeft = new GuiButton(0, this.guiLeft - 27, btnY, 24, 20, prevText);
-        this.btnRight = new GuiButton(1, this.guiLeft - 1, btnY, 24, 20, nextText);
+        this.btnLeft = new ImageButton(0, this.guiLeft - 27, btnY, 24, 24,
+            WIDGET_TEXTURE, WIDGET_WIDTH, WIDGET_HEIGHT,
+            BTN_LEFT_U, BTN_V, BTN_LEFT_HOVERED_U, BTN_V);
+        this.btnRight = new ImageButton(1, this.guiLeft - 1, btnY, 24, 24,
+            WIDGET_TEXTURE, WIDGET_WIDTH, WIDGET_HEIGHT,
+            BTN_RIGHT_U, BTN_V, BTN_RIGHT_HOVERED_U, BTN_V);
 
         this.buttonList.add(this.btnLeft);
         this.buttonList.add(this.btnRight);
@@ -316,18 +322,18 @@ public class DeepLearnerGui extends GuiContainer {
         int lineHeight = fontRendererObj.FONT_HEIGHT;
 
         // Draw title
-        drawLocalizedString("container.hostilenetworks.deep_learner", left, top, 0xFFFFFF);
+        drawLocalizedString("container.hostilenetworks.deep_learner", left, top, COLOR_WHITE);
 
         // Draw model count
         String countText = numModels + "/4";
-        fontRendererObj.drawString(countText, left, top + lineHeight + 3, 0xAAAAAA);
+        fontRendererObj.drawString(countText, left, top + lineHeight + 3, COLOR_WHITE);
 
         if (emptyText) {
             // Empty text - 7 lines using language keys
             for (int i = 0; i < 7; i++) {
                 String key = "hostilenetworks.gui.learner_empty." + i;
                 String text = StatCollector.translateToLocal(key);
-                int color = (i == 0) ? 0x55AAFF : 0xFFFFFF;
+                int color = (i == 0) ? COLOR_AQUA : COLOR_WHITE;
                 drawColoredString(text, left, top + (lineHeight + 3) * (3 + i), color);
             }
         } else if (numModels > 0 && selectedModelIndex >= 0 && selectedModelIndex < 4) {
@@ -335,23 +341,22 @@ public class DeepLearnerGui extends GuiContainer {
             if (instance != null && instance.isValid()) {
                 DataModel model = instance.getModel();
                 ModelTier tier = instance.getTier();
-                ModelTier nextTier = ModelTierRegistry.getNextTier(tier);
 
                 int mainTop = top + (lineHeight + 3) * 2;
                 int dataTop = top + (lineHeight + 3) * 8;
 
                 // Main text section (left side)
                 // "Name" header (aqua)
-                drawLocalizedString("hostilenetworks.gui.name", left, mainTop, 0x55AAFF);
+                drawLocalizedString("hostilenetworks.gui.name", left, mainTop, COLOR_AQUA);
 
                 // Entity name - use localized name
                 String entityNameKey = model.getName() != null ? model.getName()
                     .getUnformattedText() : model.getEntityId();
                 String entityName = StatCollector.translateToLocal(entityNameKey);
-                drawColoredString(entityName, left, mainTop + lineHeight + 2, 0xFFFFFF);
+                drawColoredString(entityName, left, mainTop + lineHeight + 2, COLOR_WHITE);
 
                 // "Information" header (aqua)
-                drawLocalizedString("hostilenetworks.gui.info", left, mainTop + (lineHeight + 2) * 2, 0x55AAFF);
+                drawLocalizedString("hostilenetworks.gui.info", left, mainTop + (lineHeight + 2) * 2, COLOR_AQUA);
 
                 // Trivia text
                 String trivia = model.getTriviaKey();
@@ -364,35 +369,47 @@ public class DeepLearnerGui extends GuiContainer {
                             lines[i],
                             left,
                             mainTop + (lineHeight + 2) * 3 + (lineHeight + 1) * i,
-                            0xFFFFFF);
+                            COLOR_WHITE);
                     }
                 }
 
                 // Data text section (below main)
-                // "Model Tier: TierName" (colored by tier)
-                String tierName = StatCollector.translateToLocal(
-                    "hostilenetworks.tier." + tier.getDisplayName()
-                        .toLowerCase()
-                        .replace(" ", "_"));
-                // Use format string from lang file: "Model Tier: %s"
-                String tierLine = String.format(StatCollector.translateToLocal("hostilenetworks.gui.tier"), tierName);
+                // "Model Tier: TierName" - field name in white, value in tier color
+                String tierKey = "hostilenetworks.tier." + tier.getTierName();
+                String tierName = StatCollector.translateToLocal(tierKey);
+                if (tierName.equals(tierKey)) {
+                    tierName = tier.getDisplayName();
+                }
                 int tierColor = getTierColor(tier);
-                drawColoredString(tierLine, left, dataTop, tierColor);
+                // Draw field name in white
+                String tierFieldName = StatCollector.translateToLocal("hostilenetworks.gui.tier");
+                if (tierFieldName.endsWith("%s")) {
+                    tierFieldName = tierFieldName.replace("%s", "").trim();
+                }
+                fontRendererObj.drawString(tierFieldName, left, dataTop, COLOR_WHITE);
+                // Draw tier name in tier color
+                drawColoredString(tierName, left + fontRendererObj.getStringWidth(tierFieldName), dataTop, tierColor);
 
-                // "Model Accuracy: XX.XX%" (colored by tier)
-                String accLine = String.format(
-                    StatCollector.translateToLocal("hostilenetworks.gui.accuracy"),
-                    accuracyFormat.format(instance.getAccuracy()));
-                drawColoredString(accLine, left, dataTop + lineHeight + 1, tierColor);
+                // "Model Accuracy: XX.XX%" - field name in white, value in tier color
+                double accuracy = instance.getAccuracy() * 100;
+                String accFieldName = StatCollector.translateToLocal("hostilenetworks.gui.accuracy");
+                if (accFieldName.endsWith("%s")) {
+                    accFieldName = accFieldName.replace("%s", "").trim();
+                }
+                fontRendererObj.drawString(accFieldName, left, dataTop + lineHeight + 1, COLOR_WHITE);
+                // Draw accuracy value in tier color
+                String accValue = String.format("%.2f%%", accuracy);
+                drawColoredString(accValue, left + fontRendererObj.getStringWidth(accFieldName), dataTop + lineHeight + 1, tierColor);
 
                 // Next tier or max tier message
                 if (!tier.isMax()) {
                     if (HostileConfig.killModelUpgrade) {
-                        String nextTierName = StatCollector.translateToLocal(
-                            "hostilenetworks.tier." + ModelTierRegistry.getNextTier(tier)
-                                .getDisplayName()
-                                .toLowerCase()
-                                .replace(" ", "_"));
+                        ModelTier nextTier = ModelTierRegistry.getNextTier(tier);
+                        String nextTierKey = "hostilenetworks.tier." + nextTier.getTierName();
+                        String nextTierName = StatCollector.translateToLocal(nextTierKey);
+                        if (nextTierName.equals(nextTierKey)) {
+                            nextTierName = nextTier.getDisplayName();
+                        }
                         int killsNeeded = instance.getKillsNeeded();
                         String killKey = killsNeeded == 1 ? "hostilenetworks.gui.kill" : "hostilenetworks.gui.kills";
                         String killWord = StatCollector.translateToLocal(killKey);
@@ -402,25 +419,28 @@ public class DeepLearnerGui extends GuiContainer {
                             nextTierName,
                             killsNeeded,
                             killWord);
-                        drawColoredString(nextTierLine, left, dataTop + (lineHeight + 1) * 2, 0xAAAAAA);
+                        drawColoredString(nextTierLine, left, dataTop + (lineHeight + 1) * 2, COLOR_WHITE);
                     } else {
                         drawLocalizedString(
                             "hostilenetworks.gui.upgrade_disabled",
                             left,
                             dataTop + (lineHeight + 1) * 2,
-                            0xAAAAAA);
+                            COLOR_WHITE);
                     }
                 } else {
-                    drawLocalizedString("hostilenetworks.gui.max_tier", left, dataTop + (lineHeight + 1) * 2, 0xFF5555);
+                    drawLocalizedString("hostilenetworks.gui.max_tier", left, dataTop + (lineHeight + 1) * 2, COLOR_RED);
                 }
 
                 // Stats section (right side, aligned with dots)
                 int statsX = guiLeft + WIDTH - 49 - 100;
                 int statsY = guiTop + 9 + lineHeight;
 
+                // Draw "Stats" header (aqua)
+                drawLocalizedString("hostilenetworks.gui.stats", statsX, top, COLOR_AQUA);
+
                 for (int i = 0; i < 3; i++) {
                     String statValue = statArray[i] != null ? statArray[i] : "?";
-                    drawColoredString(statValue, statsX + 15, statsY + (lineHeight + 2) * i, 0xFFFFFF);
+                    drawColoredString(statValue, statsX + 15, statsY + (lineHeight + 2) * i, COLOR_WHITE);
                 }
             }
         }
@@ -428,23 +448,33 @@ public class DeepLearnerGui extends GuiContainer {
 
     /**
      * Get color for tier display.
+     * Uses the tier's EnumChatFormatting color converted to RGB.
      */
     private int getTierColor(ModelTier tier) {
-        if (tier == null) return 0xFFFFFF;
-        // Use tier display name to determine color
-        String tierName = tier.getDisplayName();
-        if (tierName.contains("Faulty")) {
-            return 0xAAAAAA;
-        } else if (tierName.contains("Basic")) {
-            return 0x55FF55;
-        } else if (tierName.contains("Advanced")) {
-            return 0x5555FF;
-        } else if (tierName.contains("Superior")) {
-            return 0xFF55FF;
-        } else if (tierName.contains("Self Aware")) {
-            return 0xFFFF55;
+        if (tier == null) return COLOR_WHITE;
+        // Use tier's built-in EnumChatFormatting color
+        if (tier.getColor() != null) {
+            // In 1.7.10, EnumChatFormatting has a 'color' field
+            try {
+                java.lang.reflect.Field colorField = net.minecraft.util.EnumChatFormatting.class.getField("color");
+                int colorValue = colorField.getInt(tier.getColor());
+                return colorValue & 0xFFFFFF;
+            } catch (Exception e) {
+                // Fallback to name-based mapping
+            }
         }
-        return 0xFFFFFF;
+        // Fallback to tier name matching based on JSON color definitions
+        String tierName = tier.getTierName();
+        if (tierName == null) return COLOR_WHITE;
+        tierName = tierName.toLowerCase();
+        switch (tierName) {
+            case "faulty":   return 0x9E9E9E;  // dark_gray
+            case "basic":    return 0x00AA00;  // green
+            case "advanced": return 0x5555FF;  // blue (light_blue/cyan)
+            case "superior": return 0xAA00AA;  // dark_purple (light_purple)
+            case "self_aware": return 0xFFAA00; // gold
+            default:         return COLOR_WHITE;
+        }
     }
 
     @Override

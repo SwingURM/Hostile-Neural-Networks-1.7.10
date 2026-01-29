@@ -343,6 +343,8 @@ public class DataModelRegistry {
                         .getAsString();
                     int count = dropObj.has("count") ? dropObj.get("count")
                         .getAsInt() : 1;
+                    int meta = dropObj.has("meta") ? dropObj.get("meta")
+                        .getAsInt() : 0;
 
                     // Parse item using GameRegistry.findItem
                     String[] parts = dropId.split(":");
@@ -353,7 +355,7 @@ public class DataModelRegistry {
                         net.minecraft.item.Item item = cpw.mods.fml.common.registry.GameRegistry
                             .findItem(modId, itemName);
                         if (item != null) {
-                            fabricatorDrops.add(new ItemStack(item, count));
+                            fabricatorDrops.add(new ItemStack(item, count, meta));
                         } else {
                             HostileNetworks.LOG.debug("Could not find item: " + dropId);
                         }

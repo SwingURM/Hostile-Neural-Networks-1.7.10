@@ -30,13 +30,23 @@ public class LootFabGui extends GuiContainer {
     private static final ResourceLocation PLAYER = new ResourceLocation(
         "hostilenetworks",
         "textures/gui/default_gui.png");
-    private static final ResourceLocation WIDGETS = new ResourceLocation("hostilenetworks", "textures/gui/sprites.png");
+    // LootFab buttons sprite sheet: [fab_left][fab_right][fab_left_hovered][fab_right_hovered] = 116x12
+    private static final ResourceLocation FAB_BUTTONS = new ResourceLocation(
+        "hostilenetworks", "textures/gui/sprites/widget/loot_fab_buttons.png");
+    private static final int FAB_BTN_WIDTH = 116;
+    private static final int FAB_BTN_HEIGHT = 12;
+    // Button positions in sprite sheet
+    private static final int FAB_BTN_LEFT_U = 0;
+    private static final int FAB_BTN_LEFT_HOVERED_U = 58;
+    private static final int FAB_BTN_RIGHT_U = 29;
+    private static final int FAB_BTN_RIGHT_HOVERED_U = 87;
+    private static final int FAB_BTN_V = 0;
 
     private final LootFabTileEntity tile;
     private DataModel currentModel;
     private int currentPage = 0;
-    private GuiButton btnLeft;
-    private GuiButton btnRight;
+    private ImageButton btnLeft;
+    private ImageButton btnRight;
 
     public LootFabGui(net.minecraft.entity.player.InventoryPlayer playerInventory, LootFabTileEntity tile) {
         super(new LootFabContainer(playerInventory, tile));
@@ -54,11 +64,15 @@ public class LootFabGui extends GuiContainer {
         int top = this.guiTop;
 
         // Left page button (at x=13, y=68)
-        this.btnLeft = new GuiButton(0, left + 13, top + 68, 29, 12, "");
+        this.btnLeft = new ImageButton(0, left + 13, top + 68, 29, 12,
+            FAB_BUTTONS, FAB_BTN_WIDTH, FAB_BTN_HEIGHT,
+            FAB_BTN_LEFT_U, FAB_BTN_V, FAB_BTN_LEFT_HOVERED_U, FAB_BTN_V);
         this.buttonList.add(btnLeft);
 
         // Right page button (at x=46, y=68)
-        this.btnRight = new GuiButton(1, left + 46, top + 68, 29, 12, "");
+        this.btnRight = new ImageButton(1, left + 46, top + 68, 29, 12,
+            FAB_BUTTONS, FAB_BTN_WIDTH, FAB_BTN_HEIGHT,
+            FAB_BTN_RIGHT_U, FAB_BTN_V, FAB_BTN_RIGHT_HOVERED_U, FAB_BTN_V);
         this.buttonList.add(btnRight);
     }
 

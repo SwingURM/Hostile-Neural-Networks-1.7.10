@@ -6,7 +6,9 @@ import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
 import dev.shadowsoffire.hostilenetworks.HostileNetworks;
+import dev.shadowsoffire.hostilenetworks.block.HostileBlocks;
 import dev.shadowsoffire.hostilenetworks.client.DataModelItemRenderer;
+import dev.shadowsoffire.hostilenetworks.client.render.MachineItemRenderer;
 import dev.shadowsoffire.hostilenetworks.client.render.MachineTESR;
 import dev.shadowsoffire.hostilenetworks.item.HostileItems;
 import dev.shadowsoffire.hostilenetworks.tile.LootFabTileEntity;
@@ -27,6 +29,11 @@ public class ClientProxy extends CommonProxy {
 
         // Register custom item renderer for DataModelItem
         MinecraftForgeClient.registerItemRenderer(HostileItems.data_model, new DataModelItemRenderer());
+
+        // Register custom item renderers for machine blocks
+        MachineItemRenderer machineItemRenderer = new MachineItemRenderer();
+        MinecraftForgeClient.registerItemRenderer(HostileBlocks.item_sim_chamber, machineItemRenderer);
+        MinecraftForgeClient.registerItemRenderer(HostileBlocks.item_loot_fabricator, machineItemRenderer);
 
         // Register TileEntitySpecialRenderers for machines
         TileEntitySpecialRenderer machineTESR = new MachineTESR();

@@ -118,16 +118,23 @@ public class ModelTier {
 
     /**
      * Read a tier from NBT.
+     * Uses ModelTierRegistry to find the matching tier by required data.
      */
     public static ModelTier fromNBT(NBTTagCompound tag) {
-        // TODO: Fix HostileConfig.getTierColor for 1.7.10
+        int requiredData = tag.getInteger("requiredData");
+        // Find the tier in the registry by required data
+        ModelTier tier = ModelTierRegistry.getTier(requiredData);
+        if (tier != null) {
+            return tier;
+        }
+        // Fallback if not found in registry
         return new ModelTier(
-            tag.getInteger("requiredData"),
+            requiredData,
             tag.getInteger("dataPerKill"),
             net.minecraft.util.EnumChatFormatting.WHITE,
             tag.getFloat("accuracy"),
             tag.getBoolean("canSim"),
-            null);
+            "unknown");
     }
 
     @Override

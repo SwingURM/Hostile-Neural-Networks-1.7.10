@@ -24,67 +24,83 @@
     "trivia": "hostilenetworks.trivia.sheep",
     "fabricator_drops": [
         {
-            "id": "minecraft:white_wool",
+            "id": "minecraft:wool",
+            "meta": 0,
             "count": 32
         },
         {
-            "id": "minecraft:orange_wool",
+            "id": "minecraft:wool",
+            "meta": 1,
             "count": 32
         },
         {
-            "id": "minecraft:magenta_wool",
+            "id": "minecraft:wool",
+            "meta": 2,
             "count": 32
         },
         {
-            "id": "minecraft:light_blue_wool",
+            "id": "minecraft:wool",
+            "meta": 3,
             "count": 32
         },
         {
-            "id": "minecraft:yellow_wool",
+            "id": "minecraft:wool",
+            "meta": 4,
             "count": 32
         },
         {
-            "id": "minecraft:lime_wool",
+            "id": "minecraft:wool",
+            "meta": 5,
             "count": 32
         },
         {
-            "id": "minecraft:pink_wool",
+            "id": "minecraft:wool",
+            "meta": 6,
             "count": 32
         },
         {
-            "id": "minecraft:gray_wool",
+            "id": "minecraft:wool",
+            "meta": 7,
             "count": 32
         },
         {
-            "id": "minecraft:light_gray_wool",
+            "id": "minecraft:wool",
+            "meta": 8,
             "count": 32
         },
         {
-            "id": "minecraft:cyan_wool",
+            "id": "minecraft:wool",
+            "meta": 9,
             "count": 32
         },
         {
-            "id": "minecraft:purple_wool",
+            "id": "minecraft:wool",
+            "meta": 10,
             "count": 32
         },
         {
-            "id": "minecraft:blue_wool",
+            "id": "minecraft:wool",
+            "meta": 11,
             "count": 32
         },
         {
-            "id": "minecraft:brown_wool",
+            "id": "minecraft:wool",
+            "meta": 12,
             "count": 32
         },
         {
-            "id": "minecraft:green_wool",
+            "id": "minecraft:wool",
+            "meta": 13,
             "count": 32
         },
         {
-            "id": "minecraft:red_wool",
+            "id": "minecraft:wool",
+            "meta": 14,
             "count": 32
         },
         {
-            "id": "minecraft:black_wool",
+            "id": "minecraft:wool",
+            "meta": 15,
             "count": 32
         },
         {
