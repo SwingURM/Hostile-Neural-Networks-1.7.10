@@ -8,6 +8,7 @@ import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.client.renderer.entity.RenderManager;
@@ -59,7 +60,10 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
     private static final double ENTITY_Y_OFFSET = 0.25;
     private static final float ENTITY_ROTATION = 90.0F;
 
-    private static final Logger LOG = LogManager.getLogger("hostilenetworks");
+    private static final Logger LOG = LogManager.getLogger("HNN-ItemRenderer");
+
+    /** Debug flag to log only once */
+    private static boolean debugLogged = false;
 
     /**
      * Cache for entities used in trophy rendering.
@@ -136,6 +140,24 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
     }
 
     /**
+     * Render for HUD display - no extra transforms, caller handles positioning.
+     */
+    public void renderForHud(ItemStack stack) {
+        // Render the base/pedestal cube
+        renderBasePlate(stack);
+
+        // Render the entity on top of the base
+        String entityId = DataModelItem.getEntityId(stack);
+        if (entityId != null) {
+            DataModel model = DataModelRegistry.get(entityId);
+            if (model != null) {
+                double scale = model.getScale() > 0 ? model.getScale() : DEFAULT_SCALE;
+                renderTrophy(entityId, 0, ENTITY_Y_OFFSET, 0, ENTITY_ROTATION, scale);
+            }
+        }
+    }
+
+    /**
      * Render the base plate using blank_data_model texture with 3D thickness.
      * Uses ItemRenderer.renderItemIn2D to create the thickness effect.
      */
@@ -200,6 +222,7 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
 
     /**
      * Render a trophy-style entity on top of a base block.
+     * Uses standardized GUI lighting for consistent appearance across all render contexts.
      */
     private void renderTrophy(String entityId, double x, double y, double z, float rotationY, double scale) {
         Entity entity = createEntity(entityId);
@@ -208,9 +231,6 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
         }
 
         GL11.glPushMatrix();
-        // OpenGL applies in reverse order: translate -> rotate -> scale
-        // So we write: scale first, then rotate, then translate
-        // This keeps the entity centered at origin before transformation
         GL11.glTranslated(x, y, z);
         GL11.glRotatef(rotationY, 0, 1, 0);
         GL11.glScaled(scale, scale, scale);
@@ -220,7 +240,12 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
             Render renderer = RenderManager.instance.getEntityRenderObject(entity);
             if (renderer != null && renderer.getFontRendererFromRenderManager() != null) {
                 GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
-                enableLightmap();
+
+                // Unified lighting setup for all render contexts
+                GL11.glEnable(GL11.GL_LIGHTING);
+                GL11.glEnable(GL11.GL_DEPTH_TEST);
+                RenderHelper.enableGUIStandardItemLighting();
+                OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240.0F, 240.0F);
 
                 synchronized (entity) {
                     entity.worldObj = renderWorld;
@@ -228,6 +253,7 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
                     entity.worldObj = null;
                 }
 
+                RenderHelper.disableStandardItemLighting();
                 GL11.glPopAttrib();
             }
         }
@@ -237,12 +263,6 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
     private World getRenderWorld() {
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getMinecraft();
         return mc != null ? mc.theWorld : null;
-    }
-
-    private void enableLightmap() {
-        OpenGlHelper.setActiveTexture(OpenGlHelper.lightmapTexUnit);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        OpenGlHelper.setActiveTexture(OpenGlHelper.defaultTexUnit);
     }
 
     private Entity createEntity(String entityId) {
