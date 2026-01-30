@@ -161,7 +161,8 @@ public class MobPredictionItem extends Item {
         }
         // Capitalize first letter
         if (!shortEntityId.isEmpty()) {
-            shortEntityId = shortEntityId.substring(0, 1).toUpperCase() + shortEntityId.substring(1);
+            shortEntityId = shortEntityId.substring(0, 1)
+                .toUpperCase() + shortEntityId.substring(1);
         }
         return shortEntityId;
     }
@@ -231,7 +232,8 @@ public class MobPredictionItem extends Item {
      */
     public static ItemStack create(String entityId) {
         // Get damage value matching getSubItems() - index in registry + 1
-        int damage = DataModelRegistry.getIds().indexOf(entityId) + 1;
+        int damage = DataModelRegistry.getIds()
+            .indexOf(entityId) + 1;
         return create(entityId, damage);
     }
 }

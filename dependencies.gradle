@@ -52,8 +52,8 @@ dependencies {
     }
 
     // EnderIO + EnderCore for local testing only (skipped in CI)
-    if (!System.getenv("CI") && !project.hasProperty("isCI")) {
-        devOnlyNonPublishable(project.files("libs/endercore-0.5.5.jar"))
-        devOnlyNonPublishable(project.files("libs/EnderIO-2.10.16-pre.jar"))
+    if (!System.getenv().containsKey("CI") && !System.getenv().containsKey("GITHUB_ACTIONS")) {
+        devOnlyNonPublishable(project.files("endercore-0.5.5.jar"))
+        devOnlyNonPublishable(project.files("EnderIO-2.10.15.jar"))
     }
 }

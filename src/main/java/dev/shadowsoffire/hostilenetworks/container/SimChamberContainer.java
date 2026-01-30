@@ -9,8 +9,6 @@ import net.minecraft.inventory.ICrafting;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 
-import com.google.common.collect.Lists;
-
 import dev.shadowsoffire.hostilenetworks.tile.SimChamberTileEntity;
 import dev.shadowsoffire.hostilenetworks.tile.SimChamberTileEntity.FailureState;
 import dev.shadowsoffire.hostilenetworks.tile.SimChamberTileEntity.RedstoneState;
@@ -40,7 +38,8 @@ public class SimChamberContainer extends Container {
         this.syncedRuntime = tile.getRuntime();
         this.lastEnergyStored = this.syncedEnergy;
         this.lastRuntime = this.syncedRuntime;
-        this.lastFailStateOrdinal = tile.getFailState().ordinal();
+        this.lastFailStateOrdinal = tile.getFailState()
+            .ordinal();
         this.lastPredictionSuccess = tile.didPredictionSucceed() ? 1 : 0;
 
         // Slot 0: Data Model (left side of GUI)
@@ -226,7 +225,8 @@ public class SimChamberContainer extends Container {
 
         int currentEnergy = this.tile.getEnergyStored();
         int currentRuntime = this.tile.getRuntime();
-        int currentFailState = this.tile.getFailState().ordinal();
+        int currentFailState = this.tile.getFailState()
+            .ordinal();
         int currentPredSuccess = this.tile.didPredictionSucceed() ? 1 : 0;
 
         // Always sync energy and runtime (needed for progress bar)

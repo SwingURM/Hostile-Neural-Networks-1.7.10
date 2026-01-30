@@ -85,7 +85,9 @@ public class DataModelProgressBar {
                     sb.append(BLOCK_EMPTY);
                 }
             }
-            sb.append(" ").append(Math.round(progress * 100)).append("%");
+            sb.append(" ")
+                .append(Math.round(progress * 100))
+                .append("%");
         }
 
         return sb.toString();
@@ -103,7 +105,8 @@ public class DataModelProgressBar {
             return null;
         }
 
-        String entityId = stack.getTagCompound().getString(NBTKeys.ENTITY_ID);
+        String entityId = stack.getTagCompound()
+            .getString(NBTKeys.ENTITY_ID);
         if (entityId.isEmpty()) {
             return null;
         }
@@ -117,7 +120,6 @@ public class DataModelProgressBar {
             tier.getRequiredData(),
             nextTier.getRequiredData(),
             tier.isMax(),
-            colorPrefix
-        );
+            colorPrefix);
     }
 }

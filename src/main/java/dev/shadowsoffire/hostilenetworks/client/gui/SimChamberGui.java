@@ -15,7 +15,6 @@ import org.lwjgl.opengl.GL11;
 
 import dev.shadowsoffire.hostilenetworks.HostileConfig;
 import dev.shadowsoffire.hostilenetworks.HostileNetworks;
-import dev.shadowsoffire.hostilenetworks.client.gui.TickableTextList;
 import dev.shadowsoffire.hostilenetworks.container.SimChamberContainer;
 import dev.shadowsoffire.hostilenetworks.data.DataModelInstance;
 import dev.shadowsoffire.hostilenetworks.data.ModelTier;
@@ -75,10 +74,7 @@ public class SimChamberGui extends GuiContainer {
         super.initGui();
 
         // Add redstone button (positioned at right side of GUI, aligned with background)
-        this.redstoneButton = new GuiButton(0,
-            this.guiLeft + 234,
-            this.guiTop,
-            18, 18, "");
+        this.redstoneButton = new GuiButton(0, this.guiLeft + 234, this.guiTop, 18, 18, "");
         this.buttonList.add(this.redstoneButton);
 
         // Initialize typing text effect
@@ -96,7 +92,8 @@ public class SimChamberGui extends GuiContainer {
         int left = this.guiLeft + LEFT_OFFSET;
         int top = this.guiTop;
 
-        mc.getTextureManager().bindTexture(TEXTURE);
+        mc.getTextureManager()
+            .bindTexture(TEXTURE);
 
         // Main panel (216x141)
         drawTexturedModalRect(left + 8, top, 0, 0, 216, 141);
@@ -163,7 +160,8 @@ public class SimChamberGui extends GuiContainer {
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
         // Player inventory background
-        mc.getTextureManager().bindTexture(PLAYER);
+        mc.getTextureManager()
+            .bindTexture(PLAYER);
         drawTexturedModalRect(left + 28, top + 145, 0, 0, 176, 90);
     }
 
@@ -186,8 +184,10 @@ public class SimChamberGui extends GuiContainer {
             DataModelInstance model = DataModelItem.getDataModelInstance(modelStack);
             if (model != null && model.isValid()) {
                 // Target entity name (localized using game's translation system)
-                String entityId = model.getModel().getEntityId();
-                String translateKey = model.getModel().getTranslateKey();
+                String entityId = model.getModel()
+                    .getEntityId();
+                String translateKey = model.getModel()
+                    .getTranslateKey();
                 String targetName = StatCollector.translateToLocal(translateKey);
 
                 if (targetName.equals(translateKey)) {
@@ -203,8 +203,7 @@ public class SimChamberGui extends GuiContainer {
                 }
 
                 // If still not found, use entityId
-                if (targetName.equals("entity." + entityId + ".name") ||
-                    targetName.equals(translateKey)) {
+                if (targetName.equals("entity." + entityId + ".name") || targetName.equals(translateKey)) {
                     // Just use the entityId as-is
                     String shortEntityId = entityId;
                     if (entityId.contains(":")) {
@@ -214,7 +213,8 @@ public class SimChamberGui extends GuiContainer {
                 }
 
                 // Get tier color code for colored text
-                EnumChatFormatting tierColor = model.getTier().getColor();
+                EnumChatFormatting tierColor = model.getTier()
+                    .getColor();
 
                 // Sim Target: entityName (using YELLOW color like the original Color.LIME)
                 String targetFormat = StatCollector.translateToLocal("hostilenetworks.gui.target");
@@ -231,7 +231,10 @@ public class SimChamberGui extends GuiContainer {
                 if (tierFormat.equals("hostilenetworks.gui.tier")) {
                     tierFormat = "Model Tier: %s";
                 }
-                String tierText = String.format(tierFormat, model.getTier().getColoredName());
+                String tierText = String.format(
+                    tierFormat,
+                    model.getTier()
+                        .getColoredName());
                 fontRendererObj.drawString(tierText, 40, 9 + fontRendererObj.FONT_HEIGHT + 3, 0xFFFFFF);
 
                 // Accuracy - use original value directly with tier color
@@ -283,7 +286,8 @@ public class SimChamberGui extends GuiContainer {
                 String errorKey = failState.getKey();
                 String errorMsg = StatCollector.translateToLocal(errorKey);
                 // Replace literal \n with actual newline (1.7.10 doesn't auto-convert)
-                errorMsg = errorMsg.replace("\\n", "\n").replace("\\r", "");
+                errorMsg = errorMsg.replace("\\n", "\n")
+                    .replace("\\r", "");
 
                 // Handle INPUT state - show expected item name
                 if (failState == FailureState.INPUT) {
@@ -292,7 +296,8 @@ public class SimChamberGui extends GuiContainer {
                     if (modelStack != null && modelStack.getItem() instanceof DataModelItem) {
                         DataModelInstance model = DataModelItem.getDataModelInstance(modelStack);
                         if (model != null && model.isValid()) {
-                            ItemStack expectedInput = model.getModel().getInputItem();
+                            ItemStack expectedInput = model.getModel()
+                                .getInputItem();
                             if (expectedInput != null && expectedInput.getItem() != null) {
                                 inputName = expectedInput.getDisplayName();
                             }
@@ -364,7 +369,8 @@ public class SimChamberGui extends GuiContainer {
                     if (versionKey.equals("hostilenetworks.status.version")) {
                         versionText = EnumChatFormatting.GOLD + "v" + HostileNetworks.VERSION;
                     } else {
-                        versionText = EnumChatFormatting.GOLD + String.format(versionKey, "v" + HostileNetworks.VERSION);
+                        versionText = EnumChatFormatting.GOLD
+                            + String.format(versionKey, "v" + HostileNetworks.VERSION);
                     }
                     this.textList.continueLine(versionText, speed);
                 } else if (i == 1) {
@@ -380,7 +386,8 @@ public class SimChamberGui extends GuiContainer {
 
                     // Continue with prediction result - use color code (6 = gold for success, c = red for failed)
                     boolean success = this.container.didPredictionSucceed();
-                    String resultKey = success ? "hostilenetworks.color_text.success" : "hostilenetworks.color_text.failed";
+                    String resultKey = success ? "hostilenetworks.color_text.success"
+                        : "hostilenetworks.color_text.failed";
                     String resultText = StatCollector.translateToLocal(resultKey);
                     String coloredResult = (success ? EnumChatFormatting.GOLD : EnumChatFormatting.RED) + resultText;
                     this.textList.continueLine(coloredResult, speed);
@@ -431,8 +438,7 @@ public class SimChamberGui extends GuiContainer {
         int top = this.guiTop;
 
         // Energy tooltip (right bar)
-        if (mouseX >= left + 211 && mouseX <= left + 217 &&
-            mouseY >= top + 48 && mouseY <= top + 135) {
+        if (mouseX >= left + 211 && mouseX <= left + 217 && mouseY >= top + 48 && mouseY <= top + 135) {
             List<String> tooltip = new ArrayList<>();
             String energyText = StatCollector.translateToLocal("hostilenetworks.gui.energy");
             if (energyText.equals("hostilenetworks.gui.energy")) {
@@ -448,7 +454,11 @@ public class SimChamberGui extends GuiContainer {
                     if (costText.equals("hostilenetworks.gui.cost")) {
                         costText = "Model energy cost: %s FE/t";
                     }
-                    tooltip.add(String.format(costText, model.getModel().getSimCost()));
+                    tooltip.add(
+                        String.format(
+                            costText,
+                            model.getModel()
+                                .getSimCost()));
                 }
             }
 
@@ -457,8 +467,7 @@ public class SimChamberGui extends GuiContainer {
         }
 
         // Data tooltip (left bar)
-        if (mouseX >= left + 14 && mouseX <= left + 20 &&
-            mouseY >= top + 48 && mouseY <= top + 135) {
+        if (mouseX >= left + 14 && mouseX <= left + 20 && mouseY >= top + 48 && mouseY <= top + 135) {
             ItemStack modelStack = this.tile.getStackInSlot(0);
             if (modelStack != null && modelStack.getItem() instanceof DataModelItem) {
                 DataModelInstance model = DataModelItem.getDataModelInstance(modelStack);
@@ -470,11 +479,14 @@ public class SimChamberGui extends GuiContainer {
                         if (dataText.equals("hostilenetworks.gui.data")) {
                             dataText = "%s/%s Data collected";
                         }
-                        tooltip.add(String.format(dataText,
-                            model.getCurrentData() - model.getTierData(),
-                            model.getNextTierData() - model.getTierData()));
+                        tooltip.add(
+                            String.format(
+                                dataText,
+                                model.getCurrentData() - model.getTierData(),
+                                model.getNextTierData() - model.getTierData()));
                     } else {
-                        tooltip.add(EnumChatFormatting.RED + StatCollector.translateToLocal("hostilenetworks.gui.max_data"));
+                        tooltip.add(
+                            EnumChatFormatting.RED + StatCollector.translateToLocal("hostilenetworks.gui.max_data"));
                     }
                     this.drawCustomTooltip(tooltip, mouseX, mouseY);
                 }
@@ -483,8 +495,7 @@ public class SimChamberGui extends GuiContainer {
         }
 
         // Redstone button tooltip
-        if (mouseX >= left + 225 && mouseX <= left + 241 &&
-            mouseY >= top + 1 && mouseY <= top + 17) {
+        if (mouseX >= left + 225 && mouseX <= left + 241 && mouseY >= top + 1 && mouseY <= top + 17) {
             List<String> tooltip = new ArrayList<>();
             RedstoneState rs = this.container.getRedstoneState();
             tooltip.add(StatCollector.translateToLocal(rs.getKey()));

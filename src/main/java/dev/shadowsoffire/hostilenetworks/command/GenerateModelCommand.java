@@ -12,8 +12,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentTranslation;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.StatCollector;
 
 import com.google.gson.Gson;
@@ -89,8 +87,7 @@ public class GenerateModelCommand extends CommandBase {
             default:
                 sender.addChatMessage(
                     new ChatComponentTranslation("commands.hnn_genmodel.unknown_subcommand", subcommand));
-                sender.addChatMessage(
-                    new ChatComponentTranslation("commands.hnn_genmodel.available_subcommands"));
+                sender.addChatMessage(new ChatComponentTranslation("commands.hnn_genmodel.available_subcommands"));
                 break;
         }
     }
@@ -119,8 +116,7 @@ public class GenerateModelCommand extends CommandBase {
                 maxStackSize = Integer.parseInt(args[2]);
                 if (maxStackSize < 1) maxStackSize = 64;
             } catch (NumberFormatException e) {
-                sender.addChatMessage(
-                    new ChatComponentTranslation("commands.hnn_genmodel.invalid_stack_size", "64"));
+                sender.addChatMessage(new ChatComponentTranslation("commands.hnn_genmodel.invalid_stack_size", "64"));
             }
         }
 
@@ -158,7 +154,9 @@ public class GenerateModelCommand extends CommandBase {
         if (model == null) {
             sender.addChatMessage(new ChatComponentTranslation("commands.hnn_genmodel.model_not_found", modelId));
             sender.addChatMessage(
-                new ChatComponentTranslation("commands.hnn_genmodel.available_models", String.join(", ", DataModelRegistry.getIds())));
+                new ChatComponentTranslation(
+                    "commands.hnn_genmodel.available_models",
+                    String.join(", ", DataModelRegistry.getIds())));
             return;
         }
 
@@ -179,8 +177,7 @@ public class GenerateModelCommand extends CommandBase {
             maxStackSize);
 
         writeJsonFile(sender, model.getEntityId(), json, "data_models");
-        sender.addChatMessage(
-            new ChatComponentTranslation("commands.hnn_genmodel.updated", model.getEntityId()));
+        sender.addChatMessage(new ChatComponentTranslation("commands.hnn_genmodel.updated", model.getEntityId()));
     }
 
     /**
@@ -222,35 +219,24 @@ public class GenerateModelCommand extends CommandBase {
      * Usage: /hnn_genmodel datafix
      */
     private void handleDatafix(ICommandSender sender) {
-        sender.addChatMessage(
-            new ChatComponentTranslation("commands.hnn_genmodel.datafix"));
-        sender.addChatMessage(
-            new ChatComponentTranslation("commands.hnn_genmodel.datafix.help"));
-        sender.addChatMessage(
-            new ChatComponentTranslation("commands.hnn_genmodel.datafix.schema"));
+        sender.addChatMessage(new ChatComponentTranslation("commands.hnn_genmodel.datafix"));
+        sender.addChatMessage(new ChatComponentTranslation("commands.hnn_genmodel.datafix.help"));
+        sender.addChatMessage(new ChatComponentTranslation("commands.hnn_genmodel.datafix.schema"));
     }
 
     /**
      * Show help for the command.
      */
     private void showHelp(ICommandSender sender) {
-        sender.addChatMessage(
-            new ChatComponentTranslation("commands.hnn_genmodel.help.title"));
-        sender.addChatMessage(
-            new ChatComponentTranslation("commands.hnn_genmodel.generate_model.usage"));
-        sender.addChatMessage(
-            new ChatComponentTranslation("commands.hnn_genmodel.help.generate_model"));
-        sender.addChatMessage(
-            new ChatComponentTranslation("commands.hnn_genmodel.update_model.usage"));
+        sender.addChatMessage(new ChatComponentTranslation("commands.hnn_genmodel.help.title"));
+        sender.addChatMessage(new ChatComponentTranslation("commands.hnn_genmodel.generate_model.usage"));
+        sender.addChatMessage(new ChatComponentTranslation("commands.hnn_genmodel.help.generate_model"));
+        sender.addChatMessage(new ChatComponentTranslation("commands.hnn_genmodel.update_model.usage"));
         sender.addChatMessage(new ChatComponentTranslation("commands.hnn_genmodel.help.update_model"));
-        sender.addChatMessage(
-            new ChatComponentTranslation("commands.hnn_genmodel.generate_all.usage"));
-        sender.addChatMessage(
-            new ChatComponentTranslation("commands.hnn_genmodel.help.generate_all"));
-        sender.addChatMessage(
-            new ChatComponentTranslation("commands.hnn_genmodel.datafix_command"));
-        sender.addChatMessage(
-            new ChatComponentTranslation("commands.hnn_genmodel.help.datafix"));
+        sender.addChatMessage(new ChatComponentTranslation("commands.hnn_genmodel.generate_all.usage"));
+        sender.addChatMessage(new ChatComponentTranslation("commands.hnn_genmodel.help.generate_all"));
+        sender.addChatMessage(new ChatComponentTranslation("commands.hnn_genmodel.datafix_command"));
+        sender.addChatMessage(new ChatComponentTranslation("commands.hnn_genmodel.help.datafix"));
     }
 
     /**
@@ -346,8 +332,7 @@ public class GenerateModelCommand extends CommandBase {
 
             HostileNetworks.LOG.info("Generated data model file: " + outputFile.getAbsolutePath());
         } catch (IOException e) {
-            sender.addChatMessage(
-                new ChatComponentTranslation("commands.hnn_genmodel.failed_write", e.getMessage()));
+            sender.addChatMessage(new ChatComponentTranslation("commands.hnn_genmodel.failed_write", e.getMessage()));
             HostileNetworks.LOG.error("Failed to write data model file", e);
         }
     }

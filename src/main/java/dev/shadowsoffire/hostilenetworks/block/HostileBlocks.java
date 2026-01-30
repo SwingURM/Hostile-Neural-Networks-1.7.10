@@ -3,7 +3,6 @@ package dev.shadowsoffire.hostilenetworks.block;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
-import net.minecraft.item.ItemStack;
 
 import cpw.mods.fml.common.registry.GameRegistry;
 import dev.shadowsoffire.hostilenetworks.tile.LootFabTileEntity;
@@ -26,6 +25,7 @@ public class HostileBlocks {
      * Allows for custom item rendering in inventory and hand.
      */
     public static class MachineItemBlock extends ItemBlock {
+
         public MachineItemBlock(Block block) {
             super(block);
             setHasSubtypes(false);
@@ -51,7 +51,8 @@ public class HostileBlocks {
         return block;
     }
 
-    private static Block registerBlock(Block block, Class<? extends ItemBlock> itemBlockClass, String name, boolean registerItemBlock) {
+    private static Block registerBlock(Block block, Class<? extends ItemBlock> itemBlockClass, String name,
+        boolean registerItemBlock) {
         block.setBlockName(name);
         block.setBlockTextureName("hostilenetworks:" + name);
         GameRegistry.registerBlock(block, itemBlockClass, name);

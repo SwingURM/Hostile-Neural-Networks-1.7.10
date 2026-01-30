@@ -107,7 +107,8 @@ public class LootFabRecipeHandler extends TemplateRecipeHandler {
         // Draw animated progress bar: sampling from texture at (0, 30)
         // Progress bar relative to background at (34, 12), plus center offset (32, 18) = (66, 30)
         Minecraft mc = Minecraft.getMinecraft();
-        mc.getTextureManager().bindTexture(new ResourceLocation(getGuiTexture()));
+        mc.getTextureManager()
+            .bindTexture(new ResourceLocation(getGuiTexture()));
 
         int fullWidth = 36;
         int maxProgress = 100;
@@ -152,7 +153,8 @@ public class LootFabRecipeHandler extends TemplateRecipeHandler {
             // Output: Specific fabricator drop - relative to background at (79, 7), plus offset = (111, 25)
             List<ItemStack> drops = model.getFabricatorDrops();
             if (dropIndex >= 0 && dropIndex < drops.size()) {
-                ItemStack drop = drops.get(dropIndex).copy();
+                ItemStack drop = drops.get(dropIndex)
+                    .copy();
                 drop.stackSize = 1;
                 this.output = new PositionedStack(drop, 111, 25);
                 this.output.setMaxSize(1);

@@ -4,7 +4,6 @@ import java.util.List;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
@@ -33,7 +32,9 @@ public class DataModelTooltipRenderer {
     /**
      * Resource location for the Deep Learner HUD texture.
      */
-    public static final ResourceLocation DEEP_LEARNER_HUD = new ResourceLocation(HostileNetworks.MODID, "textures/gui/deep_learner_hud.png");
+    public static final ResourceLocation DEEP_LEARNER_HUD = new ResourceLocation(
+        HostileNetworks.MODID,
+        "textures/gui/deep_learner_hud.png");
 
     /**
      * Height of the custom tooltip component (in pixels).
@@ -62,8 +63,8 @@ public class DataModelTooltipRenderer {
      * @param fontRenderer Font renderer
      * @return true if custom tooltip was rendered
      */
-    public static boolean renderTooltipOverlay(List<String> tooltipLines, int mouseX, int mouseY,
-            int screenWidth, int screenHeight, FontRenderer fontRenderer) {
+    public static boolean renderTooltipOverlay(List<String> tooltipLines, int mouseX, int mouseY, int screenWidth,
+        int screenHeight, FontRenderer fontRenderer) {
         // This is a placeholder for texture-based rendering
         // In 1.7.10, this requires ASM/Mixin to hook into GuiIngame.renderToolTip
         return false;
@@ -83,7 +84,8 @@ public class DataModelTooltipRenderer {
         Minecraft mc = Minecraft.getMinecraft();
 
         // Bind the HUD texture
-        mc.getTextureManager().bindTexture(DEEP_LEARNER_HUD);
+        mc.getTextureManager()
+            .bindTexture(DEEP_LEARNER_HUD);
 
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
@@ -134,7 +136,8 @@ public class DataModelTooltipRenderer {
             return null;
         }
 
-        String entityId = stack.getTagCompound().getString(NBTKeys.ENTITY_ID);
+        String entityId = stack.getTagCompound()
+            .getString(NBTKeys.ENTITY_ID);
         if (entityId.isEmpty()) {
             return null;
         }
@@ -143,14 +146,14 @@ public class DataModelTooltipRenderer {
         ModelTier tier = ModelTierRegistry.getTier(currentData);
         ModelTier nextTier = ModelTierRegistry.getNextTier(tier);
 
-        String tierColor = tier.getColor() != null ? tier.getColor().toString() : "\u00a7f";
+        String tierColor = tier.getColor() != null ? tier.getColor()
+            .toString() : "\u00a7f";
         String progressBar = DataModelProgressBar.createProgressBar(
             currentData,
             tier.getRequiredData(),
             nextTier.getRequiredData(),
             tier.isMax(),
-            tierColor
-        );
+            tierColor);
 
         String tierName = tier.getDisplayName();
 
@@ -169,7 +172,8 @@ public class DataModelTooltipRenderer {
             return null;
         }
 
-        String entityId = stack.getTagCompound().getString(NBTKeys.ENTITY_ID);
+        String entityId = stack.getTagCompound()
+            .getString(NBTKeys.ENTITY_ID);
         if (entityId.isEmpty()) {
             return null;
         }

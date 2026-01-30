@@ -32,7 +32,8 @@ public class LootFabGui extends GuiContainer {
         "textures/gui/default_gui.png");
     // LootFab buttons sprite sheet: [fab_left][fab_right][fab_left_hovered][fab_right_hovered] = 116x12
     private static final ResourceLocation FAB_BUTTONS = new ResourceLocation(
-        "hostilenetworks", "textures/gui/sprites/widget/loot_fab_buttons.png");
+        "hostilenetworks",
+        "textures/gui/sprites/widget/loot_fab_buttons.png");
     private static final int FAB_BTN_WIDTH = 116;
     private static final int FAB_BTN_HEIGHT = 12;
     // Button positions in sprite sheet
@@ -66,15 +67,35 @@ public class LootFabGui extends GuiContainer {
         int top = this.guiTop;
 
         // Left page button (at x=13, y=68)
-        this.btnLeft = new ImageButton(0, left + 13, top + 68, 29, 12,
-            FAB_BUTTONS, FAB_BTN_WIDTH, FAB_BTN_HEIGHT,
-            FAB_BTN_LEFT_U, FAB_BTN_V, FAB_BTN_LEFT_HOVERED_U, FAB_BTN_V);
+        this.btnLeft = new ImageButton(
+            0,
+            left + 13,
+            top + 68,
+            29,
+            12,
+            FAB_BUTTONS,
+            FAB_BTN_WIDTH,
+            FAB_BTN_HEIGHT,
+            FAB_BTN_LEFT_U,
+            FAB_BTN_V,
+            FAB_BTN_LEFT_HOVERED_U,
+            FAB_BTN_V);
         this.buttonList.add(btnLeft);
 
         // Right page button (at x=46, y=68)
-        this.btnRight = new ImageButton(1, left + 46, top + 68, 29, 12,
-            FAB_BUTTONS, FAB_BTN_WIDTH, FAB_BTN_HEIGHT,
-            FAB_BTN_RIGHT_U, FAB_BTN_V, FAB_BTN_RIGHT_HOVERED_U, FAB_BTN_V);
+        this.btnRight = new ImageButton(
+            1,
+            left + 46,
+            top + 68,
+            29,
+            12,
+            FAB_BUTTONS,
+            FAB_BTN_WIDTH,
+            FAB_BTN_HEIGHT,
+            FAB_BTN_RIGHT_U,
+            FAB_BTN_V,
+            FAB_BTN_RIGHT_HOVERED_U,
+            FAB_BTN_V);
         this.buttonList.add(btnRight);
     }
 
@@ -143,7 +164,13 @@ public class LootFabGui extends GuiContainer {
         // Clamp progress height to prevent rendering outside UI bounds
         int progressHeight = Math.min((int) (35F * progress / 60F), 35);
         if (progressHeight > 0) {
-            drawTexturedModalRect(left + 84, top + 23 + 35 - progressHeight, 7, 83 + 35 - progressHeight, 6, progressHeight);
+            drawTexturedModalRect(
+                left + 84,
+                top + 23 + 35 - progressHeight,
+                7,
+                83 + 35 - progressHeight,
+                6,
+                progressHeight);
         }
 
         // Player inventory background

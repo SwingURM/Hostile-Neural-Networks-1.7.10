@@ -19,6 +19,7 @@ public class TickableTextList {
      * Represents a single line of text with its tick rate.
      */
     public static class TickableText {
+
         public final String text;
         public final float tickRate;
         public final int color;
@@ -136,6 +137,7 @@ public class TickableTextList {
      * Represents a text segment with a specific color and formatting.
      */
     public static class ColoredSegment {
+
         public final String text;
         public final int color;
         public final boolean obfuscated;
@@ -153,8 +155,8 @@ public class TickableTextList {
      * Supports Minecraft color codes (\u00a7 followed by a character).
      *
      * @param fontRenderer The font renderer to use
-     * @param x X position (left edge)
-     * @param y Y position
+     * @param x            X position (left edge)
+     * @param y            Y position
      */
     public void render(FontRenderer fontRenderer, int x, int y) {
         float timeLeft = this.ticks;
@@ -266,28 +268,89 @@ public class TickableTextList {
                 // Get new color/format
                 char formatChar = text.charAt(i + 1);
                 switch (formatChar) {
-                    case '0': currentColor = 0x000000; obfuscated = false; break;
-                    case '1': currentColor = 0x0000AA; obfuscated = false; break;
-                    case '2': currentColor = 0x00AA00; obfuscated = false; break;
-                    case '3': currentColor = 0x00AAAA; obfuscated = false; break;
-                    case '4': currentColor = 0xAA0000; obfuscated = false; break;
-                    case '5': currentColor = 0xAA00AA; obfuscated = false; break;
-                    case '6': currentColor = 0xFFAA00; obfuscated = false; break;
-                    case '7': currentColor = 0xAAAAAA; obfuscated = false; break;
-                    case '8': currentColor = 0x555555; obfuscated = false; break;
-                    case '9': currentColor = 0x5555FF; obfuscated = false; break;
-                    case 'a': currentColor = 0x55FF55; obfuscated = false; break;
-                    case 'b': currentColor = 0x55FFFF; obfuscated = false; break;
-                    case 'c': currentColor = 0xFF5555; obfuscated = false; break;
-                    case 'd': currentColor = 0xFF55FF; obfuscated = false; break;
-                    case 'e': currentColor = 0xFFFF55; obfuscated = false; break;
-                    case 'f': currentColor = 0xFFFFFF; obfuscated = false; break;
-                    case 'k': obfuscated = true; break; // Obfuscated
-                    case 'l': /* bold - not tracked */ obfuscated = false; break;
-                    case 'm': /* strikethrough - not tracked */ obfuscated = false; break;
-                    case 'n': /* underline - not tracked */ obfuscated = false; break;
-                    case 'o': /* italic - not tracked */ obfuscated = false; break;
-                    case 'r': currentColor = defaultColor; obfuscated = false; break; // Reset
+                    case '0':
+                        currentColor = 0x000000;
+                        obfuscated = false;
+                        break;
+                    case '1':
+                        currentColor = 0x0000AA;
+                        obfuscated = false;
+                        break;
+                    case '2':
+                        currentColor = 0x00AA00;
+                        obfuscated = false;
+                        break;
+                    case '3':
+                        currentColor = 0x00AAAA;
+                        obfuscated = false;
+                        break;
+                    case '4':
+                        currentColor = 0xAA0000;
+                        obfuscated = false;
+                        break;
+                    case '5':
+                        currentColor = 0xAA00AA;
+                        obfuscated = false;
+                        break;
+                    case '6':
+                        currentColor = 0xFFAA00;
+                        obfuscated = false;
+                        break;
+                    case '7':
+                        currentColor = 0xAAAAAA;
+                        obfuscated = false;
+                        break;
+                    case '8':
+                        currentColor = 0x555555;
+                        obfuscated = false;
+                        break;
+                    case '9':
+                        currentColor = 0x5555FF;
+                        obfuscated = false;
+                        break;
+                    case 'a':
+                        currentColor = 0x55FF55;
+                        obfuscated = false;
+                        break;
+                    case 'b':
+                        currentColor = 0x55FFFF;
+                        obfuscated = false;
+                        break;
+                    case 'c':
+                        currentColor = 0xFF5555;
+                        obfuscated = false;
+                        break;
+                    case 'd':
+                        currentColor = 0xFF55FF;
+                        obfuscated = false;
+                        break;
+                    case 'e':
+                        currentColor = 0xFFFF55;
+                        obfuscated = false;
+                        break;
+                    case 'f':
+                        currentColor = 0xFFFFFF;
+                        obfuscated = false;
+                        break;
+                    case 'k':
+                        obfuscated = true;
+                        break; // Obfuscated
+                    case 'l':
+                        /* bold - not tracked */ obfuscated = false;
+                        break;
+                    case 'm':
+                        /* strikethrough - not tracked */ obfuscated = false;
+                        break;
+                    case 'n':
+                        /* underline - not tracked */ obfuscated = false;
+                        break;
+                    case 'o':
+                        /* italic - not tracked */ obfuscated = false;
+                        break;
+                    case 'r':
+                        currentColor = defaultColor;
+                        obfuscated = false;
+                        break; // Reset
                 }
                 i++; // Skip format code character
             } else {

@@ -3,18 +3,18 @@ package dev.shadowsoffire.hostilenetworks.compatibility.nei;
 import java.util.HashSet;
 import java.util.Set;
 
+import net.minecraft.item.ItemStack;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import codechicken.nei.api.API;
 import codechicken.nei.api.IConfigureNEI;
-import codechicken.nei.event.NEIRegisterHandlerInfosEvent;
 import codechicken.nei.recipe.GuiRecipeTab;
 import codechicken.nei.recipe.HandlerInfo;
 import cpw.mods.fml.common.Loader;
 import dev.shadowsoffire.hostilenetworks.HostileNetworks;
 import dev.shadowsoffire.hostilenetworks.block.HostileBlocks;
-import net.minecraft.item.ItemStack;
 
 /**
  * NEI configuration for Hostile Neural Networks.
@@ -56,10 +56,8 @@ public class NEIHostileNetworksConfig implements IConfigureNEI {
         API.registerUsageHandler(new LootFabRecipeHandler());
 
         // Register handler info for custom tab icons via NEI event
-        GuiRecipeTab.handlerAdderFromIMC.put("hostilenetworks.sim_chamber",
-            createSimChamberHandlerInfo());
-        GuiRecipeTab.handlerAdderFromIMC.put("hostilenetworks.loot_fabricator",
-            createLootFabHandlerInfo());
+        GuiRecipeTab.handlerAdderFromIMC.put("hostilenetworks.sim_chamber", createSimChamberHandlerInfo());
+        GuiRecipeTab.handlerAdderFromIMC.put("hostilenetworks.loot_fabricator", createLootFabHandlerInfo());
 
         // Register NEI catalysts - machine blocks that can open recipe pages
         registerRecipeCatalysts();

@@ -1,4 +1,4 @@
-package dev.shadowsoffire.hostilenetworks.util;
+package dev.shadowsoffire.hostilenetworks.client;
 
 import java.lang.reflect.Field;
 
@@ -8,9 +8,12 @@ import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.world.World;
 
+import dev.shadowsoffire.hostilenetworks.util.EntityIdUtils;
+
 /**
  * Utility class for getting entity statistics for GUI display.
  * Uses real entity instances to get health, armor, and XP reward.
+ * Client-side only.
  */
 public class EntityStatsHelper {
 
@@ -21,11 +24,7 @@ public class EntityStatsHelper {
      * @return Array of stat strings, or obfuscated text for non-LivingEntity
      */
     public static String[] getAllStats(String entityId) {
-        return new String[] {
-            getHealthStat(entityId),
-            getArmorStat(entityId),
-            getXpStat(entityId)
-        };
+        return new String[] { getHealthStat(entityId), getArmorStat(entityId), getXpStat(entityId) };
     }
 
     /**
@@ -109,13 +108,15 @@ public class EntityStatsHelper {
             return new String[] { entityId };
         }
 
-        String capitalized = entityId.substring(0, 1).toUpperCase() + entityId.substring(1);
+        String capitalized = entityId.substring(0, 1)
+            .toUpperCase() + entityId.substring(1);
         if (net.minecraft.entity.EntityList.createEntityByName(capitalized, null) != null) {
             return new String[] { capitalized };
         }
 
         String mappedName = EntityIdUtils.getInternalName(entityId);
-        if (!mappedName.equals(capitalized) && net.minecraft.entity.EntityList.createEntityByName(mappedName, null) != null) {
+        if (!mappedName.equals(capitalized)
+            && net.minecraft.entity.EntityList.createEntityByName(mappedName, null) != null) {
             return new String[] { mappedName };
         }
 

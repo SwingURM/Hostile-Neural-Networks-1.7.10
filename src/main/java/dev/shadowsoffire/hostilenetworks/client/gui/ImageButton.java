@@ -25,22 +25,21 @@ public class ImageButton extends GuiButton {
     /**
      * Create an image button using a sprite sheet.
      *
-     * @param buttonId     The button ID
-     * @param x            X position
-     * @param y            Y position
-     * @param width        Button width
-     * @param height       Button height
-     * @param texture      The sprite sheet texture resource location
-     * @param textureWidth Total width of the sprite sheet
+     * @param buttonId      The button ID
+     * @param x             X position
+     * @param y             Y position
+     * @param width         Button width
+     * @param height        Button height
+     * @param texture       The sprite sheet texture resource location
+     * @param textureWidth  Total width of the sprite sheet
      * @param textureHeight Total height of the sprite sheet
-     * @param uNormal      U coordinate of normal state in sprite sheet
-     * @param vNormal      V coordinate of normal state in sprite sheet
-     * @param uHover       U coordinate of hover state in sprite sheet (can be same as normal)
-     * @param vHover       V coordinate of hover state in sprite sheet
+     * @param uNormal       U coordinate of normal state in sprite sheet
+     * @param vNormal       V coordinate of normal state in sprite sheet
+     * @param uHover        U coordinate of hover state in sprite sheet (can be same as normal)
+     * @param vHover        V coordinate of hover state in sprite sheet
      */
-    public ImageButton(int buttonId, int x, int y, int width, int height,
-            ResourceLocation texture, int textureWidth, int textureHeight,
-            int uNormal, int vNormal, int uHover, int vHover) {
+    public ImageButton(int buttonId, int x, int y, int width, int height, ResourceLocation texture, int textureWidth,
+        int textureHeight, int uNormal, int vNormal, int uHover, int vHover) {
         super(buttonId, x, y, width, height, "");
         this.texture = texture;
         this.textureWidth = textureWidth;
@@ -55,9 +54,8 @@ public class ImageButton extends GuiButton {
     /**
      * Create an image button with the same normal and hover state.
      */
-    public ImageButton(int buttonId, int x, int y, int width, int height,
-            ResourceLocation texture, int textureWidth, int textureHeight,
-            int u, int v) {
+    public ImageButton(int buttonId, int x, int y, int width, int height, ResourceLocation texture, int textureWidth,
+        int textureHeight, int u, int v) {
         this(buttonId, x, y, width, height, texture, textureWidth, textureHeight, u, v, u, v);
     }
 
@@ -68,9 +66,11 @@ public class ImageButton extends GuiButton {
         }
 
         boolean isHovered = mouseX >= this.xPosition && mouseY >= this.yPosition
-                && mouseX < this.xPosition + this.width && mouseY < this.yPosition + this.height;
+            && mouseX < this.xPosition + this.width
+            && mouseY < this.yPosition + this.height;
 
-        mc.getTextureManager().bindTexture(this.texture);
+        mc.getTextureManager()
+            .bindTexture(this.texture);
 
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 

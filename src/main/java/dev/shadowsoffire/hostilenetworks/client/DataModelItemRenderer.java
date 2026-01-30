@@ -1,7 +1,7 @@
 package dev.shadowsoffire.hostilenetworks.client;
 
-import java.lang.reflect.Method;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,11 +12,11 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.texture.TextureMap;
-import net.minecraft.util.IIcon;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.monster.EntitySlime;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.IIcon;
 import net.minecraft.world.World;
 
 import org.apache.logging.log4j.LogManager;
@@ -170,12 +170,7 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
             int height = icon.getIconHeight();
 
             // 0.0625F = 1 pixel thickness (1/16 = 0.0625 in Minecraft units)
-            ItemRenderer.renderItemIn2D(
-                Tessellator.instance,
-                u2, v1, u1, v2,
-                width, height,
-                0.0625F
-            );
+            ItemRenderer.renderItemIn2D(Tessellator.instance, u2, v1, u1, v2, width, height, 0.0625F);
 
             GL11.glPopMatrix();
         } else {

@@ -229,7 +229,8 @@ public class DeepLearnerItem extends Item {
         if (entityId.contains(":")) {
             shortId = entityId.substring(entityId.indexOf(":") + 1);
         }
-        String capitalized = shortId.substring(0, 1).toUpperCase() + shortId.substring(1);
+        String capitalized = shortId.substring(0, 1)
+            .toUpperCase() + shortId.substring(1);
         String entityName = StatCollector.translateToLocal("entity." + capitalized + ".name");
         if (!entityName.equals("entity." + capitalized + ".name")) {
             return entityName;
@@ -265,7 +266,8 @@ public class DeepLearnerItem extends Item {
                     ModelTier nextTier = ModelTierRegistry.getNextTier(tier);
 
                     // Get tier color
-                    String tierColor = tier.getColor() != null ? tier.getColor().toString() : "\u00a7f";
+                    String tierColor = tier.getColor() != null ? tier.getColor()
+                        .toString() : "\u00a7f";
 
                     // Get entity display name
                     String entityName = getEntityDisplayName(entityId);
@@ -276,8 +278,7 @@ public class DeepLearnerItem extends Item {
                         tier.getRequiredData(),
                         nextTier.getRequiredData(),
                         tier.isMax(),
-                        tierColor
-                    );
+                        tierColor);
 
                     // Add model info with progress bar
                     tooltip.add(tierColor + entityName + " " + progressBar);
@@ -286,7 +287,8 @@ public class DeepLearnerItem extends Item {
                     if (!tier.isMax()) {
                         int dataPerKill = tier.getDataPerKill();
                         if (dataPerKill > 0) {
-                            int killsNeeded = (int) Math.ceil((nextTier.getRequiredData() - currentData) / (float) dataPerKill);
+                            int killsNeeded = (int) Math
+                                .ceil((nextTier.getRequiredData() - currentData) / (float) dataPerKill);
                             String killsKey = StatCollector.translateToLocal("hostilenetworks.hud.kills");
                             if (killsKey.equals("hostilenetworks.hud.kills")) {
                                 killsKey = "%s Remaining";

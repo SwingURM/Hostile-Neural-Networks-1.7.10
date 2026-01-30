@@ -164,7 +164,8 @@ public class DataModelItem extends Item {
         if (model == null) return null;
 
         // Get damage value matching getSubItems() - index in registry + 1
-        int damage = DataModelRegistry.getIds().indexOf(entityId) + 1;
+        int damage = DataModelRegistry.getIds()
+            .indexOf(entityId) + 1;
         ItemStack stack = new ItemStack(HostileItems.data_model, 1, damage);
         NBTTagCompound tag = new NBTTagCompound();
         tag.setString(NBTKeys.ENTITY_ID, entityId);
@@ -179,8 +180,9 @@ public class DataModelItem extends Item {
      * Check if this item is attuned (has a valid entity ID in NBT).
      */
     public static boolean isAttuned(ItemStack stack) {
-        return stack != null && stack.hasTagCompound() && stack.getTagCompound()
-            .hasKey(NBTKeys.ENTITY_ID);
+        return stack != null && stack.hasTagCompound()
+            && stack.getTagCompound()
+                .hasKey(NBTKeys.ENTITY_ID);
     }
 
     /**

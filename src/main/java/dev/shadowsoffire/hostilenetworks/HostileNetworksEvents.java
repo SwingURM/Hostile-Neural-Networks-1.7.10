@@ -6,6 +6,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 
+import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod.EventHandler;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
@@ -60,8 +61,11 @@ public class HostileNetworksEvents {
         MinecraftForge.EVENT_BUS.register(new HostileNetworksEvents());
         HostileNetworks.LOG.info("Registered event handlers for LivingDeathEvent");
 
-        // Register NEI integration if NEI is present
-        NEIHostileNetworksConfig.registerIfNEILoaded();
+        // Register NEI integration if NEI is present - only on client side
+        if (FMLCommonHandler.instance()
+            .getSide() == Side.CLIENT) {
+            NEIHostileNetworksConfig.registerIfNEILoaded();
+        }
 
         HostileNetworks.LOG.info("Hostile Neural Networks initialization complete");
     }

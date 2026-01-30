@@ -31,20 +31,12 @@ public class HostileItems {
      */
     public static void init() {
         data_model = registerItem(new DataModelItem(), "data_model");
-        prediction_matrix = registerItem(
-            new PredictionMatrixItem(),
-            "prediction_matrix");
+        prediction_matrix = registerItem(new PredictionMatrixItem(), "prediction_matrix");
 
         // Register prediction items - these can be dynamically used based on JSON base_drop.id
-        overworld_prediction = registerItem(
-            new OverworldPredictionItem(),
-            "overworld_prediction");
-        nether_prediction = registerItem(
-            new NetherPredictionItem(),
-            "nether_prediction");
-        end_prediction = registerItem(
-            new EndPredictionItem(),
-            "end_prediction");
+        overworld_prediction = registerItem(new OverworldPredictionItem(), "overworld_prediction");
+        nether_prediction = registerItem(new NetherPredictionItem(), "nether_prediction");
+        end_prediction = registerItem(new EndPredictionItem(), "end_prediction");
 
         // Map prediction types for dynamic lookup
         PREDICTION_TYPE_MAP.put("overworld_prediction", overworld_prediction);

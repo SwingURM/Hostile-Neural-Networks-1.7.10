@@ -79,10 +79,10 @@ public class GiveModelCommand extends CommandBase {
 
         // If still no player, require player name
         if (targetPlayer == null) {
-            String playerDisplay = playerName != null ? playerName : StatCollector.translateToLocal("commands.hnn_givemodel.player_not_found.specify");
-            sender.addChatMessage(
-                new ChatComponentTranslation(
-                    "commands.hnn_givemodel.player_not_found", playerDisplay));
+            String playerDisplay = playerName != null ? playerName
+                : StatCollector.translateToLocal("commands.hnn_givemodel.player_not_found.specify");
+            sender
+                .addChatMessage(new ChatComponentTranslation("commands.hnn_givemodel.player_not_found", playerDisplay));
             return;
         }
 
@@ -111,7 +111,8 @@ public class GiveModelCommand extends CommandBase {
                     } catch (NumberFormatException e) {
                         sender.addChatMessage(
                             new ChatComponentTranslation(
-                                "commands.hnn_givemodel.invalid_bonus_data", args[argStart + 2]));
+                                "commands.hnn_givemodel.invalid_bonus_data",
+                                args[argStart + 2]));
                         return;
                     }
                 }
@@ -122,8 +123,7 @@ public class GiveModelCommand extends CommandBase {
                 } catch (NumberFormatException e) {
                     sender.addChatMessage(
                         new ChatComponentTranslation("commands.hnn_givemodel.invalid_tier", potentialTier));
-                    sender.addChatMessage(
-                        new ChatComponentTranslation("commands.hnn_givemodel.available_tiers"));
+                    sender.addChatMessage(new ChatComponentTranslation("commands.hnn_givemodel.available_tiers"));
                     return;
                 }
             }
@@ -150,13 +150,10 @@ public class GiveModelCommand extends CommandBase {
             if (bestMatch != null) {
                 model = DataModelRegistry.get(bestMatch);
             } else {
-                String modelList = allModelIds.size() > 10
-                    ? String.join(", ", allModelIds.subList(0, 10)) + "..."
+                String modelList = allModelIds.size() > 10 ? String.join(", ", allModelIds.subList(0, 10)) + "..."
                     : String.join(", ", allModelIds);
-                sender
-                    .addChatMessage(new ChatComponentTranslation("commands.hnn_givemodel.model_not_found", modelId));
-                sender.addChatMessage(
-                    new ChatComponentTranslation("commands.hnn_givemodel.model_list", modelList));
+                sender.addChatMessage(new ChatComponentTranslation("commands.hnn_givemodel.model_not_found", modelId));
+                sender.addChatMessage(new ChatComponentTranslation("commands.hnn_givemodel.model_list", modelList));
                 return;
             }
         }
@@ -165,8 +162,7 @@ public class GiveModelCommand extends CommandBase {
         ModelTier tier = ModelTierRegistry.getByName(tierName);
         if (tier == null) {
             sender.addChatMessage(new ChatComponentTranslation("commands.hnn_givemodel.invalid_tier", tierName));
-            sender.addChatMessage(
-                new ChatComponentTranslation("commands.hnn_givemodel.available_tiers"));
+            sender.addChatMessage(new ChatComponentTranslation("commands.hnn_givemodel.available_tiers"));
             return;
         }
 
@@ -195,7 +191,8 @@ public class GiveModelCommand extends CommandBase {
         ChatComponentText message = new ChatComponentText("");
         ChatComponentTranslation prefix = new ChatComponentTranslation(
             gaveItem ? "commands.hnn_givemodel.given" : "commands.hnn_givemodel.inventory_full");
-        prefix.getChatStyle().setColor(gaveItem ? EnumChatFormatting.GREEN : EnumChatFormatting.YELLOW);
+        prefix.getChatStyle()
+            .setColor(gaveItem ? EnumChatFormatting.GREEN : EnumChatFormatting.YELLOW);
         message.appendSibling(prefix);
 
         message.appendText(" ");

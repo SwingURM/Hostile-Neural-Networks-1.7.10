@@ -127,7 +127,8 @@ public class SimChamberRecipeHandler extends TemplateRecipeHandler {
         Minecraft mc = Minecraft.getMinecraft();
 
         // Draw animated progress bar: sampling from texture at (0, 43)
-        mc.getTextureManager().bindTexture(new ResourceLocation(getGuiTexture()));
+        mc.getTextureManager()
+            .bindTexture(new ResourceLocation(getGuiTexture()));
 
         int fullWidth = 36;
         int maxProgress = 200;
@@ -201,7 +202,7 @@ public class SimChamberRecipeHandler extends TemplateRecipeHandler {
         // Draw tier name (at background relative position 33,30)
         String tierName = currentTier.getDisplayName();
         int tierWidth = mc.fontRenderer.getStringWidth(tierName);
-        int tierX = 25 + 33 - tierWidth / 2;  // Background offset + relative position - center correction
+        int tierX = 25 + 33 - tierWidth / 2; // Background offset + relative position - center correction
 
         EnumChatFormatting color = currentTier.getColor();
         mc.fontRenderer.drawStringWithShadow(color + tierName, tierX, 41, 0xFFFFFF);

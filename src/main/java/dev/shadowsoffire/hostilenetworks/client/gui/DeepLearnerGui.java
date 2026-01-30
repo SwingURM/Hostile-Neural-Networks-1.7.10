@@ -13,13 +13,13 @@ import org.lwjgl.opengl.GL11;
 
 import dev.shadowsoffire.hostilenetworks.HostileConfig;
 import dev.shadowsoffire.hostilenetworks.HostileNetworks;
+import dev.shadowsoffire.hostilenetworks.client.EntityStatsHelper;
 import dev.shadowsoffire.hostilenetworks.container.DeepLearnerContainer;
 import dev.shadowsoffire.hostilenetworks.data.DataModel;
 import dev.shadowsoffire.hostilenetworks.data.DataModelInstance;
 import dev.shadowsoffire.hostilenetworks.data.ModelTier;
 import dev.shadowsoffire.hostilenetworks.data.ModelTierRegistry;
 import dev.shadowsoffire.hostilenetworks.item.DataModelItem;
-import dev.shadowsoffire.hostilenetworks.util.EntityStatsHelper;
 
 /**
  * GUI for the Deep Learner item.
@@ -32,7 +32,7 @@ public class DeepLearnerGui extends GuiContainer {
     // Color constants matching the original mod
     private static final int COLOR_AQUA = 0x62D8FF;
     private static final int COLOR_WHITE = 0xFFFFFF;
-    private static final int COLOR_RED = 0xFF0000;  // EnumChatFormatting.RED
+    private static final int COLOR_RED = 0xFF0000; // EnumChatFormatting.RED
 
     private static final ResourceLocation GUI_TEXTURE = new ResourceLocation(
         HostileNetworks.MODID,
@@ -193,12 +193,32 @@ public class DeepLearnerGui extends GuiContainer {
         // Right button: guiLeft - 1, guiTop + 105
         int btnY = this.guiTop + 105;
 
-        this.btnLeft = new ImageButton(0, this.guiLeft - 27, btnY, 24, 24,
-            WIDGET_TEXTURE, WIDGET_WIDTH, WIDGET_HEIGHT,
-            BTN_LEFT_U, BTN_V, BTN_LEFT_HOVERED_U, BTN_V);
-        this.btnRight = new ImageButton(1, this.guiLeft - 1, btnY, 24, 24,
-            WIDGET_TEXTURE, WIDGET_WIDTH, WIDGET_HEIGHT,
-            BTN_RIGHT_U, BTN_V, BTN_RIGHT_HOVERED_U, BTN_V);
+        this.btnLeft = new ImageButton(
+            0,
+            this.guiLeft - 27,
+            btnY,
+            24,
+            24,
+            WIDGET_TEXTURE,
+            WIDGET_WIDTH,
+            WIDGET_HEIGHT,
+            BTN_LEFT_U,
+            BTN_V,
+            BTN_LEFT_HOVERED_U,
+            BTN_V);
+        this.btnRight = new ImageButton(
+            1,
+            this.guiLeft - 1,
+            btnY,
+            24,
+            24,
+            WIDGET_TEXTURE,
+            WIDGET_WIDTH,
+            WIDGET_HEIGHT,
+            BTN_RIGHT_U,
+            BTN_V,
+            BTN_RIGHT_HOVERED_U,
+            BTN_V);
 
         this.buttonList.add(this.btnLeft);
         this.buttonList.add(this.btnRight);
@@ -287,6 +307,7 @@ public class DeepLearnerGui extends GuiContainer {
 
     /**
      * Clamp index to 0-3 range (deprecated, use wrapIndex for circular navigation).
+     * 
      * @deprecated Use wrapIndex() for circular navigation
      */
     @Deprecated
@@ -390,7 +411,8 @@ public class DeepLearnerGui extends GuiContainer {
                 // Draw field name in white
                 String tierFieldName = StatCollector.translateToLocal("hostilenetworks.gui.tier");
                 if (tierFieldName.endsWith("%s")) {
-                    tierFieldName = tierFieldName.replace("%s", "").trim();
+                    tierFieldName = tierFieldName.replace("%s", "")
+                        .trim();
                 }
                 fontRendererObj.drawString(tierFieldName, left, dataTop, COLOR_WHITE);
                 // Draw tier name in tier color
@@ -400,12 +422,17 @@ public class DeepLearnerGui extends GuiContainer {
                 double accuracy = instance.getAccuracy() * 100;
                 String accFieldName = StatCollector.translateToLocal("hostilenetworks.gui.accuracy");
                 if (accFieldName.endsWith("%s")) {
-                    accFieldName = accFieldName.replace("%s", "").trim();
+                    accFieldName = accFieldName.replace("%s", "")
+                        .trim();
                 }
                 fontRendererObj.drawString(accFieldName, left, dataTop + lineHeight + 1, COLOR_WHITE);
                 // Draw accuracy value in tier color
                 String accValue = String.format("%.2f%%", accuracy);
-                drawColoredString(accValue, left + fontRendererObj.getStringWidth(accFieldName), dataTop + lineHeight + 1, tierColor);
+                drawColoredString(
+                    accValue,
+                    left + fontRendererObj.getStringWidth(accFieldName),
+                    dataTop + lineHeight + 1,
+                    tierColor);
 
                 // Next tier or max tier message
                 if (!tier.isMax()) {
@@ -434,7 +461,11 @@ public class DeepLearnerGui extends GuiContainer {
                             COLOR_WHITE);
                     }
                 } else {
-                    drawLocalizedString("hostilenetworks.gui.max_tier", left, dataTop + (lineHeight + 1) * 2, COLOR_RED);
+                    drawLocalizedString(
+                        "hostilenetworks.gui.max_tier",
+                        left,
+                        dataTop + (lineHeight + 1) * 2,
+                        COLOR_RED);
                 }
 
                 // Stats section (right side, aligned with dots)
@@ -482,12 +513,18 @@ public class DeepLearnerGui extends GuiContainer {
         if (tierName == null) return COLOR_WHITE;
         tierName = tierName.toLowerCase();
         switch (tierName) {
-            case "faulty":   return 0x9E9E9E;  // dark_gray
-            case "basic":    return 0x00AA00;  // green
-            case "advanced": return 0x5555FF;  // blue (light_blue/cyan)
-            case "superior": return 0xAA00AA;  // dark_purple (light_purple)
-            case "self_aware": return 0xFFAA00; // gold
-            default:         return COLOR_WHITE;
+            case "faulty":
+                return 0x9E9E9E; // dark_gray
+            case "basic":
+                return 0x00AA00; // green
+            case "advanced":
+                return 0x5555FF; // blue (light_blue/cyan)
+            case "superior":
+                return 0xAA00AA; // dark_purple (light_purple)
+            case "self_aware":
+                return 0xFFAA00; // gold
+            default:
+                return COLOR_WHITE;
         }
     }
 
