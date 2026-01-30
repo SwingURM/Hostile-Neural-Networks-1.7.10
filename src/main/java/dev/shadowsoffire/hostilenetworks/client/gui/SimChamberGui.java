@@ -15,6 +15,7 @@ import org.lwjgl.opengl.GL11;
 
 import dev.shadowsoffire.hostilenetworks.HostileConfig;
 import dev.shadowsoffire.hostilenetworks.HostileNetworks;
+import dev.shadowsoffire.hostilenetworks.client.gui.TickableTextList;
 import dev.shadowsoffire.hostilenetworks.container.SimChamberContainer;
 import dev.shadowsoffire.hostilenetworks.data.DataModelInstance;
 import dev.shadowsoffire.hostilenetworks.data.ModelTier;
@@ -43,6 +44,8 @@ public class SimChamberGui extends GuiContainer {
 
     private static final int STATUS_LINE_X = 40;
     private static final int STATUS_LINE_Y = 51;
+    private static final int MAX_TEXT_WIDTH = 174;
+    private static final float RUNTIME_TEXT_SPEED = 0.65F;
 
     private final SimChamberTileEntity tile;
     private final SimChamberContainer container;
@@ -50,10 +53,13 @@ public class SimChamberGui extends GuiContainer {
     // Redstone button
     private GuiButton redstoneButton;
 
+    // Typing text effect
+    private TickableTextList textList;
+
     // Status text state
     private FailureState lastFailState = FailureState.NONE;
     private boolean runtimeTextLoaded = false;
-    private List<String> statusLines = new ArrayList<>();
+    private boolean initialLoadDone = false;
 
     public SimChamberGui(InventoryPlayer playerInventory, SimChamberTileEntity tile) {
         super(new SimChamberContainer(playerInventory, tile));
@@ -75,10 +81,13 @@ public class SimChamberGui extends GuiContainer {
             18, 18, "");
         this.buttonList.add(this.redstoneButton);
 
+        // Initialize typing text effect
+        this.textList = new TickableTextList(this.fontRendererObj, MAX_TEXT_WIDTH);
+
         // Reset status state
         this.lastFailState = FailureState.NONE;
         this.runtimeTextLoaded = false;
-        this.statusLines.clear();
+        this.initialLoadDone = false;
     }
 
     @Override
@@ -160,12 +169,15 @@ public class SimChamberGui extends GuiContainer {
 
     @Override
     protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
-        int runtime = this.tile.getRuntime();
+        int runtime = this.container.getSyncedRuntime();
 
         // Progress percentage
         if (runtime > 0) {
             int progress = Math.min(99, (int) (100F * (300 - runtime) / 300));
-            fontRendererObj.drawString(progress + "%", 184, 123, 0x00FFFF, true);
+            String percentText = progress + "%";
+            // Position near the right edge of GUI
+            int xPos = 210 - fontRendererObj.getStringWidth(percentText);
+            fontRendererObj.drawStringWithShadow(percentText, xPos, 123, 0x55FFFF);
         }
 
         // Data model info
@@ -201,21 +213,36 @@ public class SimChamberGui extends GuiContainer {
                     targetName = shortEntityId;
                 }
 
-                fontRendererObj.drawStringWithShadow(targetName, 40, 9, 0xFFFFFF);
+                // Get tier color code for colored text
+                EnumChatFormatting tierColor = model.getTier().getColor();
 
-                // Tier info
-                String tierText = model.getTier().getDisplayName();
+                // Sim Target: entityName (using YELLOW color like the original Color.LIME)
+                String targetFormat = StatCollector.translateToLocal("hostilenetworks.gui.target");
+                if (targetFormat.equals("hostilenetworks.gui.target")) {
+                    targetFormat = "Sim Target: %s";
+                }
+                // YELLOW color (0xFFFF55) - matches Color.LIME in Placebo library
+                String coloredTargetName = EnumChatFormatting.YELLOW.toString() + targetName;
+                String targetText = String.format(targetFormat, coloredTargetName);
+                fontRendererObj.drawStringWithShadow(targetText, 40, 9, 0xFFFFFF);
+
+                // Model Tier: tierName (with tier color)
+                String tierFormat = StatCollector.translateToLocal("hostilenetworks.gui.tier");
+                if (tierFormat.equals("hostilenetworks.gui.tier")) {
+                    tierFormat = "Model Tier: %s";
+                }
+                String tierText = String.format(tierFormat, model.getTier().getColoredName());
                 fontRendererObj.drawString(tierText, 40, 9 + fontRendererObj.FONT_HEIGHT + 3, 0xFFFFFF);
 
-                // Accuracy
+                // Accuracy - use original value directly with tier color
                 String accuracyFormat = StatCollector.translateToLocal("hostilenetworks.gui.accuracy");
                 if (accuracyFormat.equals("hostilenetworks.gui.accuracy")) {
                     accuracyFormat = "Model Accuracy: %s";
                 }
-                String accuracyText = String.format(accuracyFormat, String.format("%.2f%%", model.getAccuracy() * 100));
-                int tierColor = model.getTier().getColor() != null ?
-                    model.getTier().getColor().hashCode() & 0xFFFFFF : 0xFFFFFF;
-                fontRendererObj.drawString(accuracyText, 40, 9 + (fontRendererObj.FONT_HEIGHT + 3) * 2, tierColor);
+                // Display accuracy as-is (e.g., 0.05, 0.25, 1.00) with tier color code
+                String accuracyValue = tierColor + String.format("%.2f", model.getAccuracy());
+                String accuracyText = String.format(accuracyFormat, accuracyValue);
+                fontRendererObj.drawString(accuracyText, 40, 9 + (fontRendererObj.FONT_HEIGHT + 3) * 2, 0xFFFFFF);
             }
         }
 
@@ -224,18 +251,9 @@ public class SimChamberGui extends GuiContainer {
     }
 
     private void renderStatusText() {
-        int top = STATUS_LINE_Y;
-        int lineHeight = fontRendererObj.FONT_HEIGHT;
-
-        for (int i = 0; i < this.statusLines.size(); i++) {
-            String line = this.statusLines.get(i);
-            int color = 0xFFFFFF;
-            if (line.contains("FAILED") || line.contains("ERROR")) {
-                color = 0xFF5555;
-            } else if (line.contains("SUCCESS") || line.contains("OK")) {
-                color = 0x55FF55;
-            }
-            fontRendererObj.drawString(line, STATUS_LINE_X, top + i * (lineHeight + 1), color);
+        // Use the TickableTextList for typewriter effect rendering
+        if (this.textList != null) {
+            this.textList.render(this.fontRendererObj, STATUS_LINE_X, STATUS_LINE_Y);
         }
     }
 
@@ -243,42 +261,85 @@ public class SimChamberGui extends GuiContainer {
     public void updateScreen() {
         super.updateScreen();
 
-        FailureState failState = this.container.getFailState();
-        int runtime = this.tile.getRuntime();
+        // Initial load of status text (called once when GUI is fully initialized)
+        if (!this.initialLoadDone) {
+            this.initialLoadDone = true;
+            // Clear text list and force initial text load
+            this.textList.clear();
+            this.lastFailState = FailureState.NONE;
+            this.runtimeTextLoaded = false;
+        }
 
+        FailureState failState = this.container.getFailState();
+        int runtime = this.container.getSyncedRuntime();
+
+        // Handle error state
         if (failState != FailureState.NONE) {
-            if (this.lastFailState != failState) {
-                this.lastFailState = failState;
-                this.statusLines.clear();
+            FailureState oState = this.lastFailState;
+            this.lastFailState = failState;
+            if (oState != this.lastFailState) {
+                this.textList.clear();
 
                 String errorKey = failState.getKey();
                 String errorMsg = StatCollector.translateToLocal(errorKey);
+                // Replace literal \n with actual newline (1.7.10 doesn't auto-convert)
+                errorMsg = errorMsg.replace("\\n", "\n").replace("\\r", "");
 
+                // Handle INPUT state - show expected item name
                 if (failState == FailureState.INPUT) {
                     ItemStack modelStack = this.tile.getStackInSlot(0);
+                    String inputName = StatCollector.translateToLocal("item.prediction_matrix.name");
                     if (modelStack != null && modelStack.getItem() instanceof DataModelItem) {
                         DataModelInstance model = DataModelItem.getDataModelInstance(modelStack);
                         if (model != null && model.isValid()) {
                             ItemStack expectedInput = model.getModel().getInputItem();
-                            String inputError = StatCollector.translateToLocal("hostilenetworks.fail.input");
-                            if (inputError.equals("hostilenetworks.fail.input")) {
-                                inputError = "Cannot begin simulation\nMissing input: %s";
+                            if (expectedInput != null && expectedInput.getItem() != null) {
+                                inputName = expectedInput.getDisplayName();
                             }
-                            errorMsg = String.format(inputError, expectedInput.getDisplayName());
                         }
                     }
+                    errorMsg = String.format(errorMsg, inputName);
+                }
+                // Handle MODEL state - no model inserted
+                else if (failState == FailureState.MODEL) {
+                    // Already translated from lang file, no extra formatting needed
+                }
+                // Handle ENERGY state - insufficient power to start
+                else if (failState == FailureState.ENERGY) {
+                    // Already translated from lang file, no extra formatting needed
+                }
+                // Handle OUTPUT state - output buffers full
+                else if (failState == FailureState.OUTPUT) {
+                    // Already translated from lang file, no extra formatting needed
+                }
+                // Handle ENERGY_MID_CYCLE - power ran out during simulation
+                else if (failState == FailureState.ENERGY_MID_CYCLE) {
+                    // Already translated from lang file, no extra formatting needed
+                }
+                // Handle REDSTONE state - wrong redstone signal
+                else if (failState == FailureState.REDSTONE) {
+                    // Already translated from lang file, no extra formatting needed
+                }
+                // Handle FAULTY state - tier cannot simulate
+                else if (failState == FailureState.FAULTY) {
+                    // Already translated from lang file, no extra formatting needed
                 }
 
                 String errorLabel = StatCollector.translateToLocal("hostilenetworks.status.error");
                 if (errorLabel.equals("hostilenetworks.status.error")) {
-                    errorLabel = "ERROR";
+                    errorLabel = EnumChatFormatting.OBFUSCATED + "ERROR" + EnumChatFormatting.RESET;
                 }
-                this.statusLines.add(EnumChatFormatting.OBFUSCATED + errorLabel);
-                this.statusLines.add(errorMsg);
-                this.runtimeTextLoaded = false;
+                this.textList.addLine(errorLabel, 1.0f);
+                this.textList.continueLine(errorMsg, 1.0f);
             }
-        } else if (!this.runtimeTextLoaded) {
-            this.statusLines.clear();
+            this.runtimeTextLoaded = false;
+        }
+        // Handle runtime text - load when not loaded (regardless of runtime value)
+        else if (!this.runtimeTextLoaded) {
+            int ticks = 300 - runtime;
+            float speed = RUNTIME_TEXT_SPEED;
+
+            this.textList.clear();
 
             int iterations = 0;
             ItemStack modelStack = this.tile.getStackInSlot(0);
@@ -286,48 +347,61 @@ public class SimChamberGui extends GuiContainer {
                 iterations = DataModelItem.getIterations(modelStack);
             }
 
-            String run0Text = StatCollector.translateToLocal("hostilenetworks.run.0");
-            if (run0Text.equals("hostilenetworks.run.0")) {
-                run0Text = "> Launching runtime";
-            }
-            this.statusLines.add(run0Text);
-            String versionKey = StatCollector.translateToLocal("hostilenetworks.status.version");
-            if (versionKey.equals("hostilenetworks.status.version")) {
-                versionKey = "Version %s";
-            }
-            this.statusLines.add(EnumChatFormatting.GOLD + String.format(versionKey, HostileNetworks.VERSION));
-
-            // Handle run.1 which has %s placeholder for iterations
-            String run1Text = StatCollector.translateToLocal("hostilenetworks.run.1");
-            if (run1Text.equals("hostilenetworks.run.1")) {
-                run1Text = "> Iteration #%s started";
-            }
-            this.statusLines.add(String.format(run1Text, iterations));
-
-            for (int i = 2; i < 6; i++) {
+            // Build 7 lines (matching original)
+            for (int i = 0; i < 7; i++) {
                 String runKey = "hostilenetworks.run." + i;
                 String runText = StatCollector.translateToLocal(runKey);
-                if (runText.equals(runKey)) {
-                    runText = runKey;
+
+                if (i == 0) {
+                    if (runText.equals(runKey)) {
+                        runText = "> Launching runtime";
+                    }
+                    this.textList.addLine(runText, speed);
+
+                    // Continue with version - use color code for GOLD (6 = gold in Minecraft)
+                    String versionText;
+                    String versionKey = StatCollector.translateToLocal("hostilenetworks.status.version");
+                    if (versionKey.equals("hostilenetworks.status.version")) {
+                        versionText = EnumChatFormatting.GOLD + "v" + HostileNetworks.VERSION;
+                    } else {
+                        versionText = EnumChatFormatting.GOLD + String.format(versionKey, "v" + HostileNetworks.VERSION);
+                    }
+                    this.textList.continueLine(versionText, speed);
+                } else if (i == 1) {
+                    if (runText.equals(runKey)) {
+                        runText = "> Iteration #%s started";
+                    }
+                    this.textList.addLine(String.format(runText, iterations), speed);
+                } else if (i == 5) {
+                    if (runText.equals(runKey)) {
+                        runText = "> Processing...";
+                    }
+                    this.textList.addLine(String.format(runText, iterations), speed);
+
+                    // Continue with prediction result - use color code (6 = gold for success, c = red for failed)
+                    boolean success = this.container.didPredictionSucceed();
+                    String resultKey = success ? "hostilenetworks.color_text.success" : "hostilenetworks.color_text.failed";
+                    String resultText = StatCollector.translateToLocal(resultKey);
+                    String coloredResult = (success ? EnumChatFormatting.GOLD : EnumChatFormatting.RED) + resultText;
+                    this.textList.continueLine(coloredResult, speed);
+                } else {
+                    if (runText.equals(runKey)) {
+                        runText = "> Processing...";
+                    }
+                    this.textList.addLine(String.format(runText, iterations), speed);
                 }
-                this.statusLines.add(String.format(runText, iterations));
             }
 
-            String resultKey = this.container.didPredictionSucceed() ? "hostilenetworks.color_text.success" : "hostilenetworks.color_text.failed";
-            String resultText = StatCollector.translateToLocal(resultKey);
-            if (this.container.didPredictionSucceed()) {
-                resultText = EnumChatFormatting.GOLD + resultText;
-            } else {
-                resultText = EnumChatFormatting.RED + resultText;
-            }
-            this.statusLines.add(resultText);
-
-            this.statusLines.add(StatCollector.translateToLocal("hostilenetworks.run.6") + " " + iterations);
-
+            // Sync progress with elapsed time
+            this.textList.setTicks(ticks);
             this.runtimeTextLoaded = true;
             this.lastFailState = FailureState.NONE;
         }
 
+        // Drive animation every frame
+        this.textList.tick();
+
+        // Reset when simulation completes
         if (runtime == 0) {
             this.runtimeTextLoaded = false;
         }

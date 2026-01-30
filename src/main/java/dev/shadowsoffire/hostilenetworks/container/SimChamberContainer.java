@@ -172,7 +172,8 @@ public class SimChamberContainer extends Container {
     }
 
     public FailureState getFailState() {
-        return this.tile.getFailState();
+        // Use synced value for consistent state on client
+        return FailureState.values()[this.syncedFailState];
     }
 
     public RedstoneState getRedstoneState() {

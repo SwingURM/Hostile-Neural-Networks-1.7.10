@@ -52,8 +52,8 @@ public final class Constants {
     // Timing (in ticks)
     // ============================================
 
-    /** Simulation Chamber: Duration of one simulation */
-    public static final int SIMULATION_TICKS = 60;
+    /** Simulation Chamber: Duration of one simulation (matches original mod) */
+    public static final int SIMULATION_TICKS = 300;
 
     /** Loot Fabricator: Duration of one fabrication */
     public static final int FABRICATION_TICKS = 60;

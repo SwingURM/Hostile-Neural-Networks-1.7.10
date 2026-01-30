@@ -12,6 +12,11 @@ import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
 
 import dev.shadowsoffire.hostilenetworks.HostileNetworks;
+import dev.shadowsoffire.hostilenetworks.client.DataModelProgressBar;
+import dev.shadowsoffire.hostilenetworks.data.DataModel;
+import dev.shadowsoffire.hostilenetworks.data.DataModelRegistry;
+import dev.shadowsoffire.hostilenetworks.data.ModelTier;
+import dev.shadowsoffire.hostilenetworks.data.ModelTierRegistry;
 import dev.shadowsoffire.hostilenetworks.gui.HNNGuiHandler;
 import dev.shadowsoffire.hostilenetworks.util.Constants;
 import dev.shadowsoffire.hostilenetworks.util.NBTKeys;
@@ -49,6 +54,23 @@ public class DeepLearnerItem extends Item {
             }
         }
         return count;
+    }
+
+    /**
+     * Get the current data value for a model at a specific slot.
+     */
+    public static int getModelData(ItemStack stack, int slot) {
+        if (!stack.hasTagCompound() || !stack.getTagCompound()
+            .hasKey(NBTKeys.MODELS)) {
+            return 0;
+        }
+        NBTTagList list = stack.getTagCompound()
+            .getTagList(NBTKeys.MODELS, 10);
+        if (slot >= 0 && slot < list.tagCount()) {
+            return list.getCompoundTagAt(slot)
+                .getInteger(NBTKeys.CURRENT_DATA);
+        }
+        return 0;
     }
 
     /**
@@ -128,18 +150,18 @@ public class DeepLearnerItem extends Item {
         // Find empty slot
         for (int i = 0; i < MAX_MODELS; i++) {
             if (i >= list.tagCount() || list.getCompoundTagAt(i)
-                .getString("id")
+                .getString(NBTKeys.MODEL_ID)
                 .isEmpty()) {
                 while (list.tagCount() <= i) {
                     NBTTagCompound emptyTag = new NBTTagCompound();
-                    emptyTag.setString("id", "");
-                    emptyTag.setInteger("CurrentData", 0);
+                    emptyTag.setString(NBTKeys.MODEL_ID, "");
+                    emptyTag.setInteger(NBTKeys.CURRENT_DATA, 0);
                     list.appendTag(emptyTag);
                 }
                 list.getCompoundTagAt(i)
-                    .setString("id", entityId);
+                    .setString(NBTKeys.MODEL_ID, entityId);
                 list.getCompoundTagAt(i)
-                    .setInteger("CurrentData", 0);
+                    .setInteger(NBTKeys.CURRENT_DATA, 0);
                 return true;
             }
         }
@@ -161,9 +183,9 @@ public class DeepLearnerItem extends Item {
         for (int i = 0; i < list.tagCount(); i++) {
             if (entityId.equals(
                 list.getCompoundTagAt(i)
-                    .getString("id"))) {
+                    .getString(NBTKeys.MODEL_ID))) {
                 list.getCompoundTagAt(i)
-                    .setString("id", "");
+                    .setString(NBTKeys.MODEL_ID, "");
             }
         }
     }
@@ -181,11 +203,38 @@ public class DeepLearnerItem extends Item {
         for (int i = 0; i < list.tagCount(); i++) {
             if (entityId.equals(
                 list.getCompoundTagAt(i)
-                    .getString("id"))) {
+                    .getString(NBTKeys.MODEL_ID))) {
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * Get the entity display name for an entity ID.
+     */
+    private static String getEntityDisplayName(String entityId) {
+        // Try to find in DataModel registry first
+        DataModel model = DataModelRegistry.get(entityId);
+        if (model != null) {
+            String translateKey = model.getTranslateKey();
+            String name = StatCollector.translateToLocal(translateKey);
+            if (!name.equals(translateKey)) {
+                return name;
+            }
+        }
+
+        // Fallback to entity name translation
+        String shortId = entityId;
+        if (entityId.contains(":")) {
+            shortId = entityId.substring(entityId.indexOf(":") + 1);
+        }
+        String capitalized = shortId.substring(0, 1).toUpperCase() + shortId.substring(1);
+        String entityName = StatCollector.translateToLocal("entity." + capitalized + ".name");
+        if (!entityName.equals("entity." + capitalized + ".name")) {
+            return entityName;
+        }
+        return capitalized;
     }
 
     /**
@@ -201,14 +250,50 @@ public class DeepLearnerItem extends Item {
             tooltip.add(
                 EnumChatFormatting.GRAY
                     + StatCollector.translateToLocal("tooltip.hostilenetworks.deep_learner.models"));
+
             String listPrefix = StatCollector.translateToLocal("tooltip.hostilenetworks.list_prefix");
             if (listPrefix.equals("tooltip.hostilenetworks.list_prefix")) {
                 listPrefix = "  - %s";
             }
+
             for (int i = 0; i < MAX_MODELS; i++) {
                 String entityId = getModelAt(stack, i);
                 if (entityId != null && !entityId.isEmpty()) {
-                    tooltip.add(EnumChatFormatting.WHITE + String.format(listPrefix, entityId));
+                    // Get model data for progress bar
+                    int currentData = getModelData(stack, i);
+                    ModelTier tier = ModelTierRegistry.getTier(currentData);
+                    ModelTier nextTier = ModelTierRegistry.getNextTier(tier);
+
+                    // Get tier color
+                    String tierColor = tier.getColor() != null ? tier.getColor().toString() : "\u00a7f";
+
+                    // Get entity display name
+                    String entityName = getEntityDisplayName(entityId);
+
+                    // Create progress bar
+                    String progressBar = DataModelProgressBar.createProgressBar(
+                        currentData,
+                        tier.getRequiredData(),
+                        nextTier.getRequiredData(),
+                        tier.isMax(),
+                        tierColor
+                    );
+
+                    // Add model info with progress bar
+                    tooltip.add(tierColor + entityName + " " + progressBar);
+
+                    // Add kills needed if not max tier
+                    if (!tier.isMax()) {
+                        int dataPerKill = tier.getDataPerKill();
+                        if (dataPerKill > 0) {
+                            int killsNeeded = (int) Math.ceil((nextTier.getRequiredData() - currentData) / (float) dataPerKill);
+                            String killsKey = StatCollector.translateToLocal("hostilenetworks.hud.kills");
+                            if (killsKey.equals("hostilenetworks.hud.kills")) {
+                                killsKey = "%s Remaining";
+                            }
+                            tooltip.add(EnumChatFormatting.GRAY + String.format(killsKey, killsNeeded));
+                        }
+                    }
                 }
             }
         }

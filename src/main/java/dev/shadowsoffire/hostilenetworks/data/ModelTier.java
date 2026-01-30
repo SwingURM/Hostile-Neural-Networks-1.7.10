@@ -69,6 +69,14 @@ public class ModelTier {
     }
 
     /**
+     * Get the tier name for display with color.
+     * e.g., "§aBasic" for green basic tier.
+     */
+    public String getColoredName() {
+        return this.color.toString() + this.getDisplayName();
+    }
+
+    /**
      * Get the tier name identifier (without color formatting).
      * Used for registry and configuration.
      */

@@ -51,7 +51,9 @@ dependencies {
         transitive = false
     }
 
-    // EnderIO + EnderCore for testing energy system (only in dev runs)
-    runtimeOnlyNonPublishable(project.files("endercore-0.5.4-pre.jar"))
-    runtimeOnlyNonPublishable(project.files("EnderIO-2.10.16-pre.jar"))
+    // EnderIO + EnderCore for local testing only (skipped in CI)
+    if (!System.getenv("CI") && !project.hasProperty("isCI")) {
+        devOnlyNonPublishable(project.files("libs/endercore-0.5.5.jar"))
+        devOnlyNonPublishable(project.files("libs/EnderIO-2.10.16-pre.jar"))
+    }
 }

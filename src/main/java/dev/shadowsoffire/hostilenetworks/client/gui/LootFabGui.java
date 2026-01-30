@@ -43,6 +43,7 @@ public class LootFabGui extends GuiContainer {
     private static final int FAB_BTN_V = 0;
 
     private final LootFabTileEntity tile;
+    private final LootFabContainer container;
     private DataModel currentModel;
     private int currentPage = 0;
     private ImageButton btnLeft;
@@ -52,6 +53,7 @@ public class LootFabGui extends GuiContainer {
         super(new LootFabContainer(playerInventory, tile));
         // Use tile from container to ensure correct reference
         this.tile = (LootFabTileEntity) ((LootFabContainer) this.inventorySlots).getSlot(0).inventory;
+        this.container = (LootFabContainer) this.inventorySlots;
         this.xSize = 176;
         this.ySize = 178;
     }
@@ -81,7 +83,7 @@ public class LootFabGui extends GuiContainer {
         super.updateScreen();
 
         // Update model from prediction slot
-        this.currentModel = ((LootFabContainer) this.inventorySlots).getCurrentDataModel();
+        this.currentModel = this.container.getCurrentDataModel();
 
         if (this.currentModel != null) {
             // Update button visibility based on page count
@@ -127,8 +129,7 @@ public class LootFabGui extends GuiContainer {
 
         // Energy bar (7px wide, at left side) - draws filled bar from bottom
         // Full energy = full bar (53px), empty energy = no bar
-        LootFabContainer container = (LootFabContainer) this.inventorySlots;
-        int energyStored = container.getSyncedEnergy();
+        int energyStored = this.container.getSyncedEnergy();
         int maxEnergy = this.tile.getMaxEnergyStored();
         int energyHeight = (int) (53F * energyStored / maxEnergy);
         if (energyHeight > 0) {
@@ -138,8 +139,9 @@ public class LootFabGui extends GuiContainer {
 
         // Progress bar (6px wide) - draws filled bar from bottom
         // When progress=0, bar is empty; when progress=60, bar is full (35px)
-        int progress = container.getSyncedProgress();
-        int progressHeight = (int) (35F * progress / 60F);
+        int progress = this.container.getSyncedProgress();
+        // Clamp progress height to prevent rendering outside UI bounds
+        int progressHeight = Math.min((int) (35F * progress / 60F), 35);
         if (progressHeight > 0) {
             drawTexturedModalRect(left + 84, top + 23 + 35 - progressHeight, 7, 83 + 35 - progressHeight, 6, progressHeight);
         }
@@ -162,7 +164,7 @@ public class LootFabGui extends GuiContainer {
         List<ItemStack> drops = this.currentModel.getFabricatorDrops();
         if (drops.isEmpty()) return;
 
-        int selection = ((LootFabContainer) this.inventorySlots).getSelectedDrop();
+        int selection = this.container.getSelectedDrop();
         int startIndex = this.currentPage * 9;
         int endIndex = Math.min(startIndex + 9, drops.size());
 
@@ -299,7 +301,7 @@ public class LootFabGui extends GuiContainer {
 
             if (mouseX >= x && mouseX < x + 16 && mouseY >= y && mouseY < y + 16) {
                 // Update local selection immediately (optimistic UI)
-                ((LootFabContainer) this.inventorySlots).setLocalSelection(i);
+                this.container.setLocalSelection(i);
                 // Send selection to server
                 HostileNetworksEvents.sendLootFabSelection(this.tile.xCoord, this.tile.yCoord, this.tile.zCoord, i);
                 return;
@@ -312,7 +314,7 @@ public class LootFabGui extends GuiContainer {
             && mouseY >= this.guiTop + 5
             && mouseY < this.guiTop + 21) {
             // Update local selection immediately (optimistic UI)
-            ((LootFabContainer) this.inventorySlots).setLocalSelection(-1);
+            this.container.setLocalSelection(-1);
             // Send clear selection to server
             HostileNetworksEvents.sendLootFabSelection(this.tile.xCoord, this.tile.yCoord, this.tile.zCoord, -1);
         }

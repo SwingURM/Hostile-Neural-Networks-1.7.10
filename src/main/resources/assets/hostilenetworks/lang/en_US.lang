@@ -69,13 +69,19 @@ hostilenetworks.gui.redstone.on_when_powered=Redstone: On When Powered
 
 # Failure States
 hostilenetworks.fail.none=None
-hostilenetworks.fail.output=Cannot begin simulation\nOutput buffers are occupied
-hostilenetworks.fail.energy=Cannot begin simulation\nSystem energy levels critical
-hostilenetworks.fail.input=Cannot begin simulation\nMissing input: %s
+hostilenetworks.fail.output=Cannot begin simulation
+Output buffers are occupied
+hostilenetworks.fail.energy=Cannot begin simulation
+System energy levels critical
+hostilenetworks.fail.input=Cannot begin simulation
+Missing input: %s
+Missing input: %s
 hostilenetworks.fail.model=Please insert a Data Model to begin the simulation
 hostilenetworks.fail.faulty=Insufficient data in model. Please insert a basic model or better
-hostilenetworks.fail.energy_mid_cycle=Simulation progress paused\nSystem energy levels critical
-hostilenetworks.fail.redstone=Simulation progress paused\nIncorrect redstone signal applied
+hostilenetworks.fail.energy_mid_cycle=Simulation progress paused
+System energy levels critical
+hostilenetworks.fail.redstone=Simulation progress paused
+Incorrect redstone signal applied
 
 # Simulation Runtime Text
 hostilenetworks.run.0=> Launching runtime

@@ -53,14 +53,7 @@ public class SimChamberTileEntity extends TileEntity implements IInventory, ISid
 
     @Override
     public void updateEntity() {
-        HostileNetworks.LOG.debug("[SimChamber] updateEntity called at " + xCoord + "," + yCoord + "," + zCoord);
-
-        if (worldObj == null) {
-            HostileNetworks.LOG.debug("[SimChamber] worldObj is null!");
-            return;
-        }
-        if (worldObj.isRemote) {
-            HostileNetworks.LOG.debug("[SimChamber] worldObj.isRemote = true, skipping");
+        if (worldObj == null || worldObj.isRemote) {
             return;
         }
 
@@ -75,11 +68,6 @@ public class SimChamberTileEntity extends TileEntity implements IInventory, ISid
             return;
         }
 
-        HostileNetworks.LOG.debug(
-            "[SimChamber] Model stack: " + modelStack.getItem()
-                .getClass()
-                .getName());
-
         if (!DataModelItem.isAttuned(modelStack)) {
             HostileNetworks.LOG
                 .debug("[SimChamber] Model is not attuned (blank model). damage=" + modelStack.getItemDamage());
@@ -88,15 +76,10 @@ public class SimChamberTileEntity extends TileEntity implements IInventory, ISid
             return;
         }
 
-        HostileNetworks.LOG.debug("[SimChamber] Model is attuned, checking currentModel...");
-
         // Use ItemStack-based constructor to get proper reference
         if (this.currentModel.getSourceStack() != modelStack) {
-            HostileNetworks.LOG.debug("[SimChamber] Creating new DataModelInstance...");
             this.currentModel = new DataModelInstance(modelStack, 0);
         }
-
-        HostileNetworks.LOG.debug("[SimChamber] currentModel.isValid=" + this.currentModel.isValid());
 
         if (this.currentModel.isValid()) {
             DataModel model = this.currentModel.getModel();
@@ -124,9 +107,6 @@ public class SimChamberTileEntity extends TileEntity implements IInventory, ISid
                             inventory[Constants.SLOT_MATRIX] = null;
                         }
                     }
-                } else {
-                    HostileNetworks.LOG
-                        .debug("[SimChamber] canStartSimulation returned false. failState=" + this.failState);
                 }
             } else if (this.hasPowerFor(model)) {
                 if (this.redstoneState.matches(worldObj.isBlockIndirectlyGettingPowered(xCoord, yCoord, zCoord))) {
@@ -191,26 +171,23 @@ public class SimChamberTileEntity extends TileEntity implements IInventory, ISid
                 this.failState = FailureState.ENERGY_MID_CYCLE;
             }
         } else {
-            HostileNetworks.LOG.debug("[SimChamber] Current model is invalid");
             this.failState = FailureState.MODEL;
             this.runtime = 0;
         }
     }
 
     /**
-     * Check if the output slots are clear and there is enough power for a sim run.
+     * Check if the output slots are clear and there enough power for a sim run.
      */
     public boolean canStartSimulation(DataModel model) {
         // Check redstone state first
         if (!this.redstoneState.matches(worldObj.isBlockIndirectlyGettingPowered(xCoord, yCoord, zCoord))) {
-            HostileNetworks.LOG.debug("[SimChamber] Cannot start: redstone blocked");
             this.failState = FailureState.REDSTONE;
             return false;
         }
 
         ItemStack matrixStack = inventory[Constants.SLOT_MATRIX];
         if (matrixStack == null || !matrixStack.isItemEqual(HostileItems.getPredictionMatrix())) {
-            HostileNetworks.LOG.debug("[SimChamber] Cannot start: missing or invalid matrix. Has: " + matrixStack);
             this.failState = FailureState.INPUT;
             return false;
         }
@@ -220,60 +197,33 @@ public class SimChamberTileEntity extends TileEntity implements IInventory, ISid
 
         // Check if base drop is valid
         ItemStack nOutExp = model.getBaseDrop();
-        HostileNetworks.LOG
-            .debug("[SimChamber] baseDrop=" + (nOutExp == null ? "null" : "ItemStack with item=" + nOutExp.getItem()));
         if (nOutExp == null || nOutExp.getItem() == null) {
-            HostileNetworks.LOG.debug("[SimChamber] Cannot start: invalid base drop (null or no item)");
             this.failState = FailureState.OUTPUT;
             return false;
         }
-        HostileNetworks.LOG.debug(
-            "[SimChamber] baseDrop item=" + nOutExp.getItem()
-                .getClass()
-                .getName());
 
         // Check if prediction item is registered
         ItemStack pOutExp = null;
         if (HostileItems.mob_prediction != null) {
             pOutExp = MobPredictionItem.create(model.getEntityId());
         }
-        HostileNetworks.LOG.debug(
-            "[SimChamber] predictionItem=" + (pOutExp == null ? "null" : "ItemStack with item=" + pOutExp.getItem()));
         if (pOutExp == null || pOutExp.getItem() == null) {
-            HostileNetworks.LOG.debug("[SimChamber] Cannot start: invalid prediction item (null or no item)");
             this.failState = FailureState.OUTPUT;
             return false;
         }
-        HostileNetworks.LOG.debug(
-            "[SimChamber] predictionItem item=" + pOutExp.getItem()
-                .getClass()
-                .getName());
 
         // Check output slots
-        String nOutInfo = nOut == null ? "null" : nOut.getItem() == null ? "ItemStack with null item" : nOut.toString();
-        String pOutInfo = pOut == null ? "null" : pOut.getItem() == null ? "ItemStack with null item" : pOut.toString();
-        HostileNetworks.LOG.debug("[SimChamber] Checking output slots. nOut=" + nOutInfo + ", pOut=" + pOutInfo);
         if (!this.canStack(nOut, nOutExp)) {
-            HostileNetworks.LOG.debug(
-                "[SimChamber] Cannot start: output base slot full. nOut.stackSize="
-                    + (nOut != null ? nOut.stackSize : "null"));
             this.failState = FailureState.OUTPUT;
             return false;
         }
         if (!this.canStack(pOut, pOutExp)) {
-            HostileNetworks.LOG.debug(
-                "[SimChamber] Cannot start: output prediction slot full. pOut.stackSize="
-                    + (pOut != null ? pOut.stackSize : "null"));
             this.failState = FailureState.OUTPUT;
             return false;
         }
 
         // Check power
         if (!this.hasPowerFor(model)) {
-            HostileNetworks.LOG.debug(
-                "[SimChamber] Cannot start: insufficient power. Have: " + this.energyStored
-                    + ", Need: "
-                    + model.getSimCost());
             this.failState = FailureState.ENERGY;
             return false;
         }

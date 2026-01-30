@@ -19,6 +19,7 @@ import dev.shadowsoffire.hostilenetworks.data.DataModelInstance;
 import dev.shadowsoffire.hostilenetworks.data.ModelTier;
 import dev.shadowsoffire.hostilenetworks.data.ModelTierRegistry;
 import dev.shadowsoffire.hostilenetworks.item.DataModelItem;
+import dev.shadowsoffire.hostilenetworks.util.EntityStatsHelper;
 
 /**
  * GUI for the Deep Learner item.
@@ -170,6 +171,7 @@ public class DeepLearnerGui extends GuiContainer {
 
     /**
      * Setup display for a model.
+     * Stats are retrieved from the entity using EntityStatsHelper.
      */
     private void setupModel(DataModelInstance instance) {
         if (instance == null || !instance.isValid()) return;
@@ -177,11 +179,9 @@ public class DeepLearnerGui extends GuiContainer {
         DataModel model = instance.getModel();
         ModelTier tier = instance.getTier();
 
-        // Stats: Health/2, Armor/2, XP reward
-        // Note: In 1.7.10, we'll use placeholder values since entity attributes aren't easily accessible
-        statArray[0] = "?"; // Health
-        statArray[1] = "?"; // Armor
-        statArray[2] = "?"; // XP
+        // Get stats from entity
+        String entityId = model.getEntityId();
+        statArray = EntityStatsHelper.getAllStats(entityId);
     }
 
     @Override
@@ -244,11 +244,11 @@ public class DeepLearnerGui extends GuiContainer {
         if (numModels == 0) return;
 
         int oldIndex = selectedModelIndex;
-        selectedModelIndex = clamp(selectedModelIndex - 1);
+        selectedModelIndex = wrapIndex(selectedModelIndex - 1);
 
         // Find next valid model
         while (!modelInstances[selectedModelIndex].isValid()) {
-            selectedModelIndex = clamp(selectedModelIndex - 1);
+            selectedModelIndex = wrapIndex(selectedModelIndex - 1);
         }
 
         if (modelInstances[selectedModelIndex].getSlot() != oldIndex) {
@@ -263,11 +263,11 @@ public class DeepLearnerGui extends GuiContainer {
         if (numModels == 0) return;
 
         int oldIndex = selectedModelIndex;
-        selectedModelIndex = clamp(selectedModelIndex + 1);
+        selectedModelIndex = wrapIndex(selectedModelIndex + 1);
 
         // Find next valid model
         while (!modelInstances[selectedModelIndex].isValid()) {
-            selectedModelIndex = clamp(selectedModelIndex + 1);
+            selectedModelIndex = wrapIndex(selectedModelIndex + 1);
         }
 
         if (modelInstances[selectedModelIndex].getSlot() != oldIndex) {
@@ -276,18 +276,24 @@ public class DeepLearnerGui extends GuiContainer {
     }
 
     /**
-     * Clamp index to 0-3 range with wrap-around.
+     * Wrap index to 0-3 range (circular buffer style).
+     * Does not modify selectedModelIndex.
      */
+    private int wrapIndex(int idx) {
+        if (idx < 0) return 3;
+        if (idx > 3) return 0;
+        return idx;
+    }
+
+    /**
+     * Clamp index to 0-3 range (deprecated, use wrapIndex for circular navigation).
+     * @deprecated Use wrapIndex() for circular navigation
+     */
+    @Deprecated
     private int clamp(int idx) {
         if (idx < 0) idx = 3;
         if (idx > 3) idx = 0;
         return selectedModelIndex = idx;
-    }
-
-    @Override
-    public void updateScreen() {
-        super.updateScreen();
-        // Models are updated via callback, no need to poll here
     }
 
     /**
@@ -432,15 +438,23 @@ public class DeepLearnerGui extends GuiContainer {
                 }
 
                 // Stats section (right side, aligned with dots)
-                int statsX = guiLeft + WIDTH - 49 - 100;
-                int statsY = guiTop + 9 + lineHeight;
+                // Use relative coordinates within the GUI panel (matching foreground layer style)
+                // "数据" header X = WIDTH - 49 - statsWidth = 338 - 49 - statsWidth = 289 - statsWidth
+                // "数据" is inside the main panel (which spans from 49 to 49+256=305)
+                String statsHeader = StatCollector.translateToLocal("hostilenetworks.gui.stats");
+                int statsWidth = fontRendererObj.getStringWidth(statsHeader);
 
-                // Draw "Stats" header (aqua)
-                drawLocalizedString("hostilenetworks.gui.stats", statsX, top, COLOR_AQUA);
+                // Stats header X position (relative to GUI left, inside main panel)
+                int statsX = WIDTH - 49 - statsWidth;
 
+                // Draw "数据"/"Statistics" header (aqua)
+                drawLocalizedString("hostilenetworks.gui.stats", statsX, top + 3, COLOR_AQUA);
+
+                // Stats values are 13 pixels to the right of header (36 - 23 = 13)
+                int statsValueX = WIDTH - 36 - statsWidth;
                 for (int i = 0; i < 3; i++) {
                     String statValue = statArray[i] != null ? statArray[i] : "?";
-                    drawColoredString(statValue, statsX + 15, statsY + (lineHeight + 2) * i, COLOR_WHITE);
+                    drawColoredString(statValue, statsValueX, top + 8 + lineHeight + (lineHeight + 2) * i, COLOR_WHITE);
                 }
             }
         }
@@ -487,11 +501,15 @@ public class DeepLearnerGui extends GuiContainer {
         drawTexturedModalRect(guiLeft + 41, guiTop, 0, 0, 256, 140);
 
         // Entity preview area background (left side)
+        // Positioned at left - 41 (matches original)
         drawTexturedModalRect(guiLeft - 41, guiTop + 8, 9, 140, 75, 101);
 
         // Stats indicator dots (3 rows, right side)
-        int dotsX = guiLeft + WIDTH - 49 - 115;
-        int dotsY = guiTop + 9 + fontRendererObj.FONT_HEIGHT;
+        // Background layer uses absolute coordinates for drawTexturedModalRect
+        String statsHeader = StatCollector.translateToLocal("hostilenetworks.gui.stats");
+        int statsWidth = fontRendererObj.getStringWidth(statsHeader);
+        int dotsX = guiLeft + WIDTH - 49 - statsWidth;
+        int dotsY = guiTop + 8 + fontRendererObj.FONT_HEIGHT;
         int dotsLineHeight = fontRendererObj.FONT_HEIGHT + 2;
 
         for (int i = 0; i < 3; i++) {
