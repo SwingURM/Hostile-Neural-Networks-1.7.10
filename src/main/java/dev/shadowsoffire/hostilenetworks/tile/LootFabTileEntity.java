@@ -1,5 +1,6 @@
 package dev.shadowsoffire.hostilenetworks.tile;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,9 +12,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.MathHelper;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import cofh.api.energy.IEnergyReceiver;
+import cpw.mods.fml.common.registry.GameRegistry;
 import dev.shadowsoffire.hostilenetworks.HostileConfig;
 import dev.shadowsoffire.hostilenetworks.data.DataModel;
 import dev.shadowsoffire.hostilenetworks.data.DataModelRegistry;
@@ -27,6 +30,9 @@ import dev.shadowsoffire.hostilenetworks.util.Constants;
  * Implements IEnergyReceiver to receive power from RF conduits (EnderIO, Thermal Expansion, etc.)
  */
 public class LootFabTileEntity extends TileEntity implements IInventory, ISidedInventory, IEnergyReceiver {
+
+    /** Ticks required to complete one crafting operation (3 seconds at 20 ticks/sec). */
+    private static final int CRAFTING_TICKS = 60;
 
     // Inventory - use constants for slot indices
     private final ItemStack[] inventory = new ItemStack[Constants.LOOT_FAB_INVENTORY_SIZE];
@@ -46,76 +52,128 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
         super();
     }
 
+    /**
+     * Get the fabricator drops for a model, using config override if available.
+     */
+    private List<ItemStack> getFabricatorDropsWithConfig(DataModel model) {
+        if (model == null) return new ArrayList<>();
+
+        // Check if model is disabled - return empty list
+        if (!HostileConfig.isModelEnabled(model.getEntityId())) {
+            return new ArrayList<>();
+        }
+
+        // Use config override if available
+        if (model.shouldUseConfigFabricatorDrops()) {
+            return parseConfigDrops(model.getConfigFabricatorDrops());
+        }
+
+        return model.getFabricatorDrops();
+    }
+
+    /**
+     * Parse fabricator drops from config string list.
+     * Format: "modid:item:count,modid:item:count"
+     */
+    private List<ItemStack> parseConfigDrops(List<String> dropStrings) {
+        List<ItemStack> drops = new ArrayList<>();
+        for (String dropStr : dropStrings) {
+            try {
+                String[] parts = dropStr.split(":");
+                String modId = parts.length > 2 ? parts[0] : "minecraft";
+                String itemName = parts.length > 2 ? parts[1] : parts[0];
+                int count = parts.length > 2 ? MathHelper.parseIntWithDefault(parts[2], 1) : 1;
+
+                ItemStack item = GameRegistry.makeItemStack(modId + ":" + itemName, 0, count, null);
+                if (item != null && item.getItem() != null) {
+                    drops.add(item);
+                }
+            } catch (Exception e) {
+                // Skip invalid drops
+            }
+        }
+        return drops;
+    }
+
     @Override
     public void updateEntity() {
         if (worldObj == null || worldObj.isRemote) return;
 
         ItemStack predictionStack = inventory[Constants.SLOT_PREDICTION];
 
-        if (predictionStack != null && MobPredictionItem.getEntityId(predictionStack) != null) {
-            String entityId = MobPredictionItem.getEntityId(predictionStack);
-            DataModel model = DataModelRegistry.get(entityId);
-
-            if (model != null && !model.getFabricatorDrops()
-                .isEmpty()) {
-                // Get the selected drop index for this entity
-                int selection = getSelectedDrop(model);
-                List<ItemStack> drops = model.getFabricatorDrops();
-
-                // Check if selection is valid
-                if (selection >= 0 && selection < drops.size()) {
-                    // Check if selection changed - reset progress
-                    if (this.currentSelection != selection) {
-                        this.currentSelection = selection;
-                        this.progress = 0;
-                        return;
-                    }
-
-                    // Check if output space is available
-                    if (hasOutputSpace()) {
-                        // Check if we have enough energy to start this tick
-                        if (this.energyStored >= HostileConfig.fabPowerCost) {
-                            // Start crafting - 60 ticks (3 seconds) to complete
-                            this.progress++;
-                            this.energyStored -= HostileConfig.fabPowerCost;
-                            this.markDirty(); // Sync progress and energy to client
-
-                            if (this.progress >= 60) {
-                                // Craft the selected drop
-                                ItemStack drop = drops.get(selection)
-                                    .copy();
-                                if (insertInOutput(drop, true)) {
-                                    this.progress = 0;
-                                    insertInOutput(drop, false);
-                                    this.inventory[Constants.SLOT_PREDICTION].stackSize--;
-                                    if (this.inventory[Constants.SLOT_PREDICTION].stackSize <= 0) {
-                                        this.inventory[Constants.SLOT_PREDICTION] = null;
-                                    }
-                                    this.markDirty();
-                                }
-                            }
-                            this.isCrafting = true;
-                        } else {
-                            this.isCrafting = false;
-                        }
-                    } else {
-                        this.progress = 0;
-                        this.isCrafting = false;
-                    }
-                } else {
-                    // No valid selection, reset progress
-                    this.currentSelection = -1;
-                    this.progress = 0;
-                    this.isCrafting = false;
-                }
-            } else {
-                this.isCrafting = false;
-            }
-        } else {
-            this.isCrafting = false;
-            this.progress = 0;
-            this.currentSelection = -1;
+        if (predictionStack == null) {
+            resetState();
+            return;
         }
+
+        String entityId = MobPredictionItem.getEntityId(predictionStack);
+        if (entityId == null) {
+            resetState();
+            return;
+        }
+
+        DataModel model = DataModelRegistry.get(entityId);
+        if (model == null || getFabricatorDropsWithConfig(model).isEmpty()) {
+            this.isCrafting = false;
+            return;
+        }
+
+        // Get the selected drop index for this entity
+        int selection = getSelectedDrop(model);
+        if (selection < 0 || selection >= model.getFabricatorDrops().size()) {
+            resetState();
+            return;
+        }
+
+        // Check if selection changed - reset progress
+        if (this.currentSelection != selection) {
+            this.currentSelection = selection;
+            this.progress = 0;
+            return;
+        }
+
+        // Check if output space is available
+        if (!hasOutputSpace()) {
+            this.progress = 0;
+            this.isCrafting = false;
+            return;
+        }
+
+        // Check if we have enough energy to start this tick
+        if (this.energyStored < HostileConfig.fabPowerCost) {
+            this.isCrafting = false;
+            return;
+        }
+
+        // Start crafting
+        this.progress++;
+        this.energyStored -= HostileConfig.fabPowerCost;
+        this.markDirty(); // Sync progress and energy to client
+
+        if (this.progress >= CRAFTING_TICKS) {
+            // Craft the selected drop
+            List<ItemStack> drops = getFabricatorDropsWithConfig(model);
+            ItemStack drop = drops.get(selection).copy();
+            if (insertInOutput(drop, true)) {
+                this.progress = 0;
+                insertInOutput(drop, false);
+                this.inventory[Constants.SLOT_PREDICTION].stackSize--;
+                if (this.inventory[Constants.SLOT_PREDICTION].stackSize <= 0) {
+                    this.inventory[Constants.SLOT_PREDICTION] = null;
+                }
+                this.markDirty();
+            }
+        }
+        this.isCrafting = true;
+    }
+
+    /**
+     * Reset crafting state when no prediction is present.
+     */
+    private void resetState() {
+        this.isCrafting = false;
+        this.progress = 0;
+        this.currentSelection = -1;
     }
 
     /**
@@ -123,7 +181,7 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
      */
     private boolean hasOutputSpace() {
         for (int i = Constants.SLOT_OUTPUT_START; i < Constants.LOOT_FAB_INVENTORY_SIZE; i++) {
-            if (inventory[i] == null || inventory[i].stackSize < inventory[i].getMaxStackSize()) {
+            if (this.inventory[i] == null || this.inventory[i].stackSize < this.inventory[i].getMaxStackSize()) {
                 return true;
             }
         }
@@ -141,8 +199,8 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
         // First, try to stack with existing items
         for (int i = Constants.SLOT_OUTPUT_START; i < Constants.LOOT_FAB_INVENTORY_SIZE
             && remaining.stackSize > 0; i++) {
-            if (inventory[i] != null) {
-                ItemStack existing = inventory[i];
+            if (this.inventory[i] != null) {
+                ItemStack existing = this.inventory[i];
                 if (existing.isItemEqual(remaining) && existing.stackSize < existing.getMaxStackSize()) {
                     int canAdd = Math.min(remaining.stackSize, existing.getMaxStackSize() - existing.stackSize);
                     if (!simulate) {
@@ -156,9 +214,9 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
         // Then, try to fill empty slots
         for (int i = Constants.SLOT_OUTPUT_START; i < Constants.LOOT_FAB_INVENTORY_SIZE
             && remaining.stackSize > 0; i++) {
-            if (inventory[i] == null) {
+            if (this.inventory[i] == null) {
                 if (!simulate) {
-                    inventory[i] = remaining.copy();
+                    this.inventory[i] = remaining.copy();
                 }
                 remaining.stackSize = 0;
                 break;
@@ -170,16 +228,13 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
 
     /**
      * Get the currently selected drop index for a data model.
-     * 
+     *
      * @return The selected drop index, or -1 if no selection
      */
     public int getSelectedDrop(DataModel model) {
         if (model == null) return -1;
         Integer selection = savedSelections.get(model.getEntityId());
-        if (selection == null) return -1;
-        if (selection >= model.getFabricatorDrops()
-            .size()) return -1;
-        return selection;
+        return (selection == null || selection >= model.getFabricatorDrops().size()) ? -1 : selection;
     }
 
     /**
@@ -195,6 +250,30 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
             savedSelections.put(model.getEntityId(), selection);
         }
         this.currentSelection = selection;
+        this.progress = 0;
+        this.markDirty();
+    }
+
+    /**
+     * Get all saved selections from this fabricator.
+     * Returns a copy to prevent external modification.
+     *
+     * @return Map of entity ID to selected drop index
+     */
+    public Map<String, Integer> getSelections() {
+        return new HashMap<>(savedSelections);
+    }
+
+    /**
+     * Set all selections from a map.
+     * Used by FabDirectiveItem to apply saved selections.
+     *
+     * @param selections Map of entity ID to selected drop index
+     */
+    public void setSelections(Map<String, Integer> selections) {
+        this.savedSelections.clear();
+        this.savedSelections.putAll(selections);
+        this.currentSelection = -1;
         this.progress = 0;
         this.markDirty();
     }
@@ -269,7 +348,7 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
         if (eventId == 0) {
             // Drop selection event
             DataModel model = null;
-            ItemStack predictionStack = inventory[Constants.SLOT_PREDICTION];
+            ItemStack predictionStack = this.inventory[Constants.SLOT_PREDICTION];
             if (predictionStack != null) {
                 String entityId = MobPredictionItem.getEntityId(predictionStack);
                 if (entityId != null) {
@@ -298,26 +377,26 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
 
     @Override
     public ItemStack decrStackSize(int slot, int amount) {
-        if (inventory[slot] == null) return null;
-        ItemStack stack = inventory[slot];
+        if (this.inventory[slot] == null) return null;
+        ItemStack stack = this.inventory[slot];
         ItemStack result = stack.splitStack(amount);
         if (stack.stackSize <= 0) {
-            inventory[slot] = null;
+            this.inventory[slot] = null;
         }
         return result;
     }
 
     @Override
     public ItemStack getStackInSlotOnClosing(int slot) {
-        if (inventory[slot] == null) return null;
-        ItemStack stack = inventory[slot];
-        inventory[slot] = null;
+        if (this.inventory[slot] == null) return null;
+        ItemStack stack = this.inventory[slot];
+        this.inventory[slot] = null;
         return stack;
     }
 
     @Override
     public void setInventorySlotContents(int slot, ItemStack stack) {
-        inventory[slot] = stack;
+        this.inventory[slot] = stack;
         if (stack != null && stack.stackSize > getInventoryStackLimit()) {
             stack.stackSize = getInventoryStackLimit();
         }
@@ -390,7 +469,7 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
         for (int i = 0; i < list.tagCount(); i++) {
             NBTTagCompound itemTag = list.getCompoundTagAt(i);
             int slot = itemTag.getByte("slot");
-            inventory[slot] = ItemStack.loadItemStackFromNBT(itemTag);
+            this.inventory[slot] = ItemStack.loadItemStackFromNBT(itemTag);
         }
 
         this.energyStored = tag.getInteger("energy");
@@ -413,10 +492,10 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
 
         NBTTagList list = new NBTTagList();
         for (int i = 0; i < Constants.LOOT_FAB_INVENTORY_SIZE; i++) {
-            if (inventory[i] != null) {
+            if (this.inventory[i] != null) {
                 NBTTagCompound itemTag = new NBTTagCompound();
                 itemTag.setByte("slot", (byte) i);
-                inventory[i].writeToNBT(itemTag);
+                this.inventory[i].writeToNBT(itemTag);
                 list.appendTag(itemTag);
             }
         }

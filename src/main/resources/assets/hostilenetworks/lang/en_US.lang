@@ -145,6 +145,10 @@ tooltip.hostilenetworks.fab_directive.empty=Empty directive
 tooltip.hostilenetworks.fab_directive.copy=Right-click Loot Fabricator to copy
 tooltip.hostilenetworks.fab_directive.saved=Saved selections: %d
 tooltip.hostilenetworks.fab_directive.apply=Right-click Loot Fabricator to apply
+tooltip.hostilenetworks.fab_directive.stored_selections=Stored Selections (%d):
+tooltip.hostilenetworks.fab_directive.more=...
+tooltip.hostilenetworks.fab_directive.invalid=Invalid selection (index: %d)
+tooltip.hostilenetworks.fab_directive.stored_info=Stored %d selections
 item.hostilenetworks.fab_directive.desc=Stores selections from a Loot Fabricator
 item.hostilenetworks.fab_directive.desc2=Right-Click to copy, Shift-Right-Click to apply
 
@@ -269,3 +273,9 @@ hostilenetworks.gui.item_count=x%s
 
 # Tooltip prefixes
 tooltip.hostilenetworks.list_prefix=  - %s
+
+# FabDirective Messages
+text.hostilenetworks.selections_applied=Applied %s selections from %s
+text.hostilenetworks.selections_copied=Copied %s selections from %s
+text.hostilenetworks.fab_directive.empty=Empty directive - nothing to apply
+text.hostilenetworks.fab_directive.nothing=No selections to copy
