@@ -41,6 +41,14 @@ public class LootFabRecipeHandler extends TemplateRecipeHandler {
         return "hostilenetworks.loot_fabricator";
     }
 
+    /**
+     * Set recipes per page to 3 for better visibility.
+     */
+    @Override
+    public int recipiesPerPage() {
+        return 3;
+    }
+
     @Override
     public void loadTransferRects() {
         // No transfer rects needed - NEI handles recipe transfer automatically
@@ -168,9 +176,9 @@ public class LootFabRecipeHandler extends TemplateRecipeHandler {
             if (dropIndex >= 0 && dropIndex < drops.size()) {
                 ItemStack drop = drops.get(dropIndex)
                     .copy();
-                drop.stackSize = 1;
+                // Keep original stack size to show in NEI
                 this.output = new PositionedStack(drop, 111, 25);
-                this.output.setMaxSize(1);
+                this.output.setMaxSize(64);
             } else {
                 this.output = null;
             }

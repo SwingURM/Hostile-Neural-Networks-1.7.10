@@ -1,0 +1,30 @@
+{
+    "entity": "minecraft:LavaSlime",
+    "variants": [],
+    "name": {
+        "translate": "entity.minecraft.magma_cube",
+        "color": "#CC2200"
+    },
+    "display": {
+        "scale": 0.6
+    },
+    "sim_cost": 256,
+    "input": {
+        "item": "hostilenetworks:prediction_matrix"
+    },
+    "base_drop": {
+        "id": "hostilenetworks:nether_prediction"
+    },
+    "trivia": "hostilenetworks.trivia.LavaSlime",
+    "fabricator_drops": [
+        {
+            "id": "minecraft:magma_cream",
+            "count": 32
+        },
+        {
+            "id": "reliquary:molten_core",
+            "optional": true,
+            "count": 2
+        }
+    ]
+}

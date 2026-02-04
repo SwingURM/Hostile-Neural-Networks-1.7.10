@@ -1,0 +1,46 @@
+{
+    "entity": "minecraft:Zombie",
+    "variants": [
+        "minecraft:husk",
+        "minecraft:zombie_villager",
+        "TwilightForest.Loyal Zombie"
+    ],
+    "name": {
+        "translate": "entity.minecraft.zombie",
+        "color": "#3B622F"
+    },
+    "display": {
+        "scale": 0.4
+    },
+    "sim_cost": 128,
+    "input": {
+        "item": "hostilenetworks:prediction_matrix"
+    },
+    "base_drop": {
+        "id": "hostilenetworks:overworld_prediction"
+    },
+    "trivia": "hostilenetworks.trivia.Zombie",
+    "fabricator_drops": [
+        {
+            "id": "minecraft:rotten_flesh",
+            "count": 64
+        },
+        {
+            "id": "minecraft:iron_ingot",
+            "count": 8
+        },
+        {
+            "id": "minecraft:carrot",
+            "count": 16
+        },
+        {
+            "id": "minecraft:potato",
+            "count": 16
+        },
+        {
+            "id": "reliquary:zombie_heart",
+            "optional": true,
+            "count": 2
+        }
+    ]
+}

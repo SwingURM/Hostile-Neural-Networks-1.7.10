@@ -1,0 +1,38 @@
+{
+    "entity": "minecraft:MushroomCow",
+    "variants": [],
+    "name": {
+        "translate": "entity.minecraft.mooshroom",
+        "color": "#A81012"
+    },
+    "display": {
+        "scale": 0.4
+    },
+    "sim_cost": 64,
+    "input": {
+        "item": "hostilenetworks:prediction_matrix"
+    },
+    "base_drop": {
+        "id": "hostilenetworks:overworld_prediction",
+        "count": 1
+    },
+    "trivia": "hostilenetworks.trivia.Mooshroom",
+    "fabricator_drops": [
+        {
+            "id": "minecraft:beef",
+            "count": 32
+        },
+        {
+            "id": "minecraft:leather",
+            "count": 24
+        },
+        {
+            "id": "minecraft:red_mushroom",
+            "count": 16
+        },
+        {
+            "id": "minecraft:brown_mushroom",
+            "count": 16
+        }
+    ]
+}

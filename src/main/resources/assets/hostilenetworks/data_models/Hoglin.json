@@ -1,0 +1,32 @@
+{
+    "entity": "minecraft:Hoglin",
+    "variants": [
+        "minecraft:zoglin"
+    ],
+    "name": {
+        "translate": "entity.minecraft.hoglin",
+        "color": "#E8A074"
+    },
+    "display": {
+        "scale": 0.4
+    },
+    "sim_cost": 256,
+    "input": {
+        "item": "hostilenetworks:prediction_matrix"
+    },
+    "base_drop": {
+        "id": "hostilenetworks:nether_prediction",
+        "count": 1
+    },
+    "trivia": "hostilenetworks.trivia.Hoglin",
+    "fabricator_drops": [
+        {
+            "id": "minecraft:porkchop",
+            "count": 32
+        },
+        {
+            "id": "minecraft:leather",
+            "count": 16
+        }
+    ]
+}

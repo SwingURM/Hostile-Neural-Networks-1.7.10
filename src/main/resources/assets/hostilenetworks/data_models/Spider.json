@@ -1,0 +1,45 @@
+{
+    "entity": "minecraft:Spider",
+    "variants": [
+        "minecraft:CaveSpider"
+    ],
+    "name": {
+        "translate": "entity.minecraft.spider",
+        "color": "#322B26"
+    },
+    "display": {
+        "scale": 0.4
+    },
+    "sim_cost": 128,
+    "input": {
+        "item": "hostilenetworks:prediction_matrix"
+    },
+    "base_drop": {
+        "id": "hostilenetworks:overworld_prediction"
+    },
+    "trivia": "hostilenetworks.trivia.Spider",
+    "fabricator_drops": [
+        {
+            "id": "minecraft:string",
+            "count": 32
+        },
+        {
+            "id": "minecraft:spider_eye",
+            "count": 16
+        },
+        {
+            "id": "minecraft:cobweb",
+            "count": 4
+        },
+        {
+            "id": "silentgear:fine_silk",
+            "optional": true,
+            "count": 3
+        },
+        {
+            "id": "reliquary:chelicerae",
+            "optional": true,
+            "count": 2
+        }
+    ]
+}

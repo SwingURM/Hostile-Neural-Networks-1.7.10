@@ -19,6 +19,7 @@ public class HostileItems {
     public static Item overworld_prediction;
     public static Item nether_prediction;
     public static Item end_prediction;
+    public static Item twilight_prediction;
     public static Item mob_prediction;
     public static Item deep_learner;
     public static Item fab_directive;
@@ -37,15 +38,18 @@ public class HostileItems {
         overworld_prediction = registerItem(new OverworldPredictionItem(), "overworld_prediction");
         nether_prediction = registerItem(new NetherPredictionItem(), "nether_prediction");
         end_prediction = registerItem(new EndPredictionItem(), "end_prediction");
+        twilight_prediction = registerItem(new TwilightPredictionItem(), "twilight_prediction");
 
         // Map prediction types for dynamic lookup
         PREDICTION_TYPE_MAP.put("overworld_prediction", overworld_prediction);
         PREDICTION_TYPE_MAP.put("nether_prediction", nether_prediction);
         PREDICTION_TYPE_MAP.put("end_prediction", end_prediction);
+        PREDICTION_TYPE_MAP.put("twilight_prediction", twilight_prediction);
         // Also map with hostilenetworks: prefix
         PREDICTION_TYPE_MAP.put("hostilenetworks:overworld_prediction", overworld_prediction);
         PREDICTION_TYPE_MAP.put("hostilenetworks:nether_prediction", nether_prediction);
         PREDICTION_TYPE_MAP.put("hostilenetworks:end_prediction", end_prediction);
+        PREDICTION_TYPE_MAP.put("hostilenetworks:twilight_prediction", twilight_prediction);
 
         mob_prediction = registerItem(new MobPredictionItem(), "mob_prediction");
         deep_learner = registerItem(new DeepLearnerItem(), "deep_learner");
@@ -128,6 +132,13 @@ public class HostileItems {
      */
     public static ItemStack getEndPrediction() {
         return new ItemStack(end_prediction);
+    }
+
+    /**
+     * Get a twilight forest prediction item stack.
+     */
+    public static ItemStack getTwilightPrediction() {
+        return new ItemStack(twilight_prediction);
     }
 
     /**

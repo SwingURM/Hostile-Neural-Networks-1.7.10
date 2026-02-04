@@ -1,0 +1,26 @@
+{
+    "entity": "minecraft:WitherBoss",
+    "variants": [],
+    "name": {
+        "translate": "entity.minecraft.wither",
+        "color": "#343434"
+    },
+    "display": {
+        "scale": 0.2,
+        "y_offset": 0.0
+    },
+    "sim_cost": 2560,
+    "input": {
+        "item": "hostilenetworks:prediction_matrix"
+    },
+    "base_drop": {
+        "id": "hostilenetworks:end_prediction"
+    },
+    "trivia": "hostilenetworks.trivia.Wither",
+    "fabricator_drops": [
+        {
+            "id": "minecraft:nether_star",
+            "count": 1
+        }
+    ]
+}

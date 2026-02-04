@@ -8,6 +8,7 @@ import dev.shadowsoffire.hostilenetworks.HostileConfig;
 import dev.shadowsoffire.hostilenetworks.HostileNetworks;
 import dev.shadowsoffire.hostilenetworks.HostileNetworksEvents;
 import dev.shadowsoffire.hostilenetworks.block.HostileBlocks;
+import dev.shadowsoffire.hostilenetworks.compat.mobsinfo.MobsInfoCompat;
 import dev.shadowsoffire.hostilenetworks.data.DataModelRegistry;
 import dev.shadowsoffire.hostilenetworks.item.HostileItems;
 
@@ -41,6 +42,10 @@ public class CommonProxy {
     public void postInit(FMLPostInitializationEvent event) {
         // Ensure config is loaded for server side
         HostileConfig.postInit();
+
+        // Initialize MobsInfo compatibility (registers event handler for mob drop integration)
+        MobsInfoCompat.init();
+
         new HostileNetworksEvents().postInit(event);
     }
 

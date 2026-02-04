@@ -27,7 +27,6 @@ import dev.shadowsoffire.hostilenetworks.data.DataModelInstance;
 import dev.shadowsoffire.hostilenetworks.data.DataModelRegistry;
 import dev.shadowsoffire.hostilenetworks.data.ModelTier;
 import dev.shadowsoffire.hostilenetworks.data.ModelTierRegistry;
-import dev.shadowsoffire.hostilenetworks.util.EntityIdUtils;
 import dev.shadowsoffire.hostilenetworks.util.NBTKeys;
 
 /**
@@ -425,6 +424,9 @@ public class DataModelItem extends Item {
      * Public method for use by NEI recipe handlers.
      */
     public static String getEntityDisplayNameForModel(DataModel model) {
+        if (model == null) {
+            return "Unknown";
+        }
         String translateKey = model.getTranslateKey();
         String entityName = StatCollector.translateToLocal(translateKey);
 
@@ -584,7 +586,7 @@ public class DataModelItem extends Item {
             EnumChatFormatting.WHITE
                 + String.format(simCostKey, EnumChatFormatting.GRAY + String.format(rftKey, model.getSimCost())));
 
-        // Variants/subtypes (if any)
+        // Variants/subtypes (if any) - only show variants that exist in the game
         List<String> variants = model.getVariants();
         if (!variants.isEmpty()) {
             String subtypesKey = StatCollector.translateToLocal("hostilenetworks.info.subtypes");
@@ -597,16 +599,41 @@ public class DataModelItem extends Item {
                 listPrefix = "  - %s";
             }
             for (String variant : variants) {
-                // Get capitalized name for 1.7.10 entity lookup
-                String capitalizedVariant = EntityIdUtils.getCapitalizedName(variant);
-                String variantName = StatCollector.translateToLocal("entity." + capitalizedVariant + ".name");
-                if (variantName.equals("entity." + capitalizedVariant + ".name")) {
+                // Check if this variant exists in the game
+                if (!isVariantEntityExists(variant)) {
+                    continue; // Skip variants that don't exist
+                }
+                String variantName = StatCollector.translateToLocal("entity." + variant + ".name");
+                if (variantName.equals("entity." + variant + ".name")) {
                     // Fallback to variant ID if no translation found
-                    variantName = capitalizedVariant;
+                    variantName = variant;
                 }
                 tooltip.add(EnumChatFormatting.GREEN + String.format(listPrefix, variantName));
             }
         }
+    }
+
+    /**
+     * Check if a variant entity exists in the game.
+     */
+    private static boolean isVariantEntityExists(String variantId) {
+        // First try direct lookup in EntityList
+        if (net.minecraft.entity.EntityList.stringToClassMapping.containsKey(variantId)) {
+            return true;
+        }
+        // Try lowercase
+        if (net.minecraft.entity.EntityList.stringToClassMapping.containsKey(variantId.toLowerCase())) {
+            return true;
+        }
+        // Try EntityList.createEntityByName
+        try {
+            if (net.minecraft.entity.EntityList.createEntityByName(variantId, null) != null) {
+                return true;
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+        return false;
     }
 
     /**

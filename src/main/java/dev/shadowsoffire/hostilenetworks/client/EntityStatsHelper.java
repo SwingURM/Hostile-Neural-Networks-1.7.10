@@ -8,8 +8,6 @@ import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.world.World;
 
-import dev.shadowsoffire.hostilenetworks.util.EntityIdUtils;
-
 /**
  * Utility class for getting entity statistics for GUI display.
  * Uses real entity instances to get health, armor, and XP reward.
@@ -108,19 +106,15 @@ public class EntityStatsHelper {
             return new String[] { entityId };
         }
 
-        String capitalized = entityId.substring(0, 1)
-            .toUpperCase() + entityId.substring(1);
-        if (net.minecraft.entity.EntityList.createEntityByName(capitalized, null) != null) {
-            return new String[] { capitalized };
+        // Try lowercase as fallback
+        String lowercase = entityId.substring(0, 1)
+            .toLowerCase() + entityId.substring(1);
+        if (!lowercase.equals(entityId)
+            && net.minecraft.entity.EntityList.createEntityByName(lowercase, null) != null) {
+            return new String[] { lowercase };
         }
 
-        String mappedName = EntityIdUtils.getInternalName(entityId);
-        if (!mappedName.equals(capitalized)
-            && net.minecraft.entity.EntityList.createEntityByName(mappedName, null) != null) {
-            return new String[] { mappedName };
-        }
-
-        return new String[] { "minecraft:" + entityId, entityId, capitalized, mappedName };
+        return new String[] { "minecraft:" + entityId, entityId };
     }
 
     /**

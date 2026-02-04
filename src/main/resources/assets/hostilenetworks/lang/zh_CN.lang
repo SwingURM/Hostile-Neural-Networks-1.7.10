@@ -18,6 +18,7 @@ item.prediction_matrix.name=预测矩阵
 item.overworld_prediction.name=通用主世界预测产物
 item.nether_prediction.name=通用下界预测产物
 item.end_prediction.name=通用末地预测产物
+item.twilight_prediction.name=通用暮色森林预测产物
 item.fab_directive.name=制造指令
 item.fab_directive.desc=存储战利品制造器的选择
 item.fab_directive.desc2=鼠标右键复制，Shift+鼠标右键应用

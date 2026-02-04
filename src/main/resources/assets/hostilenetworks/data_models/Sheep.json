@@ -1,0 +1,116 @@
+{
+    "entity": "minecraft:Sheep",
+    "variants": [
+        "TwilightForest.Bighorn Sheep"
+    ],
+    "name": {
+        "translate": "entity.minecraft.sheep",
+        "color": "rainbow"
+    },
+    "display": {
+        "scale": 0.4,
+        "nbt": {
+            "CustomName": "{\"text\":\"jeb_\"}"
+        }
+    },
+    "sim_cost": 64,
+    "input": {
+        "item": "hostilenetworks:prediction_matrix"
+    },
+    "base_drop": {
+        "id": "hostilenetworks:overworld_prediction",
+        "count": 1
+    },
+    "trivia": "hostilenetworks.trivia.Sheep",
+    "fabricator_drops": [
+        {
+            "id": "minecraft:wool",
+            "meta": 0,
+            "count": 32
+        },
+        {
+            "id": "minecraft:wool",
+            "meta": 1,
+            "count": 32
+        },
+        {
+            "id": "minecraft:wool",
+            "meta": 2,
+            "count": 32
+        },
+        {
+            "id": "minecraft:wool",
+            "meta": 3,
+            "count": 32
+        },
+        {
+            "id": "minecraft:wool",
+            "meta": 4,
+            "count": 32
+        },
+        {
+            "id": "minecraft:wool",
+            "meta": 5,
+            "count": 32
+        },
+        {
+            "id": "minecraft:wool",
+            "meta": 6,
+            "count": 32
+        },
+        {
+            "id": "minecraft:wool",
+            "meta": 7,
+            "count": 32
+        },
+        {
+            "id": "minecraft:wool",
+            "meta": 8,
+            "count": 32
+        },
+        {
+            "id": "minecraft:wool",
+            "meta": 9,
+            "count": 32
+        },
+        {
+            "id": "minecraft:wool",
+            "meta": 10,
+            "count": 32
+        },
+        {
+            "id": "minecraft:wool",
+            "meta": 11,
+            "count": 32
+        },
+        {
+            "id": "minecraft:wool",
+            "meta": 12,
+            "count": 32
+        },
+        {
+            "id": "minecraft:wool",
+            "meta": 13,
+            "count": 32
+        },
+        {
+            "id": "minecraft:wool",
+            "meta": 14,
+            "count": 32
+        },
+        {
+            "id": "minecraft:wool",
+            "meta": 15,
+            "count": 32
+        },
+        {
+            "id": "minecraft:mutton",
+            "count": 32
+        },
+        {
+            "id": "potionsmaster:bezoar",
+            "optional": true,
+            "count": 16
+        }
+    ]
+}

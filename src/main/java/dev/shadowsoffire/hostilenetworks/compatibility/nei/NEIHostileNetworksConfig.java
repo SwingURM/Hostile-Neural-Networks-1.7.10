@@ -3,7 +3,7 @@ package dev.shadowsoffire.hostilenetworks.compatibility.nei;
 import java.util.HashSet;
 import java.util.Set;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,15 +13,14 @@ import codechicken.nei.api.IConfigureNEI;
 import codechicken.nei.recipe.GuiRecipeTab;
 import codechicken.nei.recipe.HandlerInfo;
 import cpw.mods.fml.common.Loader;
+import cpw.mods.fml.common.event.FMLInterModComms;
 import dev.shadowsoffire.hostilenetworks.HostileNetworks;
-import dev.shadowsoffire.hostilenetworks.block.HostileBlocks;
 
 /**
  * NEI configuration for Hostile Neural Networks.
  * Registers recipe and usage handlers for Sim Chamber and Loot Fabricator.
  *
- * Uses the standard NEI HandlerInfo API to set custom tab icons.
- * Both image-based and item-based icons are supported.
+ * Uses the IMC (Inter-Mod Communications) for GTNH NEI compatibility.
  */
 public class NEIHostileNetworksConfig implements IConfigureNEI {
 
@@ -47,11 +46,17 @@ public class NEIHostileNetworksConfig implements IConfigureNEI {
 
         LOGGER.info("Registering NEI recipe handlers for Hostile Neural Networks");
 
-        // Register Sim Chamber recipe handler
+        // Register Sim Chamber recipe handler via IMC (GTNH style)
+        sendHandler("hostilenetworks.sim_chamber", "hostilenetworks:sim_chamber", 166, 56, 3, 0);
+        sendCatalyst("hostilenetworks.sim_chamber", "hostilenetworks:sim_chamber");
+
+        // Register Loot Fabricator recipe handler via IMC
+        sendHandler("hostilenetworks.loot_fabricator", "hostilenetworks:loot_fabricator", 166, 60, 2, 0);
+        sendCatalyst("hostilenetworks.loot_fabricator", "hostilenetworks:loot_fabricator");
+
+        // Also register via old API for compatibility
         API.registerRecipeHandler(new SimChamberRecipeHandler());
         API.registerUsageHandler(new SimChamberRecipeHandler());
-
-        // Register Loot Fabricator recipe handler
         API.registerRecipeHandler(new LootFabRecipeHandler());
         API.registerUsageHandler(new LootFabRecipeHandler());
 
@@ -59,28 +64,40 @@ public class NEIHostileNetworksConfig implements IConfigureNEI {
         GuiRecipeTab.handlerAdderFromIMC.put("hostilenetworks.sim_chamber", createSimChamberHandlerInfo());
         GuiRecipeTab.handlerAdderFromIMC.put("hostilenetworks.loot_fabricator", createLootFabHandlerInfo());
 
-        // Register NEI catalysts - machine blocks that can open recipe pages
-        registerRecipeCatalysts();
-
         initialized = true;
         LOGGER.info("NEI configuration loaded successfully");
     }
 
     /**
-     * Register recipe catalysts for NEI.
-     * Catalysts are items/blocks that can be used to discover recipes in NEI.
-     * When a player holds a catalyst item, NEI shows which recipes it can craft.
+     * Send handler info to NEI via IMC.
      */
-    private static void registerRecipeCatalysts() {
-        // Sim Chamber catalyst - allows viewing Sim Chamber recipes
-        ItemStack simChamber = new ItemStack(HostileBlocks.sim_chamber, 1, 0);
-        API.addRecipeCatalyst(simChamber, "hostilenetworks.sim_chamber");
-        LOGGER.debug("Registered Sim Chamber as recipe catalyst");
+    private static void sendHandler(String handlerName, String itemName, int width, int height, int maxRecipesPerPage,
+        int yShift) {
+        NBTTagCompound nbt = new NBTTagCompound();
+        nbt.setString("handler", handlerName);
+        nbt.setString("modName", "Hostile Neural Networks");
+        nbt.setString("modId", HostileNetworks.MODID);
+        nbt.setBoolean("modRequired", true);
+        nbt.setBoolean("useCustomScroll", false);
+        nbt.setString("itemName", itemName);
+        nbt.setInteger("handlerHeight", height);
+        nbt.setInteger("handlerWidth", width);
+        nbt.setInteger("maxRecipesPerPage", maxRecipesPerPage);
+        nbt.setInteger("yShift", yShift);
+        FMLInterModComms.sendMessage("NotEnoughItems", "registerHandlerInfo", nbt);
+        LOGGER.debug("Sent handler registration via IMC: " + handlerName);
+    }
 
-        // Loot Fabricator catalyst - allows viewing Loot Fabricator recipes
-        ItemStack lootFab = new ItemStack(HostileBlocks.loot_fabricator, 1, 0);
-        API.addRecipeCatalyst(lootFab, "hostilenetworks.loot_fabricator");
-        LOGGER.debug("Registered Loot Fabricator as recipe catalyst");
+    /**
+     * Send catalyst info to NEI via IMC.
+     */
+    private static void sendCatalyst(String handlerName, String itemName) {
+        NBTTagCompound nbt = new NBTTagCompound();
+        nbt.setString("handlerID", handlerName);
+        nbt.setString("itemName", itemName);
+        nbt.setInteger("priority", 0);
+        FMLInterModComms.sendMessage("NotEnoughItems", "registerCatalystInfo", nbt);
+        LOGGER.debug("Sent catalyst registration via IMC: " + handlerName + " -> " + itemName);
     }
 
     /**
@@ -93,7 +110,6 @@ public class NEIHostileNetworksConfig implements IConfigureNEI {
             HostileNetworks.MODID,
             false,
             null);
-        // Use the Sim Chamber block as the tab icon
         info.setItem("hostilenetworks:sim_chamber", null);
         return info;
     }
@@ -108,14 +124,12 @@ public class NEIHostileNetworksConfig implements IConfigureNEI {
             HostileNetworks.MODID,
             false,
             null);
-        // Use the Loot Fabricator block as the tab icon
         info.setItem("hostilenetworks:loot_fabricator", null);
         return info;
     }
 
     /**
      * Check if NEI is loaded.
-     * Uses Loader.isModLoaded() which is the standard FML way to check for optional dependencies.
      */
     public static boolean isNEILoaded() {
         return Loader.isModLoaded("NotEnoughItems");
@@ -123,7 +137,6 @@ public class NEIHostileNetworksConfig implements IConfigureNEI {
 
     /**
      * Register this mod's NEI configuration if NEI is present.
-     * This method should be called during mod initialization.
      */
     public static void registerIfNEILoaded() {
         if (isNEILoaded()) {

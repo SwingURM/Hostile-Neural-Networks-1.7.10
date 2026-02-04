@@ -1,0 +1,32 @@
+{
+    "entity": "minecraft:GlowSquid",
+    "variants": [],
+    "name": {
+        "translate": "entity.minecraft.glow_squid",
+        "color": "#32A1A1"
+    },
+    "display": {
+        "scale": 0.3,
+        "y_offset": 0.5
+    },
+    "sim_cost": 32,
+    "input": {
+        "item": "hostilenetworks:prediction_matrix"
+    },
+    "base_drop": {
+        "id": "hostilenetworks:overworld_prediction",
+        "count": 1
+    },
+    "trivia": "hostilenetworks.trivia.GlowSquid",
+    "fabricator_drops": [
+        {
+            "id": "croptopia:glowing_calamari",
+            "optional": true,
+            "count": 32
+        },
+        {
+            "id": "minecraft:glow_ink_sac",
+            "count": 32
+        }
+    ]
+}

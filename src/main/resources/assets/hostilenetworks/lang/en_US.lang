@@ -18,6 +18,7 @@ item.prediction_matrix.name=Prediction Matrix
 item.overworld_prediction.name=Generalized Overworld Prediction
 item.nether_prediction.name=Generalized Nether Prediction
 item.end_prediction.name=Generalized Ender Prediction
+item.twilight_prediction.name=Generalized Twilight Prediction
 item.fab_directive.name=Fabrication Directive
 
 # Tiers

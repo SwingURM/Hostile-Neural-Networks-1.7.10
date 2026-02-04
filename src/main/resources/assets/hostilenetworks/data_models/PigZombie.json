@@ -1,0 +1,31 @@
+{
+    "entity": "minecraft:PigZombie",
+    "variants": [
+        "minecraft:piglin"
+    ],
+    "name": {
+        "translate": "entity.minecraft.zombified_piglin",
+        "color": "#3B992F"
+    },
+    "display": {
+        "scale": 0.4
+    },
+    "sim_cost": 256,
+    "input": {
+        "item": "hostilenetworks:prediction_matrix"
+    },
+    "base_drop": {
+        "id": "hostilenetworks:nether_prediction"
+    },
+    "trivia": "hostilenetworks.trivia.PigZombie",
+    "fabricator_drops": [
+        {
+            "id": "minecraft:rotten_flesh",
+            "count": 64
+        },
+        {
+            "id": "minecraft:gold_ingot",
+            "count": 8
+        }
+    ]
+}

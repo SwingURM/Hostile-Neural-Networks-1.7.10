@@ -1,0 +1,31 @@
+{
+    "entity": "minecraft:VillagerGolem",
+    "variants": [],
+    "name": {
+        "translate": "entity.minecraft.iron_golem",
+        "color": "#CFB198"
+    },
+    "display": {
+        "scale": 0.3,
+        "y_offset": 0.3
+    },
+    "sim_cost": 1024,
+    "input": {
+        "item": "hostilenetworks:prediction_matrix"
+    },
+    "base_drop": {
+        "id": "hostilenetworks:overworld_prediction",
+        "count": 1
+    },
+    "trivia": "hostilenetworks.trivia.VillagerGolem",
+    "fabricator_drops": [
+        {
+            "id": "minecraft:iron_ingot",
+            "count": 32
+        },
+        {
+            "id": "minecraft:poppy",
+            "count": 24
+        }
+    ]
+}

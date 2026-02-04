@@ -143,7 +143,9 @@ public final class HostileConfig {
      * Ensure configuration is loaded for server side.
      * In single player, the server runs in the same JVM and needs to access config.
      * This method is called when the server starts to ensure config is available.
+     * @deprecated Config is now loaded during preInit via {@link #init(File)}. This method is a no-op.
      */
+    @Deprecated
     public static void ensureConfigLoaded() {
         // Config should already be loaded during preInit
         // This method is kept for backward compatibility
@@ -167,10 +169,131 @@ public final class HostileConfig {
     /**
      * Post-initialize configuration.
      * Called during post-init to ensure server has access to config.
+     * @deprecated Config is now loaded during preInit via {@link #init(File)}. This method is a no-op.
      */
+    @Deprecated
     public static void postInit() {
         // Config should already be loaded during preInit
         // This method is kept for backward compatibility
+    }
+
+    /**
+     * Add configuration entries for newly registered data models.
+     * This is called after MobsInfo or other dynamic registration methods
+     * to ensure new models appear in the config file.
+     *
+     * @param newlyRegisteredModels List of newly registered model entity IDs
+     */
+    public static void addConfigsForNewModels(java.util.List<String> newlyRegisteredModels) {
+        if (config == null) return;
+
+        boolean changed = false;
+
+        for (String entityId : newlyRegisteredModels) {
+            if (MODEL_CONFIGS.containsKey(entityId)) {
+                continue; // Already has config
+            }
+
+            DataModel model = DataModelRegistry.get(entityId);
+            if (model == null) continue;
+
+            String shortName = getShortEntityName(entityId);
+            String category = sectionDataModels.lc() + "." + shortName;
+
+            ModelConfig modelConfig = new ModelConfig();
+
+            // Create detailed category comment with defaults
+            String entityName = model.getTranslateKey();
+            String dropsString = model.getFabricatorDropsAsString();
+            config.setCategoryComment(
+                category,
+                "=== " + entityName
+                    + " ("
+                    + entityId
+                    + ") ===\n"
+                    + "Auto-generated from MobsInfo.\n"
+                    + "Set 'enabled' to false to disable this model.\n"
+                    + "Default values: sim_cost="
+                    + model.getSimCost()
+                    + ", scale="
+                    + model.getScale()
+                    + ", data/kill="
+                    + java.util.Arrays.toString(model.getDataPerKillDefaults())
+                    + ", drops=["
+                    + dropsString
+                    + "]");
+
+            // Load all config with proper defaults and comments
+            loadModelConfigWithDefaults(config, category, model, modelConfig);
+
+            // Debug logging for scale values
+            HostileNetworks.LOG.debug(
+                "[Config] Model {}: JSON scale={}, config enabled={}, simCost={}, displayScale={}, color={}",
+                entityId,
+                model.getScale(),
+                modelConfig.enabled,
+                modelConfig.hasSimCostOverride() ? modelConfig.getSimCost() : "default",
+                modelConfig.hasDisplayOverride() ? modelConfig.getDisplayScale() : "default",
+                modelConfig.hasColorOverride() ? modelConfig.getColor() : "default");
+
+            MODEL_CONFIGS.put(entityId, modelConfig);
+            changed = true;
+
+            HostileNetworks.LOG.info("Added config entry for dynamically registered model: " + entityId);
+        }
+
+        if (changed && config.hasChanged()) {
+            config.save();
+        }
+    }
+
+    /**
+     * Reload configuration for all models.
+     * This ensures any new models (from MobsInfo or other sources)
+     * have their configuration entries created.
+     *
+     * @param cfg The configuration to reload from
+     */
+    public static void reloadModelConfigs(Configuration cfg) {
+        MODEL_CONFIGS.clear();
+        DISABLED_MODELS.clear();
+
+        for (DataModel model : DataModelRegistry.getAll()) {
+            String entityId = model.getEntityId();
+            String shortName = getShortEntityName(entityId);
+            String category = sectionDataModels.lc() + "." + shortName;
+
+            ModelConfig modelConfig = new ModelConfig();
+
+            // Ensure category comment exists with defaults
+            if (!cfg.hasCategory(category)) {
+                String entityName = model.getTranslateKey();
+                String dropsString = model.getFabricatorDropsAsString();
+                cfg.setCategoryComment(
+                    category,
+                    "=== " + entityName
+                        + " ("
+                        + entityId
+                        + ") ===\n"
+                        + "Customize the data model properties below.\n"
+                        + "Default values: sim_cost="
+                        + model.getSimCost()
+                        + ", scale="
+                        + model.getScale()
+                        + ", data/kill="
+                        + java.util.Arrays.toString(model.getDataPerKillDefaults())
+                        + ", drops=["
+                        + dropsString
+                        + "]");
+            }
+
+            // Load all config with proper defaults and comments
+            loadModelConfigWithDefaults(cfg, category, model, modelConfig);
+
+            MODEL_CONFIGS.put(entityId, modelConfig);
+        }
+
+        HostileNetworks.LOG.info("Reloaded {} data model configurations", MODEL_CONFIGS.size());
     }
 
     /**
@@ -253,7 +376,7 @@ public final class HostileConfig {
             sectionDataModels.name,
             "Data Model configuration. Set 'enabled' to false to disable specific entity models.\n"
                 + "Disabled models will not drop from mobs and cannot be crafted or used in machines.\n"
-                + "To customize a model, set the corresponding value. Leave empty or set to -1 to use default.");
+                + "To customize a model, set the corresponding value. See individual model sections for default values.");
 
         // Get all registered data models
         for (DataModel model : DataModelRegistry.getAll()) {
@@ -263,8 +386,9 @@ public final class HostileConfig {
 
             ModelConfig modelConfig = new ModelConfig();
 
-            // Create entity-specific category comment
+            // Create entity-specific category comment with defaults
             String entityName = model.getTranslateKey();
+            String dropsString = model.getFabricatorDropsAsString();
             config.setCategoryComment(
                 category,
                 "=== " + entityName
@@ -272,12 +396,214 @@ public final class HostileConfig {
                     + entityId
                     + ") ===\n"
                     + "Customize the data model properties below.\n"
-                    + "Leave values as default (-1 or empty) to use the values from the data pack.");
+                    + "Default values: sim_cost="
+                    + model.getSimCost()
+                    + ", scale="
+                    + model.getScale()
+                    + ", data/kill="
+                    + java.util.Arrays.toString(model.getDataPerKillDefaults())
+                    + ", drops=["
+                    + dropsString
+                    + "]");
 
-            loadModelConfigFromCategory(config, category, entityId, modelConfig);
-            loadModelConfigExtras(config, category, model, modelConfig);
+            // Load all config with proper defaults and comments
+            loadModelConfigWithDefaults(config, category, model, modelConfig);
 
             MODEL_CONFIGS.put(entityId, modelConfig);
+        }
+    }
+
+    // ==================== Color Lookup Table ====================
+
+    private static final java.util.Map<String, EnumChatFormatting> COLOR_MAP = new java.util.HashMap<>();
+
+    static {
+        COLOR_MAP.put("dark_gray", EnumChatFormatting.DARK_GRAY);
+        COLOR_MAP.put("darkgrey", EnumChatFormatting.DARK_GRAY);
+        COLOR_MAP.put("gray", EnumChatFormatting.GRAY);
+        COLOR_MAP.put("grey", EnumChatFormatting.GRAY);
+        COLOR_MAP.put("dark_green", EnumChatFormatting.DARK_GREEN);
+        COLOR_MAP.put("darkgreen", EnumChatFormatting.DARK_GREEN);
+        COLOR_MAP.put("green", EnumChatFormatting.GREEN);
+        COLOR_MAP.put("dark_blue", EnumChatFormatting.DARK_BLUE);
+        COLOR_MAP.put("darkblue", EnumChatFormatting.DARK_BLUE);
+        COLOR_MAP.put("blue", EnumChatFormatting.BLUE);
+        COLOR_MAP.put("dark_aqua", EnumChatFormatting.DARK_AQUA);
+        COLOR_MAP.put("darkaqua", EnumChatFormatting.DARK_AQUA);
+        COLOR_MAP.put("aqua", EnumChatFormatting.AQUA);
+        COLOR_MAP.put("dark_red", EnumChatFormatting.DARK_RED);
+        COLOR_MAP.put("darkred", EnumChatFormatting.DARK_RED);
+        COLOR_MAP.put("red", EnumChatFormatting.RED);
+        COLOR_MAP.put("dark_purple", EnumChatFormatting.DARK_PURPLE);
+        COLOR_MAP.put("darkpurple", EnumChatFormatting.DARK_PURPLE);
+        COLOR_MAP.put("light_purple", EnumChatFormatting.LIGHT_PURPLE);
+        COLOR_MAP.put("lightpurple", EnumChatFormatting.LIGHT_PURPLE);
+        COLOR_MAP.put("magenta", EnumChatFormatting.LIGHT_PURPLE);
+        COLOR_MAP.put("gold", EnumChatFormatting.GOLD);
+        COLOR_MAP.put("yellow", EnumChatFormatting.YELLOW);
+        COLOR_MAP.put("white", EnumChatFormatting.WHITE);
+    }
+
+    /**
+     * Parse an optional float value from config.
+     * Returns the default value if the config value is empty or invalid.
+     *
+     * @param cfg          The configuration
+     * @param category     The config category
+     * @param key          The config key
+     * @param defaultValue The default value to use if parsing fails
+     * @param comment      The config comment
+     * @return The parsed float value, or defaultValue if parsing fails
+     */
+    private static float parseOptionalFloat(Configuration cfg, String category, String key, float defaultValue,
+        String comment) {
+        String value = cfg.get(category, key, "", comment)
+            .getString();
+        if (value != null && !value.trim()
+            .isEmpty()) {
+            try {
+                return Float.parseFloat(value.trim());
+            } catch (NumberFormatException e) {
+                HostileNetworks.LOG.warn("[Config] Invalid {} value for {}, using default", key, category);
+            }
+        }
+        return defaultValue;
+    }
+
+    /**
+     * Load model configuration with detailed comments showing default values.
+     * This method handles both basic and extended config options with proper documentation.
+     *
+     * IMPORTANT: For values that use default when empty, we pass empty string as the
+     * default to Configuration, and manually fall back to the actual default in code.
+     * This ensures the config file stays clean with only user-modified values.
+     */
+    private static void loadModelConfigWithDefaults(Configuration cfg, String category, DataModel model,
+        ModelConfig modelConfig) {
+        // Load enabled - always write this since it's important
+        modelConfig.enabled = cfg.get(category, "enabled", true, "Enable/disable this data model. Default: true")
+            .getBoolean(true);
+        if (!modelConfig.enabled) {
+            DISABLED_MODELS.add(model.getEntityId());
+        }
+
+        // Simulation cost - use -1 to indicate "use default from model"
+        // Configuration will write -1, but this means "not customized, use model default"
+        int defaultSimCost = model.getSimCost();
+        modelConfig.simCost = cfg
+            .get(
+                category,
+                "sim_cost",
+                -1,
+                "Simulation cost in FE. Range: 1 to " + Integer.MAX_VALUE
+                    + ". Default: "
+                    + defaultSimCost
+                    + " (-1 = use default)")
+            .getInt(-1);
+
+        // Data per kill by tier - use -1 to indicate "use default from model"
+        int[] dataPerKillDefaults = model.getDataPerKillDefaults();
+        modelConfig.dataPerKillFaulty = cfg
+            .get(
+                category,
+                "data_per_kill.faulty",
+                -1,
+                "Data per kill (Faulty tier). Default: " + dataPerKillDefaults[0] + " (-1 = use default)")
+            .getInt(-1);
+        modelConfig.dataPerKillBasic = cfg
+            .get(
+                category,
+                "data_per_kill.basic",
+                -1,
+                "Data per kill (Basic tier). Default: " + dataPerKillDefaults[1] + " (-1 = use default)")
+            .getInt(-1);
+        modelConfig.dataPerKillAdvanced = cfg
+            .get(
+                category,
+                "data_per_kill.advanced",
+                -1,
+                "Data per kill (Advanced tier). Default: " + dataPerKillDefaults[2] + " (-1 = use default)")
+            .getInt(-1);
+        modelConfig.dataPerKillSuperior = cfg
+            .get(
+                category,
+                "data_per_kill.superior",
+                -1,
+                "Data per kill (Superior tier). Default: " + dataPerKillDefaults[3] + " (-1 = use default)")
+            .getInt(-1);
+
+        // Data to next tier - always use -1 (default) when empty
+        modelConfig.dataToNextBasic = cfg
+            .get(category, "data_to_next_tier.faulty", -1, "Data needed Faulty->Basic. Default: -1 (use tier default)")
+            .getInt(-1);
+        modelConfig.dataToNextAdvanced = cfg
+            .get(category, "data_to_next_tier.basic", -1, "Data needed Basic->Advanced. Default: -1 (use tier default)")
+            .getInt(-1);
+        modelConfig.dataToNextSuperior = cfg
+            .get(
+                category,
+                "data_to_next_tier.advanced",
+                -1,
+                "Data needed Advanced->Superior. Default: -1 (use tier default)")
+            .getInt(-1);
+        modelConfig.dataToNextSelfAware = cfg
+            .get(
+                category,
+                "data_to_next_tier.superior",
+                -1,
+                "Data needed Superior->SelfAware. Default: -1 (use tier default)")
+            .getInt(-1);
+
+        // Display settings - use empty string to mean "use default"
+        modelConfig.displayScale = parseOptionalFloat(
+            cfg,
+            category,
+            "display.scale",
+            model.getScale(),
+            "Display scale. Default: " + model.getScale() + " (leave empty to use default)");
+        modelConfig.displayXOffset = parseOptionalFloat(
+            cfg,
+            category,
+            "display.x_offset",
+            model.getXOffset(),
+            "X offset. Default: " + model.getXOffset() + " (leave empty to use default)");
+        modelConfig.displayYOffset = parseOptionalFloat(
+            cfg,
+            category,
+            "display.y_offset",
+            model.getYOffset(),
+            "Y offset. Default: " + model.getYOffset() + " (leave empty to use default)");
+        modelConfig.displayZOffset = parseOptionalFloat(
+            cfg,
+            category,
+            "display.z_offset",
+            model.getZOffset(),
+            "Z offset. Default: " + model.getZOffset() + " (leave empty to use default)");
+
+        // Color - use empty string to mean "use default"
+        String colorStr = cfg
+            .get(
+                category,
+                "color",
+                "",
+                "Color (#RRGGBB or name). Default: " + model.getColorString() + " (leave empty to use default)")
+            .getString();
+        if (colorStr != null && !colorStr.trim()
+            .isEmpty()) {
+            modelConfig.color = colorStr.trim();
+        }
+        // else: color remains null (use default)
+
+        // Fabricator drops - use empty string to mean "use default"
+        String dropsValue = cfg.get(
+            category,
+            "fabricator_drops",
+            "",
+            "Override fabricator drops (format: mod:item:count,mod:item:count). Default: (leave empty to use MobsInfo drops)")
+            .getString();
+        if (dropsValue != null && !dropsValue.trim()
+            .isEmpty()) {
+            modelConfig.fabricatorDrops = ModelConfig.parseFabricatorDrops(dropsValue);
         }
     }
 
@@ -304,43 +630,17 @@ public final class HostileConfig {
             .getInt(-1);
 
         // Load fabricator drops
-        String dropsValue = cfg.get(category, "fabricator_drops", "")
+        String dropsValue = cfg
+            .get(
+                category,
+                "fabricator_drops",
+                "",
+                "Override fabricator drops (format: mod:item:count,mod:item:count). Default: (use MobsInfo drops)")
             .getString();
         if (dropsValue != null && !dropsValue.trim()
             .isEmpty()) {
             modelConfig.fabricatorDrops = ModelConfig.parseFabricatorDrops(dropsValue);
         }
-    }
-
-    /**
-     * Load extended model config options (only during full init, not server-side).
-     */
-    private static void loadModelConfigExtras(Configuration cfg, String category, DataModel model,
-        ModelConfig modelConfig) {
-        // Simulation cost
-        modelConfig.simCost = cfg.get(category, "sim_cost", -1, "Simulation cost in FE. Default: " + model.getSimCost())
-            .getInt(-1);
-
-        // Data per kill by tier
-        modelConfig.dataPerKillFaulty = cfg.get(category, "data_per_kill.faulty", -1)
-            .getInt(-1);
-        modelConfig.dataPerKillBasic = cfg.get(category, "data_per_kill.basic", -1)
-            .getInt(-1);
-        modelConfig.dataPerKillAdvanced = cfg.get(category, "data_per_kill.advanced", -1)
-            .getInt(-1);
-        modelConfig.dataPerKillSuperior = cfg.get(category, "data_per_kill.superior", -1)
-            .getInt(-1);
-
-        // Display settings
-        modelConfig.displayScale = (float) cfg.get(category, "display.scale", -1.0)
-            .getDouble(-1.0);
-        modelConfig.displayXOffset = getFloatConfig(category, "display.x_offset", model.getXOffset(), "X offset");
-        modelConfig.displayYOffset = getFloatConfig(category, "display.y_offset", model.getYOffset(), "Y offset");
-        modelConfig.displayZOffset = getFloatConfig(category, "display.z_offset", model.getZOffset(), "Z offset");
-
-        // Color
-        modelConfig.color = cfg.get(category, "color", "")
-            .getString();
     }
 
     /**
@@ -353,31 +653,6 @@ public final class HostileConfig {
         int colonIndex = entityId.indexOf(':');
         return colonIndex >= 0 ? entityId.substring(colonIndex + 1) : entityId;
     }
-
-    /**
-     * Get a float config value, handling NaN properly.
-     */
-    private static float getFloatConfig(String category, String key, float defaultValue, String comment) {
-        String defaultStr = Float.isNaN(defaultValue) ? "NaN" : String.valueOf(defaultValue);
-        String configValue = config.get(category, key, defaultStr, comment)
-            .getString();
-
-        if ("NaN".equals(configValue)) {
-            return Float.NaN;
-        }
-        try {
-            return Float.parseFloat(configValue);
-        } catch (NumberFormatException e) {
-            HostileNetworks.LOG.warn(
-                "[Config] Invalid float value for {}.{}: '{}', using default: {}",
-                category,
-                key,
-                configValue,
-                defaultValue);
-            return defaultValue;
-        }
-    }
-
     // ==================== Public API ====================
 
     /**
@@ -430,49 +705,7 @@ public final class HostileConfig {
      */
     public static EnumChatFormatting getTierColor(String colorName) {
         if (colorName == null) return EnumChatFormatting.GRAY;
-        switch (colorName.toLowerCase()) {
-            case "dark_gray":
-            case "darkgrey":
-                return EnumChatFormatting.DARK_GRAY;
-            case "gray":
-            case "grey":
-                return EnumChatFormatting.GRAY;
-            case "dark_green":
-            case "darkgreen":
-                return EnumChatFormatting.DARK_GREEN;
-            case "green":
-                return EnumChatFormatting.GREEN;
-            case "dark_blue":
-            case "darkblue":
-                return EnumChatFormatting.DARK_BLUE;
-            case "blue":
-                return EnumChatFormatting.BLUE;
-            case "dark_aqua":
-            case "darkaqua":
-                return EnumChatFormatting.DARK_AQUA;
-            case "aqua":
-                return EnumChatFormatting.AQUA;
-            case "dark_red":
-            case "darkred":
-                return EnumChatFormatting.DARK_RED;
-            case "red":
-                return EnumChatFormatting.RED;
-            case "dark_purple":
-            case "darkpurple":
-                return EnumChatFormatting.DARK_PURPLE;
-            case "light_purple":
-            case "lightpurple":
-            case "magenta":
-                return EnumChatFormatting.LIGHT_PURPLE;
-            case "gold":
-                return EnumChatFormatting.GOLD;
-            case "yellow":
-                return EnumChatFormatting.YELLOW;
-            case "white":
-                return EnumChatFormatting.WHITE;
-            default:
-                return EnumChatFormatting.GRAY;
-        }
+        return COLOR_MAP.getOrDefault(colorName.toLowerCase(), EnumChatFormatting.GRAY);
     }
 
     /**

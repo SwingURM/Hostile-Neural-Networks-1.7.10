@@ -2,7 +2,7 @@ package dev.shadowsoffire.hostilenetworks.client;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import net.minecraft.client.Minecraft;
@@ -29,7 +29,6 @@ import cpw.mods.fml.relauncher.SideOnly;
 import dev.shadowsoffire.hostilenetworks.data.DataModel;
 import dev.shadowsoffire.hostilenetworks.data.DataModelRegistry;
 import dev.shadowsoffire.hostilenetworks.item.DataModelItem;
-import dev.shadowsoffire.hostilenetworks.util.EntityIdUtils;
 
 /**
  * Custom renderer for DataModelItem that renders:
@@ -45,10 +44,6 @@ import dev.shadowsoffire.hostilenetworks.util.EntityIdUtils;
  */
 @SideOnly(Side.CLIENT)
 public class DataModelItemRenderer implements net.minecraftforge.client.IItemRenderer {
-
-    private static final double DEFAULT_SCALE = 0.4;
-
-    private static final float BASE_HEIGHT = 0.2F;
 
     // Position adjustments for different render types
     private static final double EQUIPPED_OFFSET_X = 0.5;
@@ -69,8 +64,15 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
      * Cache for entities used in trophy rendering.
      * Prevents flickering for slime and magma cube entities which have random sizes.
      * Following the OpenBlocks trophy pattern.
+     * Uses LRU eviction to prevent unbounded memory growth.
      */
-    private static final Map<String, Entity> ENTITY_CACHE = new HashMap<>();
+    private static final java.util.Map<String, Entity> ENTITY_CACHE = new java.util.LinkedHashMap<>(64, 0.75f, true) {
+        private static final long serialVersionUID = 1L;
+        @Override
+        protected boolean removeEldestEntry(java.util.Map.Entry<String, Entity> eldest) {
+            return size() > 50; // Limit cache to 50 entries
+        }
+    };
 
     /**
      * Get the blank icon from DataModelItem's private blankIcon field.
@@ -130,8 +132,8 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
             if (entityId != null) {
                 DataModel model = DataModelRegistry.get(entityId);
                 if (model != null) {
-                    // Get scale from DataModel JSON, with fallback to default
-                    double scale = model.getScale() > 0 ? model.getScale() : DEFAULT_SCALE;
+                    // Get scale from DataModel JSON with config override support
+                    double scale = model.getScaleWithConfig();
                     // Render entity on top of the base
                     renderTrophy(entityId, 0, ENTITY_Y_OFFSET, 0, ENTITY_ROTATION, scale);
                 }
@@ -151,7 +153,8 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
         if (entityId != null) {
             DataModel model = DataModelRegistry.get(entityId);
             if (model != null) {
-                double scale = model.getScale() > 0 ? model.getScale() : DEFAULT_SCALE;
+                // Get scale from DataModel JSON with config override support
+                double scale = model.getScaleWithConfig();
                 renderTrophy(entityId, 0, ENTITY_Y_OFFSET, 0, ENTITY_ROTATION, scale);
             }
         }
@@ -290,8 +293,8 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
         if (entity != null) {
             // Fix for slime and magma cube flickering - set fixed size
             // Following OpenBlocks TrophyHandler pattern using reflection
-            String internalName = EntityIdUtils.getInternalName(entityId);
-            if ("slime".equals(internalName) || "LavaSlime".equals(internalName)) {
+            // entityId is already in camelCase (e.g., "Slime", "LavaSlime")
+            if ("Slime".equals(entityId) || "LavaSlime".equals(entityId)) {
                 if (entity instanceof EntitySlime) {
                     setFixedSlimeSize(entity);
                 }
@@ -331,6 +334,7 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
     }
 
     private String[] createEntityNameVariants(String entityId) {
+        // entityId is already in camelCase format (e.g., "LavaSlime")
         if (!entityId.contains(":")) {
             String withPrefix = "minecraft:" + entityId;
             if (EntityList.createEntityByName(withPrefix, null) != null) {
@@ -338,21 +342,28 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
             }
         }
 
-        if (EntityList.createEntityByName(entityId, null) != null) {
-            return new String[] { entityId };
+        // Try creating entity with the original ID first
+        try {
+            if (EntityList.createEntityByName(entityId, null) != null) {
+                return new String[] { entityId };
+            }
+        } catch (Exception e) {
+            // Ignore exceptions for modded entities
         }
 
-        String capitalized = entityId.substring(0, 1)
-            .toUpperCase() + entityId.substring(1);
-        if (EntityList.createEntityByName(capitalized, null) != null) {
-            return new String[] { capitalized };
+        // Try lowercase as fallback
+        String lowercase = entityId.substring(0, 1)
+            .toLowerCase() + entityId.substring(1);
+        if (!lowercase.equals(entityId)) {
+            try {
+                if (EntityList.createEntityByName(lowercase, null) != null) {
+                    return new String[] { lowercase };
+                }
+            } catch (Exception e) {
+                // Ignore exceptions for modded entities
+            }
         }
 
-        String mappedName = EntityIdUtils.getInternalName(entityId);
-        if (!mappedName.equals(capitalized) && EntityList.createEntityByName(mappedName, null) != null) {
-            return new String[] { mappedName };
-        }
-
-        return new String[] { "minecraft:" + entityId, entityId, capitalized, mappedName };
+        return new String[] { "minecraft:" + entityId, entityId };
     }
 }

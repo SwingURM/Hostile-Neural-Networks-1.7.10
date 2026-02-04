@@ -1,0 +1,38 @@
+{
+    "entity": "minecraft:Ghast",
+    "variants": [
+        "TwilightForest.Tower Ghast",
+        "TwilightForest.Mini Ghast"
+    ],
+    "name": {
+        "translate": "entity.minecraft.ghast",
+        "color": "#F0F0F0"
+    },
+    "display": {
+        "y_offset": 0.3,
+        "scale": 0.08
+    },
+    "sim_cost": 256,
+    "input": {
+        "item": "hostilenetworks:prediction_matrix"
+    },
+    "base_drop": {
+        "id": "hostilenetworks:nether_prediction"
+    },
+    "trivia": "hostilenetworks.trivia.Ghast",
+    "fabricator_drops": [
+        {
+            "id": "minecraft:ghast_tear",
+            "count": 16
+        },
+        {
+            "id": "minecraft:gunpowder",
+            "count": 32
+        },
+        {
+            "id": "reliquary:catalyzing_gland",
+            "optional": true,
+            "count": 2
+        }
+    ]
+}

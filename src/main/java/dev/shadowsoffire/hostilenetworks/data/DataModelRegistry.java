@@ -6,10 +6,8 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import net.minecraft.entity.EntityList;
 import net.minecraft.item.ItemStack;
@@ -22,7 +20,6 @@ import com.google.gson.JsonParser;
 import dev.shadowsoffire.hostilenetworks.HostileNetworks;
 import dev.shadowsoffire.hostilenetworks.item.HostileItems;
 import dev.shadowsoffire.hostilenetworks.util.Constants;
-import dev.shadowsoffire.hostilenetworks.util.EntityIdUtils;
 
 /**
  * Registry for DataModel objects.
@@ -32,13 +29,31 @@ public class DataModelRegistry {
 
     private static final Map<String, DataModel> MODELS = new HashMap<>();
     private static final Map<String, List<DataModel>> ENTITY_TO_MODELS = new HashMap<>();
-    // Track which prediction item types are used by loaded data models
-    private static final Set<String> USED_PREDICTION_TYPES = new HashSet<>();
     // Store resource paths for JSON files for faster loading
     private static final java.util.Map<String, java.net.URL> JSON_FILE_URLS = new java.util.HashMap<>();
 
     /**
+     * Check if an entity ID is a known variant of another entity.
+     * In Minecraft 1.7.10, some mobs like witherSkeleton are variants of base mobs
+     * (e.g., witherSkeleton is a Skeleton with skeletonType=1) and may not have
+     * their own entry in EntityList.stringToClassMapping.
+     */
+    private static boolean isEntityVariantKnown(String entityId) {
+        // In 1.7.10, these are known entity variants
+        // that exist in the game but may not have direct EntityList entries
+        switch (entityId) {
+            case "witherSkeleton":
+            case "stray":
+            case "husk":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
      * Register a new data model.
+     * Note: entityId should already be in the correct format (camelCase for MobsInfo compatibility).
      */
     public static void register(DataModel model) {
         String entityId = model.getEntityId();
@@ -47,19 +62,8 @@ public class DataModelRegistry {
         // Map entity and variants to this model
         addEntityMapping(entityId, model);
 
-        // Also add EntityList capitalized name mapping (e.g., magma_cube -> LavaSlime)
-        String capitalizedEntityId = EntityIdUtils.getCapitalizedName(entityId);
-        if (!capitalizedEntityId.equals(entityId)) {
-            addEntityMapping(capitalizedEntityId, model);
-        }
-
         for (String variant : model.getVariants()) {
             addEntityMapping(variant, model);
-            // Also add capitalized variant mapping
-            String capitalizedVariant = EntityIdUtils.getCapitalizedName(variant);
-            if (!capitalizedVariant.equals(variant)) {
-                addEntityMapping(capitalizedVariant, model);
-            }
         }
     }
 
@@ -70,9 +74,16 @@ public class DataModelRegistry {
 
     /**
      * Get a data model by entity ID.
+     * First checks exact match, then checks entity mappings (includes capitalized variants).
      */
     public static DataModel get(String entityId) {
-        return MODELS.get(entityId);
+        // First try exact match
+        DataModel exact = MODELS.get(entityId);
+        if (exact != null) return exact;
+
+        // Then try entity mappings (includes capitalized variants)
+        List<DataModel> models = ENTITY_TO_MODELS.getOrDefault(entityId, Collections.emptyList());
+        return models.isEmpty() ? null : models.get(0);
     }
 
     /**
@@ -95,48 +106,12 @@ public class DataModelRegistry {
     public static void init() {
         MODELS.clear();
         ENTITY_TO_MODELS.clear();
-        USED_PREDICTION_TYPES.clear();
 
         // Initialize tiers first
         ModelTierRegistry.init();
 
         // Load data models from JSON files
         loadJsonDataModels();
-
-        // Log used prediction types
-        registerUsedPredictionItems();
-    }
-
-    /**
-     * Track which prediction item types are used by data models.
-     * Called during JSON parsing to collect all prediction types.
-     */
-    private static void trackPredictionType(String predictionId) {
-        // Normalize the ID (remove "hostilenetworks:" prefix if present)
-        String normalized = predictionId;
-        if (predictionId.startsWith("hostilenetworks:")) {
-            normalized = predictionId.substring("hostilenetworks:".length());
-        }
-        USED_PREDICTION_TYPES.add(normalized);
-    }
-
-    /**
-     * Register prediction items that are actually used by loaded data models.
-     * This ensures only the needed prediction items are available.
-     */
-    private static void registerUsedPredictionItems() {
-        // For 1.7.10, we pre-register all known prediction types in HostileItems
-        // This method exists to collect which ones are used for potential future features
-        if (!USED_PREDICTION_TYPES.isEmpty()) {
-            HostileNetworks.LOG.info("Data models use prediction types: " + USED_PREDICTION_TYPES);
-        }
-    }
-
-    /**
-     * Get all prediction item types that are used by loaded data models.
-     */
-    public static Set<String> getUsedPredictionTypes() {
-        return Collections.unmodifiableSet(USED_PREDICTION_TYPES);
     }
 
     /**
@@ -248,6 +223,8 @@ public class DataModelRegistry {
 
     /**
      * Parse a JSON object into a DataModel.
+     * Note: JSON files should use camelCase entity IDs (e.g., "CaveSpider" instead of "cave_spider")
+     * that match Minecraft 1.7.10's EntityList capitalization.
      */
     private static DataModel parseJsonDataModel(JsonObject json, String filename) {
         try {
@@ -259,22 +236,21 @@ public class DataModelRegistry {
                 entityId = entityId.substring("minecraft:".length());
             }
 
-            // Get the capitalized entity name for EntityList lookup (handles 1.7.10 name differences)
-            String capitalizedEntityId = EntityIdUtils.getCapitalizedName(entityId);
-
             // Skip entities that don't exist in Minecraft 1.7.10
-            if (!EntityList.stringToClassMapping.containsKey(capitalizedEntityId)) {
-                HostileNetworks.LOG.info(
-                    "Skipping data model {} - entity {} does not exist in Minecraft 1.7.10",
-                    filename,
-                    capitalizedEntityId);
+            // EntityList.stringToClassMapping uses entity names from EntityList.addMapping()
+            // Examples: "wither_skeleton" (lowercase with underscore), "CaveSpider", "Spider"
+            // Note: Some mobs are variants of other entities (e.g., witherSkeleton is a variant of Skeleton)
+            // and may not have their own entry in EntityList.stringToClassMapping
+            if (!EntityList.stringToClassMapping.containsKey(entityId) && !isEntityVariantKnown(entityId)) {
+                HostileNetworks.LOG
+                    .info("Skipping data model {} - entity {} does not exist in Minecraft 1.7.10", filename, entityId);
                 return null;
             }
 
             // Parse name
             JsonObject nameObj = json.getAsJsonObject("name");
-            // For translation key: use "entity.{EntityId}.name" format for Minecraft 1.7.10
-            String entityTranslateName = "entity." + capitalizedEntityId + ".name";
+            // For translation key: use "entity.{EntityId}.name" format
+            String entityTranslateName = "entity." + entityId + ".name";
             String hexColor = null;
 
             if (nameObj != null) {
@@ -284,32 +260,14 @@ public class DataModelRegistry {
                 }
             }
 
-            // Parse variants - only add variants that exist in 1.7.10
+            // Parse variants - store as-is for runtime matching
             List<String> variants = new ArrayList<>();
             if (json.has("variants")) {
                 for (com.google.gson.JsonElement variant : json.getAsJsonArray("variants")) {
                     String variantId = variant.getAsString();
-                    // Remove mod prefix if present
-                    if (variantId.contains(":")) {
-                        String modId = variantId.substring(0, variantId.indexOf(":"));
-                        variantId = variantId.substring(variantId.indexOf(":") + 1);
-                        // Skip non-minecraft variants (mod entities like twilightforest)
-                        if (!"minecraft".equals(modId)) {
-                            HostileNetworks.LOG.debug("Skipping non-minecraft variant: " + variant.getAsString());
-                            continue;
-                        }
-                    }
-                    // Check if variant entity exists in 1.7.10
-                    String capitalizedVariant = EntityIdUtils.getCapitalizedName(variantId);
-                    if (EntityList.stringToClassMapping.containsKey(capitalizedVariant)) {
-                        variants.add(variantId);
-                        HostileNetworks.LOG.debug("Added variant: " + variantId + " -> " + capitalizedVariant);
-                    } else {
-                        HostileNetworks.LOG.debug(
-                            "Skipping variant {} - entity {} not found in 1.7.10",
-                            variantId,
-                            capitalizedVariant);
-                    }
+                    // Store the variant ID for runtime matching
+                    // The variant will be matched against EntityList.getEntityString() at kill time
+                    variants.add(variantId);
                 }
             }
 
@@ -336,9 +294,6 @@ public class DataModelRegistry {
                         .getAsString();
                     int count = baseDropObj.has("count") ? baseDropObj.get("count")
                         .getAsInt() : 1;
-
-                    // Track which prediction types are used
-                    trackPredictionType(dropId);
 
                     // Get the prediction item based on type
                     ItemStack predictionItem = HostileItems.getPredictionItem(dropId);

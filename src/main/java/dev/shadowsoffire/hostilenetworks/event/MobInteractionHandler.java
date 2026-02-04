@@ -14,7 +14,6 @@ import dev.shadowsoffire.hostilenetworks.data.DataModelRegistry;
 import dev.shadowsoffire.hostilenetworks.data.ModelTier;
 import dev.shadowsoffire.hostilenetworks.data.ModelTierRegistry;
 import dev.shadowsoffire.hostilenetworks.item.DeepLearnerItem;
-import dev.shadowsoffire.hostilenetworks.util.EntityIdUtils;
 
 /**
  * Handles player interaction with mobs for data model attuning and kill tracking.
@@ -45,18 +44,43 @@ public class MobInteractionHandler {
     }
 
     /**
-     * Normalize entity ID to handle different naming conventions.
-     * Maps 1.7.10 entity names to standardized format.
+     * Normalize entity ID for comparison.
+     * Converts to lowercase and handles 1.7.10 entity name mappings.
+     * e.g., "TwilightForest.Penguin" -> "twilightforest.penguin"
+     * e.g., "LavaSlime" -> "magma_cube" (1.7.10 entity name mapping)
      */
     private static String normalizeEntityId(String entityId) {
-        // Check if there's a known mapping (e.g., LavaSlime -> magma_cube)
-        if ("LavaSlime".equals(entityId)) return "magma_cube";
-        if ("VillagerGolem".equals(entityId)) return "iron_golem";
-        if ("SnowMan".equals(entityId)) return "snow_golem";
-        if ("EnderDragon".equals(entityId)) return "ender_dragon";
-        if ("WitherBoss".equals(entityId)) return "wither";
-        if ("MushroomCow".equals(entityId)) return "mooshroom";
-        return entityId;
+        if (entityId == null) return null;
+
+        // Handle 1.7.10 entity name mappings
+        String mapped = ENTITY_NAME_MAPPINGS.get(entityId);
+        if (mapped != null) {
+            entityId = mapped;
+        }
+
+        // Normalize to lowercase with dots instead of colons
+        return entityId.toLowerCase().replace(':', '.');
+    }
+
+    /** 1.7.10 entity name to standard ID mapping */
+    private static final java.util.Map<String, String> ENTITY_NAME_MAPPINGS = new java.util.HashMap<>();
+    static {
+        ENTITY_NAME_MAPPINGS.put("LavaSlime", "magma_cube");
+        ENTITY_NAME_MAPPINGS.put("VillagerGolem", "iron_golem");
+        ENTITY_NAME_MAPPINGS.put("SnowMan", "snow_golem");
+        ENTITY_NAME_MAPPINGS.put("EnderDragon", "ender_dragon");
+        ENTITY_NAME_MAPPINGS.put("WitherBoss", "wither");
+        ENTITY_NAME_MAPPINGS.put("MushroomCow", "mooshroom");
+    }
+
+    /**
+     * Normalize entity ID for variant comparison.
+     * Converts to lowercase and replaces colons with dots.
+     * e.g., "twilightforest:penguin" -> "twilightforest.penguin"
+     */
+    private static String normalizeForComparison(String entityId) {
+        if (entityId == null) return null;
+        return entityId.toLowerCase().replace(':', '.');
     }
 
     /**
@@ -105,12 +129,11 @@ public class MobInteractionHandler {
             if (!matches) {
                 DataModel model = DataModelRegistry.get(modelEntityId);
                 if (model != null) {
+                    String killedNormalized = normalizeForComparison(killedEntityId);
                     for (String variant : model.getVariants()) {
-                        // Compare with various formats
-                        String variantCapitalized = EntityIdUtils.getCapitalizedName(variant);
-                        if (variant.equalsIgnoreCase(normalizedId) || variant.equalsIgnoreCase(lowerCaseId)
-                            || variant.equalsIgnoreCase(killedEntityId)
-                            || variantCapitalized.equals(killedEntityId)) {
+                        String variantNormalized = normalizeForComparison(variant);
+                        // Compare normalized versions
+                        if (variantNormalized != null && variantNormalized.equals(killedNormalized)) {
                             matches = true;
                             break;
                         }

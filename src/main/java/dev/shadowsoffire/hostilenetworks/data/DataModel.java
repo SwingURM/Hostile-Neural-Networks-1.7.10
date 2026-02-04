@@ -148,6 +148,110 @@ public class DataModel {
     }
 
     /**
+     * Get a mutable copy of the fabricator drops list.
+     * This allows external code (like MobsInfoCompat) to add additional drops
+     * without using reflection.
+     *
+     * @return A new ArrayList containing all fabricator drops
+     */
+    public List<ItemStack> getMutableFabricatorDrops() {
+        return new ArrayList<>(fabricatorDrops);
+    }
+
+    /**
+     * Add additional fabricator drops to this model.
+     * Creates a new DataModel with the additional drops included.
+     * Existing drops are preserved, new drops that don't already exist are added.
+     *
+     * @param additionalDrops The drops to add
+     * @return A new DataModel with the additional drops, or this model if no drops were added
+     */
+    public DataModel withAdditionalDrops(List<ItemStack> additionalDrops) {
+        if (additionalDrops == null || additionalDrops.isEmpty()) {
+            return this;
+        }
+
+        // Get existing drops to check for duplicates
+        List<ItemStack> existingDrops = getMutableFabricatorDrops();
+        java.util.Set<String> existingNames = new java.util.HashSet<>();
+        for (ItemStack existing : existingDrops) {
+            if (existing.getItem() != null) {
+                existingNames.add(
+                    existing.getItem()
+                        .getUnlocalizedName());
+            }
+        }
+
+        // Add new drops that don't already exist
+        boolean added = false;
+        for (ItemStack newDrop : additionalDrops) {
+            if (newDrop.getItem() != null) {
+                String newName = newDrop.getItem()
+                    .getUnlocalizedName();
+                if (!existingNames.contains(newName)) {
+                    existingDrops.add(newDrop);
+                    existingNames.add(newName);
+                    added = true;
+                }
+            }
+        }
+
+        if (!added) {
+            return this;
+        }
+
+        // Build a new DataModel with the additional drops
+        return new Builder().entityId(this.entityId)
+            .translateKey(this.translateKey)
+            .name(this.name)
+            .color(this.color != null ? this.color : EnumChatFormatting.WHITE)
+            .scale(this.scale)
+            .xOffset(this.xOffset)
+            .yOffset(this.yOffset)
+            .zOffset(this.zOffset)
+            .simCost(this.simCost)
+            .inputItem(this.inputItem)
+            .baseDrop(this.baseDrop)
+            .triviaKey(this.triviaKey)
+            .defaultTier(this.defaultTier)
+            .defaultDataPerKill(this.defaultDataPerKill)
+            .dataPerKillByTier(this.dataPerKillByTier.clone())
+            .overrideRequiredData(this.overrideRequiredData)
+            .buildWithDrops(existingDrops);
+    }
+
+    /**
+     * Get fabricator drops as a comma-separated string for config comments.
+     * Returns a human-readable list of drop items.
+     */
+    public String getFabricatorDropsAsString() {
+        List<ItemStack> drops = fabricatorDrops;
+        if (drops == null || drops.isEmpty()) {
+            return "(none)";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < drops.size(); i++) {
+            ItemStack stack = drops.get(i);
+            if (i > 0) sb.append(", ");
+            String itemName = stack.getItem() != null ? stack.getItem()
+                .getUnlocalizedName() : "unknown";
+            // Extract simple name from unlocalized name (e.g., "item.stone.name" -> "stone")
+            if (itemName != null && itemName.startsWith("item.")) {
+                itemName = itemName.substring(5);
+                if (itemName.endsWith(".name")) {
+                    itemName = itemName.substring(0, itemName.length() - 5);
+                }
+            }
+            if (stack.stackSize > 1) {
+                sb.append(stack.stackSize)
+                    .append("x ");
+            }
+            sb.append(itemName);
+        }
+        return sb.toString();
+    }
+
+    /**
      * Parse config drop strings into ItemStacks.
      */
     private List<ItemStack> parseConfigDrops(List<String> dropStrings) {
@@ -182,6 +286,14 @@ public class DataModel {
 
     public int getOverrideRequiredData() {
         return overrideRequiredData;
+    }
+
+    /**
+     * Get the default data per kill values for each tier.
+     * Returns an array [faulty, basic, advanced, superior].
+     */
+    public int[] getDataPerKillDefaults() {
+        return dataPerKillByTier != null ? dataPerKillByTier.clone() : new int[] { 1, 4, 10, 18 };
     }
 
     /**
@@ -531,7 +643,7 @@ public class DataModel {
     public float getScaleWithConfig() {
         return getConfigValueWithDefault(
             () -> HostileConfig.getModelConfig(entityId),
-            config -> config.displayScale >= 0,
+            config -> !Float.isNaN(config.displayScale),
             config -> config.displayScale,
             () -> this.scale);
     }
@@ -775,6 +887,36 @@ public class DataModel {
 
         public DataModel build() {
             return new DataModel(this);
+        }
+
+        /**
+         * Build a DataModel with a pre-existing list of fabricator drops.
+         * This is used internally by withAdditionalDrops() to create enriched models.
+         */
+        private DataModel buildWithDrops(List<ItemStack> drops) {
+            // Create a copy of the builder and set the fabricator drops
+            Builder builder = new Builder();
+            builder.entityId = this.entityId;
+            builder.translateKey = this.translateKey;
+            builder.name = this.name;
+            builder.color = this.color;
+            builder.hexColor = this.hexColor;
+            builder.scale = this.scale;
+            builder.xOffset = this.xOffset;
+            builder.yOffset = this.yOffset;
+            builder.zOffset = this.zOffset;
+            builder.simCost = this.simCost;
+            builder.inputItem = this.inputItem;
+            builder.baseDrop = this.baseDrop;
+            builder.triviaKey = this.triviaKey;
+            builder.defaultTier = this.defaultTier;
+            builder.defaultDataPerKill = this.defaultDataPerKill;
+            builder.dataPerKillByTier = this.dataPerKillByTier != null ? this.dataPerKillByTier.clone()
+                : new int[] { 1, 4, 10, 18 };
+            builder.overrideRequiredData = this.overrideRequiredData;
+            builder.fabricatorDrops.clear();
+            builder.fabricatorDrops.addAll(drops);
+            return new DataModel(builder);
         }
     }
 }

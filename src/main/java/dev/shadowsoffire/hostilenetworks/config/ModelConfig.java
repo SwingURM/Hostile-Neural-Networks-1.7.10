@@ -27,8 +27,8 @@ public class ModelConfig {
     public int dataToNextSuperior = -1; // Advanced -> Superior
     public int dataToNextSelfAware = -1; // Superior -> Self Aware
 
-    /** Display settings */
-    public float displayScale = -1.0f;
+    /** Display settings - use Float.NaN to indicate "use default from model" */
+    public float displayScale = Float.NaN;
     public float displayXOffset = Float.NaN;
     public float displayYOffset = Float.NaN;
     public float displayZOffset = Float.NaN;
@@ -121,9 +121,10 @@ public class ModelConfig {
 
     /**
      * Check if display settings should be overridden.
+     * Uses Float.NaN as sentinel value meaning "use default".
      */
     public boolean hasDisplayOverride() {
-        return displayScale >= 0 || !Float.isNaN(displayXOffset)
+        return !Float.isNaN(displayScale) || !Float.isNaN(displayXOffset)
             || !Float.isNaN(displayYOffset)
             || !Float.isNaN(displayZOffset);
     }
@@ -132,6 +133,13 @@ public class ModelConfig {
      * Get display scale override.
      */
     public float getDisplayScale() {
+        return displayScale;
+    }
+
+    /**
+     * Get display scale value, or Float.NaN if using default.
+     */
+    public float getDisplayScaleOrDefault() {
         return displayScale;
     }
 

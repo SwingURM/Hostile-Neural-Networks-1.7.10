@@ -1,0 +1,31 @@
+{
+    "entity": "minecraft:SnowMan",
+    "variants": [],
+    "name": {
+        "translate": "entity.minecraft.snow_golem",
+        "color": "#FFFFFF"
+    },
+    "display": {
+        "scale": 0.4
+    },
+    "sim_cost": 64,
+    "input": {
+        "item": "hostilenetworks:prediction_matrix"
+    },
+    "base_drop": {
+        "id": "hostilenetworks:overworld_prediction",
+        "count": 1
+    },
+    "trivia": "hostilenetworks.trivia.SnowMan",
+    "fabricator_drops": [
+        {
+            "id": "minecraft:snowball",
+            "count": 32
+        },
+        {
+            "id": "reliquary:frozen_core",
+            "optional": true,
+            "count": 2
+        }
+    ]
+}

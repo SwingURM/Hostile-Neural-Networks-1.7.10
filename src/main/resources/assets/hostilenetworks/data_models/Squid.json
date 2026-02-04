@@ -1,0 +1,37 @@
+{
+    "entity": "minecraft:Squid",
+    "variants": [],
+    "name": {
+        "translate": "entity.minecraft.squid",
+        "color": "#546D80"
+    },
+    "display": {
+        "y_offset": 0.5,
+        "scale": 0.3
+    },
+    "sim_cost": 32,
+    "input": {
+        "item": "hostilenetworks:prediction_matrix"
+    },
+    "base_drop": {
+        "id": "hostilenetworks:overworld_prediction",
+        "count": 1
+    },
+    "trivia": "hostilenetworks.trivia.Squid",
+    "fabricator_drops": [
+        {
+            "id": "minecraft:ink_sac",
+            "count": 32
+        },
+        {
+            "id": "croptopia:calamari",
+            "optional": true,
+            "count": 32
+        },
+        {
+            "id": "reliquary:squid_beak",
+            "optional": true,
+            "count": 2
+        }
+    ]
+}

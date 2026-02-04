@@ -51,9 +51,14 @@ dependencies {
         transitive = false
     }
 
-    // EnderIO + EnderCore for local testing only (skipped in CI)
+    // MobsInfo API for automatic mob drop integration (optional runtime dependency)
+    compileOnly(project.files("mobsinfo-0.5.10-GTNH-dev.jar"))
+
+    // EnderIO + EnderCore + TwilightForest for local testing only (skipped in CI)
     if (!System.getenv().containsKey("CI") && !System.getenv().containsKey("GITHUB_ACTIONS")) {
         devOnlyNonPublishable(project.files("endercore-0.5.5.jar"))
         devOnlyNonPublishable(project.files("EnderIO-2.10.15.jar"))
+        devOnlyNonPublishable(project.files("TwilightForest-2.7.16.jar"))
+        devOnlyNonPublishable(project.files("mobsinfo-0.5.10-GTNH-dev.jar"))
     }
 }
