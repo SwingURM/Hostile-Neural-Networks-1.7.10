@@ -403,26 +403,28 @@ public class DataModel {
         int threshold = 0;
 
         // Add up all data_to_next_tier values for tiers before the current tier
+        // Default values match original mod: faulty(0)->basic(6)->advanced(54)->superior(354)->self_aware(1254)
+        // Differences: 6, 48, 300, 900
         switch (currentTier.getTierName()) {
             case "faulty":
                 threshold = 0; // Faulty starts at 0
                 break;
             case "basic":
-                threshold += config.dataToNextBasic >= 0 ? config.dataToNextBasic : 6;
+                threshold = config.dataToNextBasic >= 0 ? config.dataToNextBasic : 6;
                 break;
             case "advanced":
-                threshold += config.dataToNextBasic >= 0 ? config.dataToNextBasic : 6;
-                threshold += config.dataToNextAdvanced >= 0 ? config.dataToNextAdvanced : 36;
+                threshold = config.dataToNextBasic >= 0 ? config.dataToNextBasic : 6;
+                threshold += config.dataToNextAdvanced >= 0 ? config.dataToNextAdvanced : 48;
                 break;
             case "superior":
-                threshold += config.dataToNextBasic >= 0 ? config.dataToNextBasic : 6;
-                threshold += config.dataToNextAdvanced >= 0 ? config.dataToNextAdvanced : 36;
-                threshold += config.dataToNextSuperior >= 0 ? config.dataToNextSuperior : 312;
+                threshold = config.dataToNextBasic >= 0 ? config.dataToNextBasic : 6;
+                threshold += config.dataToNextAdvanced >= 0 ? config.dataToNextAdvanced : 48;
+                threshold += config.dataToNextSuperior >= 0 ? config.dataToNextSuperior : 300;
                 break;
             case "self_aware":
-                threshold += config.dataToNextBasic >= 0 ? config.dataToNextBasic : 6;
-                threshold += config.dataToNextAdvanced >= 0 ? config.dataToNextAdvanced : 36;
-                threshold += config.dataToNextSuperior >= 0 ? config.dataToNextSuperior : 312;
+                threshold = config.dataToNextBasic >= 0 ? config.dataToNextBasic : 6;
+                threshold += config.dataToNextAdvanced >= 0 ? config.dataToNextAdvanced : 48;
+                threshold += config.dataToNextSuperior >= 0 ? config.dataToNextSuperior : 300;
                 threshold += config.dataToNextSelfAware >= 0 ? config.dataToNextSelfAware : 900;
                 break;
             default:

@@ -27,6 +27,7 @@ import dev.shadowsoffire.hostilenetworks.data.DataModelInstance;
 import dev.shadowsoffire.hostilenetworks.data.DataModelRegistry;
 import dev.shadowsoffire.hostilenetworks.data.ModelTier;
 import dev.shadowsoffire.hostilenetworks.data.ModelTierRegistry;
+import dev.shadowsoffire.hostilenetworks.util.EntityIdUtils;
 import dev.shadowsoffire.hostilenetworks.util.NBTKeys;
 
 /**
@@ -596,9 +597,12 @@ public class DataModelItem extends Item {
                 listPrefix = "  - %s";
             }
             for (String variant : variants) {
-                String variantName = StatCollector.translateToLocal("entity." + variant + ".name");
-                if (variantName.equals("entity." + variant + ".name")) {
-                    variantName = variant;
+                // Get capitalized name for 1.7.10 entity lookup
+                String capitalizedVariant = EntityIdUtils.getCapitalizedName(variant);
+                String variantName = StatCollector.translateToLocal("entity." + capitalizedVariant + ".name");
+                if (variantName.equals("entity." + capitalizedVariant + ".name")) {
+                    // Fallback to variant ID if no translation found
+                    variantName = capitalizedVariant;
                 }
                 tooltip.add(EnumChatFormatting.GREEN + String.format(listPrefix, variantName));
             }

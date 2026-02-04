@@ -237,13 +237,14 @@ public class SimChamberGui extends GuiContainer {
                         .getColoredName());
                 fontRendererObj.drawString(tierText, 40, 9 + fontRendererObj.FONT_HEIGHT + 3, 0xFFFFFF);
 
-                // Accuracy - use original value directly with tier color
+                // Accuracy - display as percentage (e.g., 5%, 22%, 65%)
                 String accuracyFormat = StatCollector.translateToLocal("hostilenetworks.gui.accuracy");
                 if (accuracyFormat.equals("hostilenetworks.gui.accuracy")) {
                     accuracyFormat = "Model Accuracy: %s";
                 }
-                // Display accuracy as-is (e.g., 0.05, 0.25, 1.00) with tier color code
-                String accuracyValue = tierColor + String.format("%.2f", model.getAccuracy());
+                // Convert accuracy (0.0-1.0) to percentage display
+                int accuracyPercent = Math.round(model.getAccuracy() * 100);
+                String accuracyValue = tierColor.toString() + accuracyPercent + "%";
                 String accuracyText = String.format(accuracyFormat, accuracyValue);
                 fontRendererObj.drawString(accuracyText, 40, 9 + (fontRendererObj.FONT_HEIGHT + 3) * 2, 0xFFFFFF);
             }
@@ -458,7 +459,7 @@ public class SimChamberGui extends GuiContainer {
                         String.format(
                             costText,
                             model.getModel()
-                                .getSimCost()));
+                                .getSimCostWithConfig()));
                 }
             }
 

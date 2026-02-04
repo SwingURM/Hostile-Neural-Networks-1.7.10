@@ -14,6 +14,7 @@ import dev.shadowsoffire.hostilenetworks.data.DataModelRegistry;
 import dev.shadowsoffire.hostilenetworks.data.ModelTier;
 import dev.shadowsoffire.hostilenetworks.data.ModelTierRegistry;
 import dev.shadowsoffire.hostilenetworks.item.DeepLearnerItem;
+import dev.shadowsoffire.hostilenetworks.util.EntityIdUtils;
 
 /**
  * Handles player interaction with mobs for data model attuning and kill tracking.
@@ -105,7 +106,11 @@ public class MobInteractionHandler {
                 DataModel model = DataModelRegistry.get(modelEntityId);
                 if (model != null) {
                     for (String variant : model.getVariants()) {
-                        if (variant.equalsIgnoreCase(normalizedId) || variant.equalsIgnoreCase(lowerCaseId)) {
+                        // Compare with various formats
+                        String variantCapitalized = EntityIdUtils.getCapitalizedName(variant);
+                        if (variant.equalsIgnoreCase(normalizedId) || variant.equalsIgnoreCase(lowerCaseId)
+                            || variant.equalsIgnoreCase(killedEntityId)
+                            || variantCapitalized.equals(killedEntityId)) {
                             matches = true;
                             break;
                         }

@@ -111,27 +111,28 @@ public class DataModelInstance {
 
     /**
      * Get the accuracy for the current tier, considering fractional accuracy if enabled.
+     * Matches original NeoForge implementation.
      */
     public float getAccuracy() {
         ModelTier tier = getTier();
 
-        if (HostileConfig.continuousAccuracy) {
-            // Calculate fractional accuracy within tier using config-aware data
-            ModelTier nextTier = ModelTierRegistry.getNextTier(tier);
-            int currentTierData = model.getCurrentTierThreshold(tier);
-            int nextTierData = model.getNextTierThreshold(tier);
-            if (nextTier != tier && nextTierData > currentTierData) {
-                int dataInTier = currentData - currentTierData;
-                int dataNeeded = nextTierData - currentTierData;
-                if (dataNeeded > 0) {
-                    float fraction = (float) dataInTier / dataNeeded;
-                    float accuracyRange = nextTier.getAccuracy() - tier.getAccuracy();
-                    return tier.getAccuracy() + (fraction * accuracyRange);
-                }
-            }
+        // If continuous accuracy is disabled or at max tier, return tier's base accuracy
+        if (!HostileConfig.continuousAccuracy || tier.isMax()) {
+            return tier.getAccuracy();
         }
 
-        return tier.getAccuracy();
+        // Calculate fractional accuracy within tier (matching original formula)
+        ModelTier nextTier = ModelTierRegistry.getNextTier(tier);
+        int tierData = getTierData();
+        int nextTierData = getNextTierData();
+        int diff = nextTierData - tierData;
+        if (diff <= 0) {
+            return tier.getAccuracy();
+        }
+
+        float tDiff = nextTier.getAccuracy() - tier.getAccuracy();
+        // Formula: tierAccuracy + accuracyDiff * (currentData - tierData) / (nextTierData - tierData)
+        return tier.getAccuracy() + tDiff * (diff - (nextTierData - currentData)) / diff;
     }
 
     /**
@@ -162,15 +163,23 @@ public class DataModelInstance {
 
     /**
      * Get the data required for the current tier.
+     * Uses config-aware thresholds if available.
      */
     public int getTierData() {
+        if (model != null) {
+            return model.getCurrentTierThreshold(getTier());
+        }
         return getTier().getRequiredData();
     }
 
     /**
      * Get the data required for the next tier.
+     * Uses config-aware thresholds if available.
      */
     public int getNextTierData() {
+        if (model != null) {
+            return model.getNextTierThreshold(getTier());
+        }
         ModelTier next = ModelTierRegistry.getNextTier(getTier());
         return next.getRequiredData();
     }

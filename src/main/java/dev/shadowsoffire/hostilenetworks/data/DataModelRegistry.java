@@ -284,15 +284,32 @@ public class DataModelRegistry {
                 }
             }
 
-            // Parse variants
+            // Parse variants - only add variants that exist in 1.7.10
             List<String> variants = new ArrayList<>();
             if (json.has("variants")) {
                 for (com.google.gson.JsonElement variant : json.getAsJsonArray("variants")) {
                     String variantId = variant.getAsString();
-                    if (variantId.startsWith("minecraft:")) {
-                        variantId = variantId.substring("minecraft:".length());
+                    // Remove mod prefix if present
+                    if (variantId.contains(":")) {
+                        String modId = variantId.substring(0, variantId.indexOf(":"));
+                        variantId = variantId.substring(variantId.indexOf(":") + 1);
+                        // Skip non-minecraft variants (mod entities like twilightforest)
+                        if (!"minecraft".equals(modId)) {
+                            HostileNetworks.LOG.debug("Skipping non-minecraft variant: " + variant.getAsString());
+                            continue;
+                        }
                     }
-                    variants.add(variantId);
+                    // Check if variant entity exists in 1.7.10
+                    String capitalizedVariant = EntityIdUtils.getCapitalizedName(variantId);
+                    if (EntityList.stringToClassMapping.containsKey(capitalizedVariant)) {
+                        variants.add(variantId);
+                        HostileNetworks.LOG.debug("Added variant: " + variantId + " -> " + capitalizedVariant);
+                    } else {
+                        HostileNetworks.LOG.debug(
+                            "Skipping variant {} - entity {} not found in 1.7.10",
+                            variantId,
+                            capitalizedVariant);
+                    }
                 }
             }
 
