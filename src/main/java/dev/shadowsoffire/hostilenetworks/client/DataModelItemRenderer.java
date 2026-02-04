@@ -2,8 +2,6 @@ package dev.shadowsoffire.hostilenetworks.client;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemRenderer;
@@ -67,7 +65,9 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
      * Uses LRU eviction to prevent unbounded memory growth.
      */
     private static final java.util.Map<String, Entity> ENTITY_CACHE = new java.util.LinkedHashMap<>(64, 0.75f, true) {
+
         private static final long serialVersionUID = 1L;
+
         @Override
         protected boolean removeEldestEntry(java.util.Map.Entry<String, Entity> eldest) {
             return size() > 50; // Limit cache to 50 entries

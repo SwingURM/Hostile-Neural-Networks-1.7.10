@@ -59,7 +59,8 @@ public class MobInteractionHandler {
         }
 
         // Normalize to lowercase with dots instead of colons
-        return entityId.toLowerCase().replace(':', '.');
+        return entityId.toLowerCase()
+            .replace(':', '.');
     }
 
     /** 1.7.10 entity name to standard ID mapping */
@@ -80,7 +81,8 @@ public class MobInteractionHandler {
      */
     private static String normalizeForComparison(String entityId) {
         if (entityId == null) return null;
-        return entityId.toLowerCase().replace(':', '.');
+        return entityId.toLowerCase()
+            .replace(':', '.');
     }
 
     /**

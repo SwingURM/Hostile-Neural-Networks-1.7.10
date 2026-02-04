@@ -143,6 +143,7 @@ public final class HostileConfig {
      * Ensure configuration is loaded for server side.
      * In single player, the server runs in the same JVM and needs to access config.
      * This method is called when the server starts to ensure config is available.
+     * 
      * @deprecated Config is now loaded during preInit via {@link #init(File)}. This method is a no-op.
      */
     @Deprecated
@@ -169,6 +170,7 @@ public final class HostileConfig {
     /**
      * Post-initialize configuration.
      * Called during post-init to ensure server has access to config.
+     * 
      * @deprecated Config is now loaded during preInit via {@link #init(File)}. This method is a no-op.
      */
     @Deprecated

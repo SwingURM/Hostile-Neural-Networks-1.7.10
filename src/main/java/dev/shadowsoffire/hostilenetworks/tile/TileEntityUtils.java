@@ -20,7 +20,7 @@ public final class TileEntityUtils {
      * Read inventory from NBT tag.
      *
      * @param inventory The inventory array to populate
-     * @param tag The NBT tag to read from
+     * @param tag       The NBT tag to read from
      */
     public static void readInventoryFromNBT(ItemStack[] inventory, NBTTagCompound tag) {
         NBTTagList list = tag.getTagList("inventory", Constants.TAG_COMPOUND);
@@ -37,7 +37,7 @@ public final class TileEntityUtils {
      * Write inventory to NBT tag.
      *
      * @param inventory The inventory array to serialize
-     * @param tag The NBT tag to write to
+     * @param tag       The NBT tag to write to
      */
     public static void writeInventoryToNBT(ItemStack[] inventory, NBTTagCompound tag) {
         NBTTagList list = new NBTTagList();
@@ -56,7 +56,7 @@ public final class TileEntityUtils {
      * Check if an item stack can stack with another.
      *
      * @param existing The existing stack (may be null)
-     * @param toAdd The stack to add (may be null)
+     * @param toAdd    The stack to add (may be null)
      * @return true if they can stack in an output slot
      */
     public static boolean canStack(ItemStack existing, ItemStack toAdd) {

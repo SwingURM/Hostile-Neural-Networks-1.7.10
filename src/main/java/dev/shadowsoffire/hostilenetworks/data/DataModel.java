@@ -763,7 +763,8 @@ public class DataModel {
         private final List<ItemStack> fabricatorDrops = new ArrayList<>();
         private ModelTier defaultTier;
         private int defaultDataPerKill = 1;
-        private int[] dataPerKillByTier = Constants.DATA_PER_KILL_DEFAULTS.clone(); // [faulty, basic, advanced, superior]
+        private int[] dataPerKillByTier = Constants.DATA_PER_KILL_DEFAULTS.clone(); // [faulty, basic, advanced,
+                                                                                    // superior]
         private int overrideRequiredData;
 
         public Builder entityId(String entityId) {
