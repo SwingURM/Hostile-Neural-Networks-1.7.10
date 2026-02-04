@@ -11,7 +11,9 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
 
+import cpw.mods.fml.common.registry.GameRegistry;
 import dev.shadowsoffire.hostilenetworks.HostileConfig;
+import dev.shadowsoffire.hostilenetworks.config.ModelConfig;
 import dev.shadowsoffire.hostilenetworks.item.MobPredictionItem;
 
 /**
@@ -138,7 +140,36 @@ public class DataModel {
     }
 
     public List<ItemStack> getFabricatorDrops() {
+        // Use config override if available
+        if (shouldUseConfigFabricatorDrops()) {
+            return parseConfigDrops(getConfigFabricatorDrops());
+        }
         return fabricatorDrops;
+    }
+
+    /**
+     * Parse config drop strings into ItemStacks.
+     */
+    private List<ItemStack> parseConfigDrops(List<String> dropStrings) {
+        List<ItemStack> drops = new ArrayList<>();
+        for (String dropStr : dropStrings) {
+            try {
+                String[] parts = dropStr.split(":");
+                if (parts.length >= 2) {
+                    String modId = parts[0];
+                    String itemName = parts[1];
+                    int count = parts.length >= 3 ? Math.max(1, Integer.parseInt(parts[2])) : 1;
+                    String fullName = modId + ":" + itemName;
+                    ItemStack item = GameRegistry.makeItemStack(fullName, 0, count, null);
+                    if (item != null && item.getItem() != null) {
+                        drops.add(item);
+                    }
+                }
+            } catch (Exception e) {
+                // Skip invalid drops silently
+            }
+        }
+        return drops;
     }
 
     public ModelTier getDefaultTier() {
@@ -312,6 +343,284 @@ public class DataModel {
         builder.overrideRequiredData(tag.getInteger("overrideRequiredData"));
 
         return builder.build();
+    }
+
+    // ==================== Configuration Support ====================
+
+    /**
+     * Get the simulation cost, applying config override if available.
+     *
+     * @return The sim cost from config override, or the default value
+     */
+    public int getSimCostWithConfig() {
+        return getConfigValueWithDefault(
+            () -> HostileConfig.getModelConfig(entityId),
+            config -> config.hasSimCostOverride(),
+            config -> config.getSimCost(),
+            () -> this.simCost);
+    }
+
+    /**
+     * Get data per kill for a specific tier, applying config override if available.
+     *
+     * @param tier The model tier
+     * @return The data per kill from config override, or the default value
+     */
+    public int getDataPerKillWithConfig(ModelTier tier) {
+        if (tier == null) return getDefaultDataPerKillWithConfig();
+        return getConfigValueWithDefault(
+            () -> HostileConfig.getModelConfig(entityId),
+            config -> config.hasDataPerKillOverride(tier.getTierName()),
+            config -> config.getDataPerKill(tier.getTierName()),
+            () -> getDataPerKill(tier));
+    }
+
+    /**
+     * Get default data per kill, applying config override if available.
+     */
+    public int getDefaultDataPerKillWithConfig() {
+        return getConfigValueWithDefault(
+            () -> HostileConfig.getModelConfig(entityId),
+            config -> config.hasDataPerKillOverride("faulty"),
+            config -> config.getDataPerKill("faulty"),
+            () -> this.defaultDataPerKill);
+    }
+
+    /**
+     * Get the current tier's data threshold.
+     * This is the minimum data required to be in this tier.
+     * Uses config overrides if set.
+     *
+     * @param currentTier The current model tier
+     * @return The tier's data threshold
+     */
+    public int getCurrentTierThreshold(ModelTier currentTier) {
+        ModelConfig config = HostileConfig.getModelConfig(entityId);
+        if (config == null) {
+            return currentTier.getRequiredData();
+        }
+
+        int threshold = 0;
+
+        // Add up all data_to_next_tier values for tiers before the current tier
+        switch (currentTier.getTierName()) {
+            case "faulty":
+                threshold = 0; // Faulty starts at 0
+                break;
+            case "basic":
+                threshold += config.dataToNextBasic >= 0 ? config.dataToNextBasic : 6;
+                break;
+            case "advanced":
+                threshold += config.dataToNextBasic >= 0 ? config.dataToNextBasic : 6;
+                threshold += config.dataToNextAdvanced >= 0 ? config.dataToNextAdvanced : 36;
+                break;
+            case "superior":
+                threshold += config.dataToNextBasic >= 0 ? config.dataToNextBasic : 6;
+                threshold += config.dataToNextAdvanced >= 0 ? config.dataToNextAdvanced : 36;
+                threshold += config.dataToNextSuperior >= 0 ? config.dataToNextSuperior : 312;
+                break;
+            case "self_aware":
+                threshold += config.dataToNextBasic >= 0 ? config.dataToNextBasic : 6;
+                threshold += config.dataToNextAdvanced >= 0 ? config.dataToNextAdvanced : 36;
+                threshold += config.dataToNextSuperior >= 0 ? config.dataToNextSuperior : 312;
+                threshold += config.dataToNextSelfAware >= 0 ? config.dataToNextSelfAware : 900;
+                break;
+            default:
+                threshold = 0; // Should not happen, but safe fallback
+        }
+        return threshold;
+    }
+
+    /**
+     * Get the next tier's data threshold.
+     * This is the minimum data required to reach the next tier.
+     * Uses config overrides if set.
+     *
+     * @param currentTier The current model tier
+     * @return The next tier's data threshold, or Integer.MAX_VALUE if at max tier
+     */
+    public int getNextTierThreshold(ModelTier currentTier) {
+        ModelTier nextTier = ModelTierRegistry.getNextTier(currentTier);
+        if (nextTier == currentTier) {
+            return Integer.MAX_VALUE;
+        }
+        return getCurrentTierThreshold(nextTier);
+    }
+
+    /**
+     * Get the data needed to advance from the current tier to the next tier.
+     * Uses the user-friendly "data_to_next_tier" config if set.
+     *
+     * @param currentTier The current model tier
+     * @return The data needed to reach next tier, or -1 if not overridden
+     */
+    private int getDataToNextTierWithConfig(ModelTier currentTier) {
+        String tierName = currentTier.getTierName();
+        ModelConfig config = HostileConfig.getModelConfig(entityId);
+        if (config != null) {
+            switch (tierName) {
+                case "faulty":
+                    if (config.dataToNextBasic >= 0) return config.dataToNextBasic;
+                    break;
+                case "basic":
+                    if (config.dataToNextAdvanced >= 0) return config.dataToNextAdvanced;
+                    break;
+                case "advanced":
+                    if (config.dataToNextSuperior >= 0) return config.dataToNextSuperior;
+                    break;
+                case "superior":
+                    if (config.dataToNextSelfAware >= 0) return config.dataToNextSelfAware;
+                    break;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Get the data needed to advance from current tier to next tier.
+     * Uses config overrides if set, otherwise falls back to tier defaults.
+     *
+     * @param currentData The current data amount
+     * @param currentTier The current model tier
+     * @return The data needed to reach the next tier
+     */
+    public int getDataToNextTierWithConfig(int currentData, ModelTier currentTier) {
+        // Check if user set data_to_next_tier for this tier
+        int dataToNextTier = getDataToNextTierWithConfig(currentTier);
+        if (dataToNextTier >= 0) {
+            // User specified how much data is needed from current tier to next
+            // Calculate how much more data is needed based on current progress in this tier
+            int currentTierThreshold = currentTier.getRequiredData();
+            int dataInCurrentTier = Math.max(0, currentData - currentTierThreshold);
+            return Math.max(0, dataToNextTier - dataInCurrentTier);
+        }
+
+        // Fall back to default tier thresholds
+        ModelTier nextTier = ModelTierRegistry.getNextTier(currentTier);
+        if (nextTier == currentTier) {
+            return 0; // Already at max tier
+        }
+        return Math.max(0, nextTier.getRequiredData() - currentData);
+    }
+
+    /**
+     * Get the number of kills needed to reach the next tier,
+     * using config overrides.
+     *
+     * @param currentData The current data amount
+     * @param currentTier The current model tier
+     * @return The number of kills needed, or Integer.MAX_VALUE if at max tier or dataPerKill is 0
+     */
+    public int getKillsNeededWithConfig(int currentData, ModelTier currentTier) {
+        int dataPerKill = getDataPerKillWithConfig(currentTier);
+        if (dataPerKill <= 0) {
+            return Integer.MAX_VALUE;
+        }
+        int dataNeeded = getDataToNextTierWithConfig(currentData, currentTier);
+        if (dataNeeded <= 0) {
+            return 0;
+        }
+        return (int) Math.ceil(dataNeeded / (float) dataPerKill);
+    }
+
+    /**
+     * Get display scale, applying config override if available.
+     */
+    public float getScaleWithConfig() {
+        return getConfigValueWithDefault(
+            () -> HostileConfig.getModelConfig(entityId),
+            config -> config.displayScale >= 0,
+            config -> config.displayScale,
+            () -> this.scale);
+    }
+
+    /**
+     * Get X offset, applying config override if available.
+     */
+    public float getXOffsetWithConfig() {
+        return getConfigValueWithDefault(
+            () -> HostileConfig.getModelConfig(entityId),
+            config -> !Float.isNaN(config.displayXOffset),
+            config -> config.displayXOffset,
+            () -> this.xOffset);
+    }
+
+    /**
+     * Get Y offset, applying config override if available.
+     */
+    public float getYOffsetWithConfig() {
+        return getConfigValueWithDefault(
+            () -> HostileConfig.getModelConfig(entityId),
+            config -> !Float.isNaN(config.displayYOffset),
+            config -> config.displayYOffset,
+            () -> this.yOffset);
+    }
+
+    /**
+     * Get Z offset, applying config override if available.
+     */
+    public float getZOffsetWithConfig() {
+        return getConfigValueWithDefault(
+            () -> HostileConfig.getModelConfig(entityId),
+            config -> !Float.isNaN(config.displayZOffset),
+            config -> config.displayZOffset,
+            () -> this.zOffset);
+    }
+
+    /**
+     * Get the display scale and offsets as a config override.
+     * Returns the configured values if available, otherwise the default values.
+     */
+    public float[] getDisplayWithConfig() {
+        return new float[] { getScaleWithConfig(), getXOffsetWithConfig(), getYOffsetWithConfig(),
+            getZOffsetWithConfig() };
+    }
+
+    /**
+     * Get color as a string, applying config override if available.
+     *
+     * @return The color string from config, or the default color
+     */
+    public String getColorStringWithConfig() {
+        return getConfigValueWithDefault(
+            () -> HostileConfig.getModelConfig(entityId),
+            config -> config.hasColorOverride(),
+            config -> config.getColor(),
+            () -> getColorString());
+    }
+
+    /**
+     * Check if fabricator drops should be overridden by config.
+     */
+    public boolean shouldUseConfigFabricatorDrops() {
+        ModelConfig config = HostileConfig.getModelConfig(entityId);
+        return config != null && config.hasFabricatorDropsOverride();
+    }
+
+    /**
+     * Get fabricator drops from config override.
+     *
+     * @return The list of drop strings from config, or null if not overridden
+     */
+    public List<String> getConfigFabricatorDrops() {
+        ModelConfig config = HostileConfig.getModelConfig(entityId);
+        if (config != null && config.hasFabricatorDropsOverride()) {
+            return config.getFabricatorDrops();
+        }
+        return null;
+    }
+
+    /**
+     * Helper method to get a value with config override.
+     */
+    private <T> T getConfigValueWithDefault(java.util.function.Supplier<ModelConfig> configSupplier,
+        java.util.function.Function<ModelConfig, Boolean> hasOverride,
+        java.util.function.Function<ModelConfig, T> getOverride, java.util.function.Supplier<T> defaultSupplier) {
+        ModelConfig config = configSupplier.get();
+        if (config != null && hasOverride.apply(config)) {
+            return getOverride.apply(config);
+        }
+        return defaultSupplier.get();
     }
 
     @Override

@@ -223,10 +223,40 @@ public class ModelTierRegistry {
     }
 
     /**
-     * Get the tier for a given data amount.
+     * Get the tier for a given data amount using config-aware thresholds.
      * Returns the highest tier whose requiredData is less than or equal to the given data.
+     * For DataModel items, uses config overrides if available.
+     *
+     * @param data     The data amount
+     * @param entityId Optional entity ID for config-aware lookup
      */
-    public static ModelTier getTier(int data) {
+    public static ModelTier getTier(int data, String entityId) {
+        // If entityId is provided, use config-aware threshold calculation
+        if (entityId != null) {
+            DataModel model = DataModelRegistry.get(entityId);
+            if (model != null) {
+                // Check each tier from lowest to highest
+                for (ModelTier tier : TIERS) {
+                    int threshold = model.getCurrentTierThreshold(tier);
+                    if (data < threshold) {
+                        // Return previous tier (handled by result variable)
+                        break;
+                    }
+                    // Check if this is the max tier or if next tier threshold would exceed data
+                    ModelTier nextTier = getNextTier(tier);
+                    if (nextTier == tier) {
+                        // This is the max tier
+                        return tier;
+                    }
+                    int nextThreshold = model.getCurrentTierThreshold(nextTier);
+                    if (data < nextThreshold) {
+                        return tier;
+                    }
+                }
+            }
+        }
+
+        // Fallback to original behavior using datapack thresholds
         ModelTier result = TIERS.get(0);
         for (ModelTier tier : TIERS) {
             if (tier.getRequiredData() <= data) {
@@ -239,11 +269,33 @@ public class ModelTierRegistry {
     }
 
     /**
+     * Get the tier for a given data amount.
+     * Returns the highest tier whose requiredData is less than or equal to the given data.
+     * Note: This uses datapack thresholds only. Use the overload with entityId for config support.
+     */
+    public static ModelTier getTier(int data) {
+        return getTier(data, null);
+    }
+
+    /**
      * Get a tier by name (case-insensitive).
      */
     public static ModelTier getByName(String name) {
         if (name == null) return null;
         return TIERS_BY_NAME.get(name.toLowerCase());
+    }
+
+    /**
+     * Get a tier by index.
+     *
+     * @param index The index (0 = first tier)
+     * @return The tier at the given index, or null if out of bounds
+     */
+    public static ModelTier getByIndex(int index) {
+        if (index >= 0 && index < TIERS.size()) {
+            return TIERS.get(index);
+        }
+        return null;
     }
 
     /**
