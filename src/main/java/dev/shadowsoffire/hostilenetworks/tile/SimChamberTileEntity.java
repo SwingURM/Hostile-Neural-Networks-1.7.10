@@ -13,7 +13,6 @@ import net.minecraftforge.common.util.ForgeDirection;
 
 import cofh.api.energy.IEnergyReceiver;
 import dev.shadowsoffire.hostilenetworks.HostileConfig;
-import dev.shadowsoffire.hostilenetworks.HostileNetworks;
 import dev.shadowsoffire.hostilenetworks.data.DataModel;
 import dev.shadowsoffire.hostilenetworks.data.DataModelInstance;
 import dev.shadowsoffire.hostilenetworks.data.ModelTier;
@@ -56,20 +55,15 @@ public class SimChamberTileEntity extends TileEntity implements IInventory, ISid
             return;
         }
 
-        HostileNetworks.LOG.debug("[SimChamber] Processing simulation...");
-
         ItemStack modelStack = inventory[Constants.SLOT_MODEL];
 
         if (modelStack == null) {
-            HostileNetworks.LOG.debug("[SimChamber] No model in slot 0");
             this.failState = FailureState.MODEL;
             this.runtime = 0;
             return;
         }
 
         if (!DataModelItem.isAttuned(modelStack)) {
-            HostileNetworks.LOG
-                .debug("[SimChamber] Model is not attuned (blank model). damage=" + modelStack.getItemDamage());
             this.failState = FailureState.MODEL;
             this.runtime = 0;
             return;
@@ -85,9 +79,6 @@ public class SimChamberTileEntity extends TileEntity implements IInventory, ISid
 
             if (!this.currentModel.getTier()
                 .canSim()) {
-                HostileNetworks.LOG.debug(
-                    "[SimChamber] Tier " + this.currentModel.getTier()
-                        .getDisplayName() + " cannot simulate");
                 this.failState = FailureState.FAULTY;
                 this.runtime = 0;
                 return;
@@ -99,7 +90,6 @@ public class SimChamberTileEntity extends TileEntity implements IInventory, ISid
                     float accuracy = this.currentModel.getAccuracy();
                     this.predictionSuccess = (int) accuracy
                         + (RANDOM.nextFloat() <= this.currentModel.getAccuracy() % 1 ? 1 : 0);
-                    HostileNetworks.LOG.debug("[SimChamber] Started simulation: " + model.getEntityId());
                     if (inventory[Constants.SLOT_MATRIX] != null) {
                         inventory[Constants.SLOT_MATRIX].stackSize--;
                         if (inventory[Constants.SLOT_MATRIX].stackSize <= 0) {
@@ -114,8 +104,6 @@ public class SimChamberTileEntity extends TileEntity implements IInventory, ISid
                     this.markDirty(); // Sync runtime to client
                     if (this.runtime == 0) {
                         // Complete simulation
-                        HostileNetworks.LOG
-                            .debug("[SimChamber] Completed simulation: {} (+1 data)", model.getEntityId());
                         ItemStack baseOut = inventory[Constants.SLOT_OUTPUT_BASE];
                         ItemStack predOut = inventory[Constants.SLOT_OUTPUT_PREDICTION];
 
@@ -161,7 +149,7 @@ public class SimChamberTileEntity extends TileEntity implements IInventory, ISid
 
                         this.markDirty();
                     } else {
-                        this.energyStored -= model.getSimCost();
+                        this.energyStored -= model.getSimCostWithConfig();
                     }
                 } else {
                     this.failState = FailureState.REDSTONE;
@@ -239,7 +227,12 @@ public class SimChamberTileEntity extends TileEntity implements IInventory, ISid
     }
 
     public boolean hasPowerFor(DataModel model) {
-        return this.energyStored >= model.getSimCost();
+        // Check if model is disabled
+        if (!HostileConfig.isModelEnabled(model.getEntityId())) {
+            return false;
+        }
+        // Use config-overridden sim cost
+        return this.energyStored >= model.getSimCostWithConfig();
     }
 
     // Energy methods

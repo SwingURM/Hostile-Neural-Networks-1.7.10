@@ -18,7 +18,8 @@ import dev.shadowsoffire.hostilenetworks.proxy.CommonProxy;
     modid = HostileNetworks.MODID,
     version = Tags.VERSION,
     name = "Hostile Neural Networks",
-    acceptedMinecraftVersions = "[1.7.10]")
+    acceptedMinecraftVersions = "[1.7.10]",
+    guiFactory = "dev.shadowsoffire.hostilenetworks.HostileConfig$ConfigGuiFactory")
 public class HostileNetworks {
 
     public static final String MODID = "hostilenetworks";

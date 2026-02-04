@@ -2,6 +2,8 @@ package dev.shadowsoffire.hostilenetworks.client;
 
 import net.minecraft.item.ItemStack;
 
+import dev.shadowsoffire.hostilenetworks.data.DataModel;
+import dev.shadowsoffire.hostilenetworks.data.DataModelRegistry;
 import dev.shadowsoffire.hostilenetworks.data.ModelTier;
 import dev.shadowsoffire.hostilenetworks.data.ModelTierRegistry;
 import dev.shadowsoffire.hostilenetworks.item.DataModelItem;
@@ -111,15 +113,40 @@ public class DataModelProgressBar {
             return null;
         }
 
-        int currentData = DataModelItem.getCurrentData(stack);
-        ModelTier tier = ModelTierRegistry.getTier(currentData);
-        ModelTier nextTier = ModelTierRegistry.getNextTier(tier);
+        DataModel dataModel = DataModelRegistry.get(entityId);
+        if (dataModel == null) {
+            return null;
+        }
 
-        return createProgressBar(
-            currentData,
-            tier.getRequiredData(),
-            nextTier.getRequiredData(),
-            tier.isMax(),
-            colorPrefix);
+        int currentData = DataModelItem.getCurrentData(stack);
+        ModelTier tier = ModelTierRegistry.getTier(currentData, entityId);
+
+        // Use config-aware data thresholds
+        int currentTierData = dataModel.getCurrentTierThreshold(tier);
+        int nextTierData = dataModel.getNextTierThreshold(tier);
+
+        return createProgressBar(currentData, currentTierData, nextTierData, tier.isMax(), colorPrefix);
+    }
+
+    /**
+     * Create a progress bar using config-aware data from a DataModel.
+     *
+     * @param currentData Current data amount
+     * @param dataModel   The data model (provides config overrides)
+     * @param colorPrefix Color code to prepend
+     * @return Formatted progress bar string
+     */
+    public static String createProgressBarWithConfig(int currentData, DataModel dataModel, String colorPrefix) {
+        if (dataModel == null) {
+            return "";
+        }
+
+        ModelTier tier = ModelTierRegistry.getTier(currentData, dataModel.getEntityId());
+
+        // Use config-aware data thresholds
+        int currentTierData = dataModel.getCurrentTierThreshold(tier);
+        int nextTierData = dataModel.getNextTierThreshold(tier);
+
+        return createProgressBar(currentData, currentTierData, nextTierData, tier.isMax(), colorPrefix);
     }
 }

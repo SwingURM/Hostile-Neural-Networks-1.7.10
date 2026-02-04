@@ -14,6 +14,7 @@ import org.lwjgl.opengl.GL11;
 import codechicken.lib.gui.GuiDraw;
 import codechicken.nei.PositionedStack;
 import codechicken.nei.recipe.TemplateRecipeHandler;
+import dev.shadowsoffire.hostilenetworks.HostileConfig;
 import dev.shadowsoffire.hostilenetworks.data.DataModel;
 import dev.shadowsoffire.hostilenetworks.data.DataModelRegistry;
 import dev.shadowsoffire.hostilenetworks.item.HostileItems;
@@ -49,6 +50,10 @@ public class LootFabRecipeHandler extends TemplateRecipeHandler {
     public void loadCraftingRecipes(String outputId, Object... results) {
         if ("hostilenetworks.loot_fabricator".equals(outputId) && getClass() == LootFabRecipeHandler.class) {
             for (DataModel model : DataModelRegistry.getAll()) {
+                // Skip disabled models
+                if (!HostileConfig.isModelEnabled(model.getEntityId())) {
+                    continue;
+                }
                 List<ItemStack> drops = model.getFabricatorDrops();
                 for (int i = 0; i < drops.size(); i++) {
                     this.arecipes.add(new CachedLootFabRecipe(model, i));
@@ -62,6 +67,10 @@ public class LootFabRecipeHandler extends TemplateRecipeHandler {
     @Override
     public void loadCraftingRecipes(ItemStack result) {
         for (DataModel model : DataModelRegistry.getAll()) {
+            // Skip disabled models
+            if (!HostileConfig.isModelEnabled(model.getEntityId())) {
+                continue;
+            }
             List<ItemStack> drops = model.getFabricatorDrops();
             for (int i = 0; i < drops.size(); i++) {
                 ItemStack drop = drops.get(i);
@@ -82,6 +91,10 @@ public class LootFabRecipeHandler extends TemplateRecipeHandler {
         if (ingredient.getItem() == HostileItems.mob_prediction) {
             String entityId = MobPredictionItem.getEntityId(ingredient);
             if (entityId != null) {
+                // Check if model is disabled
+                if (!HostileConfig.isModelEnabled(entityId)) {
+                    return;
+                }
                 DataModel model = DataModelRegistry.get(entityId);
                 if (model != null) {
                     List<ItemStack> drops = model.getFabricatorDrops();

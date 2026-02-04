@@ -106,7 +106,8 @@ public class FabDirectiveItem extends Item {
 
         if (!stack.hasTagCompound()) return selections;
 
-        NBTTagList list = stack.getTagCompound().getTagList(NBTKeys.SELECTIONS, 10);
+        NBTTagList list = stack.getTagCompound()
+            .getTagList(NBTKeys.SELECTIONS, 10);
         for (int i = 0; i < list.tagCount(); i++) {
             NBTTagCompound tagCompound = list.getCompoundTagAt(i);
             String entityId = tagCompound.getString(NBTKeys.ENTITY_ID);
@@ -150,7 +151,9 @@ public class FabDirectiveItem extends Item {
      */
     public static int getSelectionCount(ItemStack stack) {
         if (!stack.hasTagCompound()) return 0;
-        return stack.getTagCompound().getTagList(NBTKeys.SELECTIONS, 10).tagCount();
+        return stack.getTagCompound()
+            .getTagList(NBTKeys.SELECTIONS, 10)
+            .tagCount();
     }
 
     /**
@@ -223,7 +226,8 @@ public class FabDirectiveItem extends Item {
                 String entityName = getEntityDisplayName(entityId, model);
                 String dropInfo = getDropDisplayInfo(model, dropIndex);
                 if (dropInfo == null) {
-                    dropInfo = StatCollector.translateToLocalFormatted("tooltip.hostilenetworks.fab_directive.invalid", dropIndex);
+                    dropInfo = StatCollector
+                        .translateToLocalFormatted("tooltip.hostilenetworks.fab_directive.invalid", dropIndex);
                 }
 
                 tooltip.add(
@@ -253,12 +257,14 @@ public class FabDirectiveItem extends Item {
             }
             // Fallback to model name
             if (model.getName() != null) {
-                return model.getName().getUnformattedText();
+                return model.getName()
+                    .getUnformattedText();
             }
         }
         // Fallback to entity name translation
         String shortId = entityId.contains(":") ? entityId.substring(entityId.indexOf(":") + 1) : entityId;
-        String capitalized = shortId.substring(0, 1).toUpperCase() + shortId.substring(1);
+        String capitalized = shortId.substring(0, 1)
+            .toUpperCase() + shortId.substring(1);
         String translated = StatCollector.translateToLocal("entity." + capitalized + ".name");
         return !translated.equals("entity." + capitalized + ".name") ? translated : capitalized;
     }

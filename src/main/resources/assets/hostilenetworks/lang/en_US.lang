@@ -270,6 +270,7 @@ hostilenetworks.gui.fab_cost=Cost: %s FE/tick
 hostilenetworks.gui.clear=Clear Selection
 hostilenetworks.gui.fab_select=Select Output
 hostilenetworks.gui.item_count=x%s
+hostilenetworks.gui.model_disabled=Model Disabled
 
 # Tooltip prefixes
 tooltip.hostilenetworks.list_prefix=  - %s

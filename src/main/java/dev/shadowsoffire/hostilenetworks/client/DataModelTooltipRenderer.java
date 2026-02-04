@@ -12,6 +12,8 @@ import net.minecraft.util.StatCollector;
 import org.lwjgl.opengl.GL11;
 
 import dev.shadowsoffire.hostilenetworks.HostileNetworks;
+import dev.shadowsoffire.hostilenetworks.data.DataModel;
+import dev.shadowsoffire.hostilenetworks.data.DataModelRegistry;
 import dev.shadowsoffire.hostilenetworks.data.ModelTier;
 import dev.shadowsoffire.hostilenetworks.data.ModelTierRegistry;
 import dev.shadowsoffire.hostilenetworks.item.DataModelItem;
@@ -142,18 +144,17 @@ public class DataModelTooltipRenderer {
             return null;
         }
 
+        DataModel dataModel = DataModelRegistry.get(entityId);
+        if (dataModel == null) {
+            return null;
+        }
+
         int currentData = DataModelItem.getCurrentData(stack);
-        ModelTier tier = ModelTierRegistry.getTier(currentData);
-        ModelTier nextTier = ModelTierRegistry.getNextTier(tier);
+        ModelTier tier = ModelTierRegistry.getTier(currentData, entityId);
 
         String tierColor = tier.getColor() != null ? tier.getColor()
             .toString() : "\u00a7f";
-        String progressBar = DataModelProgressBar.createProgressBar(
-            currentData,
-            tier.getRequiredData(),
-            nextTier.getRequiredData(),
-            tier.isMax(),
-            tierColor);
+        String progressBar = DataModelProgressBar.createProgressBarWithConfig(currentData, dataModel, tierColor);
 
         String tierName = tier.getDisplayName();
 
@@ -179,20 +180,21 @@ public class DataModelTooltipRenderer {
         }
 
         int currentData = DataModelItem.getCurrentData(stack);
-        ModelTier tier = ModelTierRegistry.getTier(currentData);
+        ModelTier tier = ModelTierRegistry.getTier(currentData, entityId);
 
         if (tier.isMax()) {
             return null;
         }
 
-        ModelTier nextTier = ModelTierRegistry.getNextTier(tier);
-        int dataPerKill = tier.getDataPerKill();
-
-        if (dataPerKill <= 0) {
+        // Get DataModel and use its data_per_kill with config override
+        DataModel dataModel = DataModelRegistry.get(entityId);
+        if (dataModel == null) {
             return null;
         }
 
-        int killsNeeded = (int) Math.ceil((nextTier.getRequiredData() - currentData) / (float) dataPerKill);
+        // Use the config-aware method for kills needed calculation
+        int killsNeeded = dataModel.getKillsNeededWithConfig(currentData, tier);
+
         String killsKey = StatCollector.translateToLocal("hostilenetworks.hud.kills");
         if (killsKey.equals("hostilenetworks.hud.kills")) {
             killsKey = "%d kills to next tier";

@@ -16,14 +16,11 @@ import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import cpw.mods.fml.relauncher.Side;
-import dev.shadowsoffire.hostilenetworks.block.HostileBlocks;
 import dev.shadowsoffire.hostilenetworks.command.GenerateModelCommand;
 import dev.shadowsoffire.hostilenetworks.command.GiveModelCommand;
 import dev.shadowsoffire.hostilenetworks.compatibility.nei.NEIHostileNetworksConfig;
-import dev.shadowsoffire.hostilenetworks.data.DataModelRegistry;
 import dev.shadowsoffire.hostilenetworks.event.MobInteractionHandler;
 import dev.shadowsoffire.hostilenetworks.gui.HNNGuiHandler;
-import dev.shadowsoffire.hostilenetworks.item.HostileItems;
 import dev.shadowsoffire.hostilenetworks.net.LootFabSelectionMessage;
 
 /**
@@ -36,14 +33,8 @@ public class HostileNetworksEvents {
 
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-        // Initialize items first (needed by DataModelRegistry for base_drop items)
-        HostileItems.init();
-
-        // Initialize blocks
-        HostileBlocks.init();
-
-        // Initialize data model registry (needs items to be initialized first)
-        DataModelRegistry.init();
+        // Items, blocks, and data models are now initialized in CommonProxy.preInit()
+        // before configuration is loaded, allowing per-model config entries to be generated.
 
         HostileNetworks.LOG.info("Hostile Neural Networks pre-initialization complete");
     }

@@ -16,6 +16,7 @@ import org.lwjgl.opengl.GL11;
 import codechicken.lib.gui.GuiDraw;
 import codechicken.nei.PositionedStack;
 import codechicken.nei.recipe.TemplateRecipeHandler;
+import dev.shadowsoffire.hostilenetworks.HostileConfig;
 import dev.shadowsoffire.hostilenetworks.data.DataModel;
 import dev.shadowsoffire.hostilenetworks.data.DataModelRegistry;
 import dev.shadowsoffire.hostilenetworks.data.ModelTier;
@@ -61,6 +62,10 @@ public class SimChamberRecipeHandler extends TemplateRecipeHandler {
         if ("hostilenetworks.sim_chamber".equals(outputId) && getClass() == SimChamberRecipeHandler.class) {
             cachedRecipes.clear();
             for (DataModel model : DataModelRegistry.getAll()) {
+                // Skip disabled models
+                if (!HostileConfig.isModelEnabled(model.getEntityId())) {
+                    continue;
+                }
                 CachedSimChamberRecipe recipe = new CachedSimChamberRecipe(model);
                 cachedRecipes.add(recipe);
                 this.arecipes.add(recipe);
@@ -76,6 +81,10 @@ public class SimChamberRecipeHandler extends TemplateRecipeHandler {
             // Find recipes for this prediction item
             String entityId = DataModelItem.getEntityIdFromStack(result);
             if (entityId != null) {
+                // Check if model is disabled
+                if (!HostileConfig.isModelEnabled(entityId)) {
+                    return;
+                }
                 DataModel model = DataModelRegistry.get(entityId);
                 if (model != null) {
                     this.arecipes.add(new CachedSimChamberRecipe(model));
@@ -87,6 +96,10 @@ public class SimChamberRecipeHandler extends TemplateRecipeHandler {
         } else {
             // Find recipes for this base drop
             for (DataModel model : DataModelRegistry.getAll()) {
+                // Skip disabled models
+                if (!HostileConfig.isModelEnabled(model.getEntityId())) {
+                    continue;
+                }
                 ItemStack baseDrop = model.getBaseDrop();
                 if (baseDrop != null && areStacksSameType(baseDrop, result)) {
                     this.arecipes.add(new CachedSimChamberRecipe(model));
@@ -105,6 +118,10 @@ public class SimChamberRecipeHandler extends TemplateRecipeHandler {
         if (ingredient.getItem() == HostileItems.data_model) {
             String entityId = DataModelItem.getEntityIdFromStack(ingredient);
             if (entityId != null) {
+                // Check if model is disabled
+                if (!HostileConfig.isModelEnabled(entityId)) {
+                    return;
+                }
                 DataModel model = DataModelRegistry.get(entityId);
                 if (model != null) {
                     this.arecipes.add(new CachedSimChamberRecipe(model));
@@ -184,11 +201,6 @@ public class SimChamberRecipeHandler extends TemplateRecipeHandler {
                 }
 
                 currentTier = next;
-
-                // Update all cached recipes' current tier
-                for (CachedSimChamberRecipe r : cachedRecipes) {
-                    r.setTier(next);
-                }
             }
             lastTickTime = time;
         }
@@ -229,15 +241,12 @@ public class SimChamberRecipeHandler extends TemplateRecipeHandler {
 
     public class CachedSimChamberRecipe extends CachedRecipe {
 
-        private final DataModel model;
         private final PositionedStack dataModelInput;
         private final PositionedStack matrixInput;
         private final PositionedStack baseDropOutput;
         private final PositionedStack predictionOutput;
 
         public CachedSimChamberRecipe(DataModel model) {
-            this.model = model;
-
             // Input: Data Model - relative to background at (4, 4), plus center offset (25, 11) = (29, 15)
             ItemStack modelStack = DataModelItem.createForEntity(model.getEntityId());
             if (modelStack != null) {
@@ -269,13 +278,6 @@ public class SimChamberRecipeHandler extends TemplateRecipeHandler {
             } else {
                 this.predictionOutput = null;
             }
-        }
-
-        /**
-         * Set current tier
-         */
-        public void setTier(ModelTier tier) {
-            // Optional: update item NBT to reflect current tier
         }
 
         @Override

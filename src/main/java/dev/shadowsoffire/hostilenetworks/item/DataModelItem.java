@@ -157,13 +157,13 @@ public class DataModelItem extends Item {
     /**
      * Create a data model ItemStack for a specific entity ID.
      * Used by NEI recipe handlers.
-     * Returns ItemStack with damage value matching getSubItems() for proper NEI display.
+     * Damage value is used to distinguish entity types for NEI display.
      */
     public static ItemStack createForEntity(String entityId) {
         DataModel model = DataModelRegistry.get(entityId);
         if (model == null) return null;
 
-        // Get damage value matching getSubItems() - index in registry + 1
+        // Damage value = index in registry + 1 (0 is blank model)
         int damage = DataModelRegistry.getIds()
             .indexOf(entityId) + 1;
         ItemStack stack = new ItemStack(HostileItems.data_model, 1, damage);
@@ -171,8 +171,8 @@ public class DataModelItem extends Item {
         tag.setString(NBTKeys.ENTITY_ID, entityId);
         tag.setInteger(NBTKeys.CURRENT_DATA, 0);
         tag.setInteger(NBTKeys.ITERATIONS, 0);
-
         stack.setTagCompound(tag);
+
         return stack;
     }
 
@@ -197,21 +197,10 @@ public class DataModelItem extends Item {
     }
 
     /**
-     * Restore damage value from NBT when loading item.
+     * Restore damage value based on entity type.
      */
     public static void restoreDamage(ItemStack stack) {
-        if (isBlank(stack)) {
-            stack.setItemDamage(0);
-            return;
-        }
-        if (stack.hasTagCompound() && stack.getTagCompound()
-            .hasKey("Damage")) {
-            int dmg = stack.getTagCompound()
-                .getInteger("Damage");
-            stack.setItemDamage(dmg);
-        } else {
-            updateDamage(stack);
-        }
+        updateDamage(stack);
     }
 
     /**
@@ -282,40 +271,24 @@ public class DataModelItem extends Item {
     }
 
     /**
-     * Update the item's damage based on current data.
+     * Update the item's damage based on entity type.
+     * Damage is used to distinguish entity types for NEI display.
+     * Progress is stored in NBT only.
      */
     public static void updateDamage(ItemStack stack) {
         if (isBlank(stack)) {
             stack.setItemDamage(0);
             return;
         }
-        int data = getCurrentData(stack);
-        ModelTier tier = ModelTierRegistry.getTier(data);
-        ModelTier nextTier = ModelTierRegistry.getNextTier(tier);
-
-        int maxData;
-        int progress;
-
-        if (tier.isMax()) {
-            maxData = tier.getRequiredData();
-            progress = maxData;
-        } else {
-            maxData = nextTier.getRequiredData() - tier.getRequiredData();
-            progress = data - tier.getRequiredData();
+        // Damage = entity index + 1, used for NEI display
+        String entityId = getEntityId(stack);
+        if (entityId != null) {
+            int index = DataModelRegistry.getIds()
+                .indexOf(entityId);
+            if (index >= 0) {
+                stack.setItemDamage(index + 1);
+            }
         }
-
-        if (maxData <= 0) {
-            stack.setItemDamage(100);
-        } else {
-            int damage = 100 - (int) ((float) progress / maxData * 100);
-            stack.setItemDamage(Math.max(0, Math.min(100, damage)));
-        }
-
-        if (!stack.hasTagCompound()) {
-            stack.setTagCompound(new NBTTagCompound());
-        }
-        stack.getTagCompound()
-            .setInteger("Damage", stack.getItemDamage());
     }
 
     /**
@@ -437,11 +410,11 @@ public class DataModelItem extends Item {
 
         // Show success message
         String entityName = getEntityDisplayNameForModel(model);
-        String builtMsg = StatCollector.translateToLocal("hostilenetworks.msg.built");
+        String builtMsg = StatCollector.translateToLocalFormatted("hostilenetworks.msg.built", entityName);
         if (builtMsg.equals("hostilenetworks.msg.built")) {
-            builtMsg = "Built Data Model for ";
+            builtMsg = "Built Data Model for " + entityName;
         }
-        player.addChatMessage(new ChatComponentText(EnumChatFormatting.GOLD + builtMsg + entityName));
+        player.addChatMessage(new ChatComponentText(EnumChatFormatting.GOLD + builtMsg));
 
         LOGGER.info("Player {} attuned data model to {}", player.getCommandSenderName(), modelId);
     }
@@ -538,7 +511,7 @@ public class DataModelItem extends Item {
         }
 
         int data = getCurrentData(stack);
-        ModelTier tier = ModelTierRegistry.getTier(data);
+        ModelTier tier = ModelTierRegistry.getTier(data, entityId);
 
         // Tier line: "Tier: <color>Basic"
         String tierKey = StatCollector.translateToLocal("hostilenetworks.info.tier");
@@ -552,12 +525,15 @@ public class DataModelItem extends Item {
 
         // Data progress and Data Per Kill (only if not max tier)
         if (!tier.isMax()) {
-            int tierData = tier.getRequiredData();
-            ModelTier nextTier = ModelTierRegistry.getNextTier(tier);
-            int nextTierData = nextTier.getRequiredData();
+            // Use config-aware data thresholds
+            int tierData = model.getCurrentTierThreshold(tier);
+            int nextTierData = model.getNextTierThreshold(tier);
 
-            int dProg = data - tierData;
-            int dMax = nextTierData - tierData;
+            // Calculate progress within current tier
+            // dProg: data collected in current tier (from tier start)
+            // dMax: data needed to reach next tier (from current tier)
+            int dProg = Math.max(0, data - tierData);
+            int dMax = Math.max(1, nextTierData - tierData);
 
             // Data Collected: <gray>60/100
             String dataKey = StatCollector.translateToLocal("hostilenetworks.info.data");
@@ -572,12 +548,12 @@ public class DataModelItem extends Item {
                 EnumChatFormatting.WHITE
                     + String.format(dataKey, EnumChatFormatting.GRAY + String.format(dprogKey, dProg, dMax)));
 
-            // Data Per Kill
+            // Data Per Kill - use config-aware method
             String dpkKey = StatCollector.translateToLocal("hostilenetworks.info.dpk");
             if (dpkKey.equals("hostilenetworks.info.dpk")) {
                 dpkKey = "Data Per Kill: %s";
             }
-            int dataPerKill = model.getDataPerKill(tier);
+            int dataPerKill = model.getDataPerKillWithConfig(tier);
             if (dataPerKill == 0) {
                 String disabledKey = StatCollector.translateToLocal("hostilenetworks.info.disabled");
                 if (disabledKey.equals("hostilenetworks.info.disabled")) {
@@ -632,7 +608,7 @@ public class DataModelItem extends Item {
     /**
      * Add sub-items for each entity data model variant.
      * damage=0: Blank model framework
-     * damage=1+: Attuned models for each entity
+     * damage=1+: Attuned models for each entity (used by NEI for display)
      */
     @Override
     public void getSubItems(Item item, CreativeTabs tab, List<ItemStack> list) {
@@ -646,9 +622,7 @@ public class DataModelItem extends Item {
             DataModel model = DataModelRegistry.get(entityId);
             if (model != null) {
                 ItemStack modelStack = new ItemStack(item, 1, damage++);
-                if (!modelStack.hasTagCompound()) {
-                    modelStack.setTagCompound(new NBTTagCompound());
-                }
+                modelStack.setTagCompound(new NBTTagCompound());
                 modelStack.getTagCompound()
                     .setString(NBTKeys.ENTITY_ID, entityId);
                 modelStack.getTagCompound()

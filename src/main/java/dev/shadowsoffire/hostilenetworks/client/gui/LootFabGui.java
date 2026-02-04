@@ -106,11 +106,14 @@ public class LootFabGui extends GuiContainer {
         // Update model from prediction slot
         this.currentModel = this.container.getCurrentDataModel();
 
-        if (this.currentModel != null) {
+        // Check if current model is disabled
+        boolean isModelDisabled = this.currentModel != null
+            && !HostileConfig.isModelEnabled(this.currentModel.getEntityId());
+
+        if (this.currentModel != null && !isModelDisabled) {
             // Update button visibility based on page count
-            int pageCount = (int) Math.ceil(
-                this.currentModel.getFabricatorDrops()
-                    .size() / 9.0);
+            List<ItemStack> drops = getCurrentDrops();
+            int pageCount = (int) Math.ceil(drops.size() / 9.0);
             this.btnLeft.visible = this.currentPage > 0;
             this.btnRight.visible = this.currentPage < pageCount - 1;
         } else {
@@ -126,10 +129,8 @@ public class LootFabGui extends GuiContainer {
                 this.currentPage--;
             }
         } else if (button == this.btnRight) {
-            int pageCount = this.currentModel != null ? (int) Math.ceil(
-                this.currentModel.getFabricatorDrops()
-                    .size() / 9.0)
-                : 0;
+            List<ItemStack> drops = getCurrentDrops();
+            int pageCount = drops != null ? (int) Math.ceil(drops.size() / 9.0) : 0;
             if (this.currentPage < pageCount - 1) {
                 this.currentPage++;
             }
@@ -185,10 +186,27 @@ public class LootFabGui extends GuiContainer {
     }
 
     /**
+     * Check if the current model is disabled.
+     */
+    private boolean isCurrentModelDisabled() {
+        return this.currentModel != null && !HostileConfig.isModelEnabled(this.currentModel.getEntityId());
+    }
+
+    /**
+     * Get drops for the current model, or empty list if disabled.
+     */
+    private List<ItemStack> getCurrentDrops() {
+        if (isCurrentModelDisabled()) {
+            return new ArrayList<>();
+        }
+        return this.currentModel.getFabricatorDrops();
+    }
+
+    /**
      * Render the 3x3 fabricator drops selection grid.
      */
     private void renderDropsGrid(int guiLeft, int guiTop, int mouseX, int mouseY) {
-        List<ItemStack> drops = this.currentModel.getFabricatorDrops();
+        List<ItemStack> drops = getCurrentDrops();
         if (drops.isEmpty()) return;
 
         int selection = this.container.getSelectedDrop();
@@ -242,9 +260,23 @@ public class LootFabGui extends GuiContainer {
     protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
         // All text is rendered in the texture itself
 
+        // Check if current model is disabled
+        boolean isDisabled = isCurrentModelDisabled();
+
+        // Render disabled message if model is disabled
+        if (isDisabled) {
+            String disabledText = StatCollector.translateToLocal("hostilenetworks.gui.model_disabled");
+            if (disabledText.equals("hostilenetworks.gui.model_disabled")) {
+                disabledText = "Model Disabled";
+            }
+            int textWidth = mc.fontRenderer.getStringWidth(disabledText);
+            mc.fontRenderer.drawStringWithShadow(disabledText, (176 - textWidth) / 2, 45, 0xFF5555); // Red color for
+                                                                                                     // disabled
+        }
+
         // Render tooltips for drops
         if (this.currentModel != null) {
-            List<ItemStack> drops = this.currentModel.getFabricatorDrops();
+            List<ItemStack> drops = getCurrentDrops();
             int selection = ((LootFabContainer) this.inventorySlots).getSelectedDrop();
             int startIndex = this.currentPage * 9;
             int endIndex = Math.min(startIndex + 9, drops.size());
@@ -311,9 +343,10 @@ public class LootFabGui extends GuiContainer {
     protected void mouseClicked(int mouseX, int mouseY, int button) {
         super.mouseClicked(mouseX, mouseY, button);
 
-        if (this.currentModel == null) return;
+        // Check if current model is disabled
+        if (this.currentModel == null || isCurrentModelDisabled()) return;
 
-        List<ItemStack> drops = this.currentModel.getFabricatorDrops();
+        List<ItemStack> drops = getCurrentDrops();
         if (drops.isEmpty()) return;
 
         int selection = ((LootFabContainer) this.inventorySlots).getSelectedDrop();

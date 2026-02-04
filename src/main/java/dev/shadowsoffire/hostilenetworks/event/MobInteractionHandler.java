@@ -9,7 +9,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 
 import dev.shadowsoffire.hostilenetworks.HostileConfig;
-import dev.shadowsoffire.hostilenetworks.HostileNetworks;
 import dev.shadowsoffire.hostilenetworks.data.DataModel;
 import dev.shadowsoffire.hostilenetworks.data.DataModelRegistry;
 import dev.shadowsoffire.hostilenetworks.data.ModelTier;
@@ -31,8 +30,6 @@ public class MobInteractionHandler {
 
         // Get entity type ID from the killed mob
         String killedEntityId = EntityList.getEntityString(killed);
-        HostileNetworks.LOG
-            .debug("[HNN] Mob kill: entity={}, killer={}", killedEntityId, killer.getCommandSenderName());
 
         if (killedEntityId == null || killedEntityId.isEmpty()) {
             return;
@@ -81,6 +78,11 @@ public class MobInteractionHandler {
         String normalizedId = normalizeEntityId(killedEntityId);
         String lowerCaseId = killedEntityId.toLowerCase();
 
+        // Check if this entity type is disabled
+        if (!HostileConfig.isModelEnabled(normalizedId) && !HostileConfig.isModelEnabled(lowerCaseId)) {
+            return;
+        }
+
         for (int i = 0; i < modelList.tagCount() && i < 4; i++) {
             NBTTagCompound modelTag = modelList.getCompoundTagAt(i);
             String modelEntityId = modelTag.getString("id");
@@ -124,15 +126,8 @@ public class MobInteractionHandler {
                 continue;
             }
 
-            int dataPerKill = model.getDataPerKill(tier);
+            int dataPerKill = model.getDataPerKillWithConfig(tier);
             int newData = currentData + dataPerKill;
-
-            HostileNetworks.LOG.debug(
-                "[HNN] DeepLearner: {} + {} = {} (tier={})",
-                currentData,
-                dataPerKill,
-                newData,
-                tier.getDisplayName());
 
             // Update the data in NBT
             setModelDataInNBT(modelTag, newData);

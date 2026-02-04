@@ -95,7 +95,6 @@ public class GiveModelCommand extends CommandBase {
 
         // Parse tier (optional, defaults to "faulty")
         String tierName = "faulty";
-        int dataAmount = -1; // -1 means use tier's required data
         int bonusData = 0;
 
         // Check if second argument after model is a tier name
@@ -166,8 +165,9 @@ public class GiveModelCommand extends CommandBase {
             return;
         }
 
-        // Calculate data amount
-        int initialData = tier.getRequiredData() + bonusData;
+        // Calculate data amount using config-aware threshold
+        int tierThreshold = model.getCurrentTierThreshold(tier);
+        int initialData = tierThreshold + bonusData;
 
         // Create the data model item
         ItemStack modelStack = new ItemStack(HostileItems.data_model);

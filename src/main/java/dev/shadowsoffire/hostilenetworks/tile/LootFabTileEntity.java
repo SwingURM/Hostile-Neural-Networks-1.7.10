@@ -58,8 +58,10 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
     private List<ItemStack> getFabricatorDropsWithConfig(DataModel model) {
         if (model == null) return new ArrayList<>();
 
+        String entityId = model.getEntityId();
+
         // Check if model is disabled - return empty list
-        if (!HostileConfig.isModelEnabled(model.getEntityId())) {
+        if (!HostileConfig.isModelEnabled(entityId)) {
             return new ArrayList<>();
         }
 
@@ -120,7 +122,8 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
 
         // Get the selected drop index for this entity
         int selection = getSelectedDrop(model);
-        if (selection < 0 || selection >= model.getFabricatorDrops().size()) {
+        if (selection < 0 || selection >= model.getFabricatorDrops()
+            .size()) {
             resetState();
             return;
         }
@@ -153,7 +156,8 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
         if (this.progress >= CRAFTING_TICKS) {
             // Craft the selected drop
             List<ItemStack> drops = getFabricatorDropsWithConfig(model);
-            ItemStack drop = drops.get(selection).copy();
+            ItemStack drop = drops.get(selection)
+                .copy();
             if (insertInOutput(drop, true)) {
                 this.progress = 0;
                 insertInOutput(drop, false);
@@ -234,7 +238,8 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
     public int getSelectedDrop(DataModel model) {
         if (model == null) return -1;
         Integer selection = savedSelections.get(model.getEntityId());
-        return (selection == null || selection >= model.getFabricatorDrops().size()) ? -1 : selection;
+        List<ItemStack> drops = getFabricatorDropsWithConfig(model);
+        return (selection == null || selection >= drops.size()) ? -1 : selection;
     }
 
     /**
@@ -242,7 +247,7 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
      */
     public void setSelection(DataModel model, int selection) {
         if (model == null) return;
-        List<ItemStack> drops = model.getFabricatorDrops();
+        List<ItemStack> drops = getFabricatorDropsWithConfig(model);
 
         if (selection < 0 || selection >= drops.size()) {
             savedSelections.remove(model.getEntityId());

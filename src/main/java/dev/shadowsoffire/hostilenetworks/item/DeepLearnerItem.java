@@ -263,7 +263,10 @@ public class DeepLearnerItem extends Item {
                     // Get model data for progress bar
                     int currentData = getModelData(stack, i);
                     ModelTier tier = ModelTierRegistry.getTier(currentData);
-                    ModelTier nextTier = ModelTierRegistry.getNextTier(tier);
+                    DataModel dataModel = DataModelRegistry.get(entityId);
+                    if (dataModel == null) {
+                        continue;
+                    }
 
                     // Get tier color
                     String tierColor = tier.getColor() != null ? tier.getColor()
@@ -272,23 +275,18 @@ public class DeepLearnerItem extends Item {
                     // Get entity display name
                     String entityName = getEntityDisplayName(entityId);
 
-                    // Create progress bar
-                    String progressBar = DataModelProgressBar.createProgressBar(
-                        currentData,
-                        tier.getRequiredData(),
-                        nextTier.getRequiredData(),
-                        tier.isMax(),
-                        tierColor);
+                    // Create progress bar with config-aware required data
+                    String progressBar = DataModelProgressBar
+                        .createProgressBarWithConfig(currentData, dataModel, tierColor);
 
                     // Add model info with progress bar
                     tooltip.add(tierColor + entityName + " " + progressBar);
 
                     // Add kills needed if not max tier
                     if (!tier.isMax()) {
-                        int dataPerKill = tier.getDataPerKill();
-                        if (dataPerKill > 0) {
-                            int killsNeeded = (int) Math
-                                .ceil((nextTier.getRequiredData() - currentData) / (float) dataPerKill);
+                        // Use the already-defined dataModel for config-aware kills needed calculation
+                        int killsNeeded = dataModel.getKillsNeededWithConfig(currentData, tier);
+                        if (killsNeeded > 0 && killsNeeded < Integer.MAX_VALUE) {
                             String killsKey = StatCollector.translateToLocal("hostilenetworks.hud.kills");
                             if (killsKey.equals("hostilenetworks.hud.kills")) {
                                 killsKey = "%s Remaining";

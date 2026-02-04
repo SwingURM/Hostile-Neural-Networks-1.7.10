@@ -106,7 +106,7 @@ public class DataModelInstance {
      * Get the current tier for this model instance.
      */
     public ModelTier getTier() {
-        return ModelTierRegistry.getTier(currentData);
+        return ModelTierRegistry.getTier(currentData, model != null ? model.getEntityId() : null);
     }
 
     /**
@@ -116,11 +116,13 @@ public class DataModelInstance {
         ModelTier tier = getTier();
 
         if (HostileConfig.continuousAccuracy) {
-            // Calculate fractional accuracy within tier
+            // Calculate fractional accuracy within tier using config-aware data
             ModelTier nextTier = ModelTierRegistry.getNextTier(tier);
-            if (nextTier != tier && nextTier.getRequiredData() > tier.getRequiredData()) {
-                int dataInTier = currentData - tier.getRequiredData();
-                int dataNeeded = nextTier.getRequiredData() - tier.getRequiredData();
+            int currentTierData = model.getCurrentTierThreshold(tier);
+            int nextTierData = model.getNextTierThreshold(tier);
+            if (nextTier != tier && nextTierData > currentTierData) {
+                int dataInTier = currentData - currentTierData;
+                int dataNeeded = nextTierData - currentTierData;
                 if (dataNeeded > 0) {
                     float fraction = (float) dataInTier / dataNeeded;
                     float accuracyRange = nextTier.getAccuracy() - tier.getAccuracy();
@@ -136,7 +138,7 @@ public class DataModelInstance {
      * Get the data needed to reach the next tier.
      */
     public int getDataToNextTier() {
-        return ModelTierRegistry.getDataToNextTier(getTier(), currentData);
+        return model.getDataToNextTierWithConfig(currentData, getTier());
     }
 
     /**
@@ -148,8 +150,10 @@ public class DataModelInstance {
         if (next == current) {
             return 1.0f;
         }
-        int dataInTier = currentData - current.getRequiredData();
-        int dataNeeded = next.getRequiredData() - current.getRequiredData();
+        int currentTierData = model.getCurrentTierThreshold(current);
+        int nextTierData = model.getNextTierThreshold(current);
+        int dataInTier = currentData - currentTierData;
+        int dataNeeded = nextTierData - currentTierData;
         if (dataNeeded <= 0) {
             return 1.0f;
         }
@@ -178,7 +182,7 @@ public class DataModelInstance {
         if (!HostileConfig.killModelUpgrade) {
             return 0;
         }
-        return model.getDataPerKill(getTier());
+        return model.getDataPerKillWithConfig(getTier());
     }
 
     /**
@@ -216,7 +220,7 @@ public class DataModelInstance {
      */
     public void addKillData() {
         ModelTier tier = getTier();
-        int dataPerKill = model.getDataPerKill(tier);
+        int dataPerKill = model.getDataPerKillWithConfig(tier);
         addSimulationData(dataPerKill);
     }
 
