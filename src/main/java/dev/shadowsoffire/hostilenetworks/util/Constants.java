@@ -147,4 +147,92 @@ public final class Constants {
 
     /** NBTTagCompound type ID (for tag lists) */
     public static final int TAG_COMPOUND = 10;
+
+    // ============================================
+    // Tier Names
+    // ============================================
+
+    /** Tier name for Faulty tier */
+    public static final String TIER_FAULTY = "faulty";
+
+    /** Tier name for Basic tier */
+    public static final String TIER_BASIC = "basic";
+
+    /** Tier name for Advanced tier */
+    public static final String TIER_ADVANCED = "advanced";
+
+    /** Tier name for Superior tier */
+    public static final String TIER_SUPERIOR = "superior";
+
+    /** Tier name for Self-Aware tier */
+    public static final String TIER_SELF_AWARE = "self_aware";
+
+    // ============================================
+    // MobsInfo Drop Chance Thresholds (x10000 for precision)
+    // ============================================
+
+    /** High drop chance threshold (50%+) */
+    public static final int DROP_CHANCE_HIGH = 5000;
+
+    /** Medium-high drop chance threshold (20%+) */
+    public static final int DROP_CHANCE_MEDIUM_HIGH = 2000;
+
+    /** Medium drop chance threshold (10%+) */
+    public static final int DROP_CHANCE_MEDIUM = 1000;
+
+    /** Low drop chance threshold (5%+) */
+    public static final int DROP_CHANCE_LOW = 500;
+
+    /** Minimum drop chance for fabricator inclusion (10%+) */
+    public static final int FABRICATOR_DROP_CHANCE_MIN = 1000;
+
+    // ============================================
+    // MobsInfo Stack Sizes
+    // ============================================
+
+    /** Stack size for high probability drops */
+    public static final int STACK_SIZE_HIGH = 32;
+
+    /** Stack size for medium-high probability drops */
+    public static final int STACK_SIZE_MEDIUM_HIGH = 16;
+
+    /** Stack size for medium probability drops */
+    public static final int STACK_SIZE_MEDIUM = 8;
+
+    /** Stack size for low probability drops */
+    public static final int STACK_SIZE_LOW = 4;
+
+    /** Stack size for very low probability drops */
+    public static final int STACK_SIZE_VERY_LOW = 1;
+
+    // ============================================
+    // MobsInfo Sim Cost Thresholds
+    // ============================================
+
+    /** Maximum health for basic tier mobs */
+    public static final float HEALTH_BASIC = 20.0f;
+
+    /** Maximum health for medium tier mobs */
+    public static final float HEALTH_MEDIUM = 50.0f;
+
+    /** Maximum health for strong tier mobs */
+    public static final float HEALTH_STRONG = 100.0f;
+
+    /** Sim cost for basic tier mobs */
+    public static final int SIM_COST_BASIC = 256;
+
+    /** Sim cost for medium tier mobs */
+    public static final int SIM_COST_MEDIUM = 512;
+
+    /** Sim cost for strong tier mobs */
+    public static final int SIM_COST_STRONG = 1024;
+
+    /** Sim cost for boss tier mobs */
+    public static final int SIM_COST_BOSS = 2048;
+
+    /** Maximum number of fabricator drops to include per mob */
+    public static final int MAX_FABRICATOR_DROPS = 8;
+
+    /** Default simulation cost */
+    public static final int SIM_COST_DEFAULT = 128;
 }

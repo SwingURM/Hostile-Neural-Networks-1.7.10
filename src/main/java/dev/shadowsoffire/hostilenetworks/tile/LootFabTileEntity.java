@@ -10,7 +10,6 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.MathHelper;
 import net.minecraftforge.common.util.ForgeDirection;
@@ -30,9 +29,6 @@ import dev.shadowsoffire.hostilenetworks.util.Constants;
  * Implements IEnergyReceiver to receive power from RF conduits (EnderIO, Thermal Expansion, etc.)
  */
 public class LootFabTileEntity extends TileEntity implements IInventory, ISidedInventory, IEnergyReceiver {
-
-    /** Ticks required to complete one crafting operation (3 seconds at 20 ticks/sec). */
-    private static final int CRAFTING_TICKS = 60;
 
     // Inventory - use constants for slot indices
     private final ItemStack[] inventory = new ItemStack[Constants.LOOT_FAB_INVENTORY_SIZE];
@@ -153,7 +149,7 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
         this.energyStored -= HostileConfig.fabPowerCost;
         this.markDirty(); // Sync progress and energy to client
 
-        if (this.progress >= CRAFTING_TICKS) {
+        if (this.progress >= Constants.FABRICATION_TICKS) {
             // Craft the selected drop
             List<ItemStack> drops = getFabricatorDropsWithConfig(model);
             ItemStack drop = drops.get(selection)
@@ -419,7 +415,7 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
 
     @Override
     public int getInventoryStackLimit() {
-        return 64;
+        return Constants.DEFAULT_STACK_LIMIT;
     }
 
     @Override
@@ -470,12 +466,7 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
     public void readFromNBT(NBTTagCompound tag) {
         super.readFromNBT(tag);
 
-        NBTTagList list = tag.getTagList("inventory", 10);
-        for (int i = 0; i < list.tagCount(); i++) {
-            NBTTagCompound itemTag = list.getCompoundTagAt(i);
-            int slot = itemTag.getByte("slot");
-            this.inventory[slot] = ItemStack.loadItemStackFromNBT(itemTag);
-        }
+        TileEntityUtils.readInventoryFromNBT(inventory, tag);
 
         this.energyStored = tag.getInteger("energy");
         this.progress = tag.getInteger("progress");
@@ -495,16 +486,7 @@ public class LootFabTileEntity extends TileEntity implements IInventory, ISidedI
     public void writeToNBT(NBTTagCompound tag) {
         super.writeToNBT(tag);
 
-        NBTTagList list = new NBTTagList();
-        for (int i = 0; i < Constants.LOOT_FAB_INVENTORY_SIZE; i++) {
-            if (this.inventory[i] != null) {
-                NBTTagCompound itemTag = new NBTTagCompound();
-                itemTag.setByte("slot", (byte) i);
-                this.inventory[i].writeToNBT(itemTag);
-                list.appendTag(itemTag);
-            }
-        }
-        tag.setTag("inventory", list);
+        TileEntityUtils.writeInventoryToNBT(inventory, tag);
 
         tag.setInteger("energy", this.energyStored);
         tag.setInteger("progress", this.progress);

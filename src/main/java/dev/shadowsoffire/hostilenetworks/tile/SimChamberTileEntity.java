@@ -220,10 +220,7 @@ public class SimChamberTileEntity extends TileEntity implements IInventory, ISid
     }
 
     public boolean canStack(ItemStack a, ItemStack b) {
-        if (a == null) return true;
-        if (b == null) return true;
-        if (b.getItem() == null) return false;
-        return a.isItemEqual(b) && a.stackSize < a.getMaxStackSize();
+        return TileEntityUtils.canStack(a, b);
     }
 
     public boolean hasPowerFor(DataModel model) {
@@ -341,7 +338,7 @@ public class SimChamberTileEntity extends TileEntity implements IInventory, ISid
 
     @Override
     public int getInventoryStackLimit() {
-        return 64;
+        return Constants.DEFAULT_STACK_LIMIT;
     }
 
     @Override
@@ -401,12 +398,7 @@ public class SimChamberTileEntity extends TileEntity implements IInventory, ISid
     public void readFromNBT(NBTTagCompound tag) {
         super.readFromNBT(tag);
 
-        NBTTagList list = tag.getTagList("inventory", 10);
-        for (int i = 0; i < list.tagCount(); i++) {
-            NBTTagCompound itemTag = list.getCompoundTagAt(i);
-            int slot = itemTag.getByte("slot");
-            inventory[slot] = ItemStack.loadItemStackFromNBT(itemTag);
-        }
+        TileEntityUtils.readInventoryFromNBT(inventory, tag);
 
         this.energyStored = tag.getInteger("energy");
         this.runtime = tag.getInteger("runtime");
@@ -419,16 +411,7 @@ public class SimChamberTileEntity extends TileEntity implements IInventory, ISid
     public void writeToNBT(NBTTagCompound tag) {
         super.writeToNBT(tag);
 
-        NBTTagList list = new NBTTagList();
-        for (int i = 0; i < Constants.SIM_CHAMBER_INVENTORY_SIZE; i++) {
-            if (inventory[i] != null) {
-                NBTTagCompound itemTag = new NBTTagCompound();
-                itemTag.setByte("slot", (byte) i);
-                inventory[i].writeToNBT(itemTag);
-                list.appendTag(itemTag);
-            }
-        }
-        tag.setTag("inventory", list);
+        TileEntityUtils.writeInventoryToNBT(inventory, tag);
 
         tag.setInteger("energy", this.energyStored);
         tag.setInteger("runtime", this.runtime);

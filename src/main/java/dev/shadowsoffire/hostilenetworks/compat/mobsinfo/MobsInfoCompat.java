@@ -31,52 +31,6 @@ public class MobsInfoCompat {
     public static final String MOBSINFO_MODID = "mobsinfo";
     private static boolean initialized = false;
 
-    // ==================== Constants for Drop Chance Thresholds
-    // ====================
-    /** Drop chance threshold for high probability drops (50%+) */
-    private static final int DROP_CHANCE_HIGH = 5000;
-    /** Drop chance threshold for medium-high probability drops (20%+) */
-    private static final int DROP_CHANCE_MEDIUM_HIGH = 2000;
-    /** Drop chance threshold for medium probability drops (10%+) */
-    private static final int DROP_CHANCE_MEDIUM = 1000;
-    /** Drop chance threshold for low probability drops (5%+) */
-    private static final int DROP_CHANCE_LOW = 500;
-
-    // ==================== Constants for Stack Sizes ====================
-    /** Stack size for high probability drops */
-    private static final int STACK_SIZE_HIGH = 32;
-    /** Stack size for medium-high probability drops */
-    private static final int STACK_SIZE_MEDIUM_HIGH = 16;
-    /** Stack size for medium probability drops */
-    private static final int STACK_SIZE_MEDIUM = 8;
-    /** Stack size for low probability drops */
-    private static final int STACK_SIZE_LOW = 4;
-    /** Stack size for very low probability drops */
-    private static final int STACK_SIZE_VERY_LOW = 1;
-
-    // ==================== Constants for Sim Cost Calculation ====================
-    /** Maximum health threshold for basic tier mobs */
-    private static final float HEALTH_BASIC = 20.0f;
-    /** Maximum health threshold for medium tier mobs */
-    private static final float HEALTH_MEDIUM = 50.0f;
-    /** Maximum health threshold for strong tier mobs */
-    private static final float HEALTH_STRONG = 100.0f;
-
-    /** Sim cost for basic tier mobs */
-    private static final int SIM_COST_BASIC = 256;
-    /** Sim cost for medium tier mobs */
-    private static final int SIM_COST_MEDIUM = 512;
-    /** Sim cost for strong tier mobs */
-    private static final int SIM_COST_STRONG = 1024;
-    /** Sim cost for boss tier mobs */
-    private static final int SIM_COST_BOSS = 2048;
-
-    /** Maximum number of fabricator drops to include */
-    private static final int MAX_FABRICATOR_DROPS = 8;
-
-    /** Minimum drop chance for fabricator inclusion (10%) */
-    private static final int FABRICATOR_DROP_CHANCE_MIN = 1000;
-
     /**
      * Track which models were newly registered by MobsInfo.
      * Used to create config entries for these models.
@@ -97,7 +51,9 @@ public class MobsInfoCompat {
     private static boolean isModelFromJson(DataModel model) {
         // Models loaded from JSON have a non-empty trivia key
         // MobsInfo-created models have empty trivia key
-        return model != null && model.getTriviaKey() != null && !model.getTriviaKey().isEmpty();
+        return model != null && model.getTriviaKey() != null
+            && !model.getTriviaKey()
+                .isEmpty();
     }
 
     /**
@@ -188,7 +144,7 @@ public class MobsInfoCompat {
                             HostileNetworks.LOG.debug("Enriched existing model with MobsInfo drops: " + mobName);
                         }
                     } catch (Exception e) {
-                        HostileNetworks.LOG.warn("Failed to enrich model for: " + mobName + " - " + e.getMessage());
+                        HostileNetworks.LOG.debug("Failed to enrich model for: " + mobName + " - " + e.getMessage());
                     }
                     skipped++;
                     continue;
@@ -202,7 +158,10 @@ public class MobsInfoCompat {
                     // If the model was loaded from JSON (not from MobsInfo), skip creating独立 model
                     if (isModelFromJson(model)) {
                         isVariantOfExistingModel = true;
-                        HostileNetworks.LOG.debug("Skipping MobsInfo model for " + mobName + " - variant of existing JSON model: " + model.getEntityId());
+                        HostileNetworks.LOG.debug(
+                            "Skipping MobsInfo model for " + mobName
+                                + " - variant of existing JSON model: "
+                                + model.getEntityId());
                         break;
                     }
                 }
@@ -251,16 +210,16 @@ public class MobsInfoCompat {
                 ItemStack dropStack = drop.stack.copy();
 
                 // Set stack size based on drop chance
-                if (drop.chance >= DROP_CHANCE_HIGH) { // 50%+ chance - high probability
-                    dropStack.stackSize = STACK_SIZE_HIGH;
-                } else if (drop.chance >= DROP_CHANCE_MEDIUM_HIGH) { // 20%+ chance
-                    dropStack.stackSize = STACK_SIZE_MEDIUM_HIGH;
-                } else if (drop.chance >= DROP_CHANCE_MEDIUM) { // 10%+ chance
-                    dropStack.stackSize = STACK_SIZE_MEDIUM;
-                } else if (drop.chance >= DROP_CHANCE_LOW) { // 5%+ chance
-                    dropStack.stackSize = STACK_SIZE_LOW;
+                if (drop.chance >= Constants.DROP_CHANCE_HIGH) { // 50%+ chance - high probability
+                    dropStack.stackSize = Constants.STACK_SIZE_HIGH;
+                } else if (drop.chance >= Constants.DROP_CHANCE_MEDIUM_HIGH) { // 20%+ chance
+                    dropStack.stackSize = Constants.STACK_SIZE_MEDIUM_HIGH;
+                } else if (drop.chance >= Constants.DROP_CHANCE_MEDIUM) { // 10%+ chance
+                    dropStack.stackSize = Constants.STACK_SIZE_MEDIUM;
+                } else if (drop.chance >= Constants.DROP_CHANCE_LOW) { // 5%+ chance
+                    dropStack.stackSize = Constants.STACK_SIZE_LOW;
                 } else { // <5% chance
-                    dropStack.stackSize = STACK_SIZE_VERY_LOW;
+                    dropStack.stackSize = Constants.STACK_SIZE_VERY_LOW;
                 }
 
                 drops.add(dropStack);
@@ -305,18 +264,18 @@ public class MobsInfoCompat {
                 if (drop.stack != null && drop.stack.getItem() != null) {
                     ItemStack dropStack = drop.stack.copy();
                     // Normalize stack size based on chance
-                    if (drop.chance >= DROP_CHANCE_HIGH) { // 50%+ chance
+                    if (drop.chance >= Constants.DROP_CHANCE_HIGH) { // 50%+ chance
                         fabricatorDrops.add(dropStack);
-                    } else if (drop.chance >= FABRICATOR_DROP_CHANCE_MIN
-                        && fabricatorDrops.size() < MAX_FABRICATOR_DROPS) { // 10%+ chance
+                    } else if (drop.chance >= Constants.FABRICATOR_DROP_CHANCE_MIN
+                        && fabricatorDrops.size() < Constants.MAX_FABRICATOR_DROPS) { // 10%+ chance
                             fabricatorDrops.add(dropStack);
                         }
                 }
             }
 
             // Limit fabricator drops to reasonable amount
-            if (fabricatorDrops.size() > MAX_FABRICATOR_DROPS) {
-                fabricatorDrops = fabricatorDrops.subList(0, MAX_FABRICATOR_DROPS);
+            if (fabricatorDrops.size() > Constants.MAX_FABRICATOR_DROPS) {
+                fabricatorDrops = fabricatorDrops.subList(0, Constants.MAX_FABRICATOR_DROPS);
             }
 
             // Determine sim cost based on entity health
@@ -324,11 +283,11 @@ public class MobsInfoCompat {
             int simCost = calculateSimCost(maxHealth);
 
             // Determine tier based on sim cost
-            String tierName = "basic";
+            String tierName = Constants.TIER_BASIC;
             if (simCost >= Constants.SUPERIOR_THRESHOLD) {
-                tierName = "superior";
+                tierName = Constants.TIER_SUPERIOR;
             } else if (simCost >= Constants.ADVANCED_THRESHOLD) {
-                tierName = "advanced";
+                tierName = Constants.TIER_ADVANCED;
             }
 
             // Determine base drop type based on entity dimension/type
@@ -377,14 +336,14 @@ public class MobsInfoCompat {
      * Calculate simulation cost based on entity max health.
      */
     private static int calculateSimCost(float maxHealth) {
-        if (maxHealth <= HEALTH_BASIC) {
-            return SIM_COST_BASIC; // Basic mobs
-        } else if (maxHealth <= HEALTH_MEDIUM) {
-            return SIM_COST_MEDIUM; // Medium mobs
-        } else if (maxHealth <= HEALTH_STRONG) {
-            return SIM_COST_STRONG; // Strong mobs
+        if (maxHealth <= Constants.HEALTH_BASIC) {
+            return Constants.SIM_COST_BASIC; // Basic mobs
+        } else if (maxHealth <= Constants.HEALTH_MEDIUM) {
+            return Constants.SIM_COST_MEDIUM; // Medium mobs
+        } else if (maxHealth <= Constants.HEALTH_STRONG) {
+            return Constants.SIM_COST_STRONG; // Strong mobs
         } else {
-            return SIM_COST_BOSS; // Boss-tier mobs
+            return Constants.SIM_COST_BOSS; // Boss-tier mobs
         }
     }
 

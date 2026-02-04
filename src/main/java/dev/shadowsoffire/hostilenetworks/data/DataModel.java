@@ -15,6 +15,7 @@ import cpw.mods.fml.common.registry.GameRegistry;
 import dev.shadowsoffire.hostilenetworks.HostileConfig;
 import dev.shadowsoffire.hostilenetworks.config.ModelConfig;
 import dev.shadowsoffire.hostilenetworks.item.MobPredictionItem;
+import dev.shadowsoffire.hostilenetworks.util.Constants;
 
 /**
  * Represents a data model that can be used in the Simulation Chamber to produce loot.
@@ -323,13 +324,13 @@ public class DataModel {
     private int getTierIndex(ModelTier tier) {
         String name = tier.getTierName();
         switch (name) {
-            case "faulty":
+            case Constants.TIER_FAULTY:
                 return 0;
-            case "basic":
+            case Constants.TIER_BASIC:
                 return 1;
-            case "advanced":
+            case Constants.TIER_ADVANCED:
                 return 2;
-            case "superior":
+            case Constants.TIER_SUPERIOR:
                 return 3;
             default:
                 return -1; // SELF_AWARE and unknown tiers
@@ -518,22 +519,22 @@ public class DataModel {
         // Default values match original mod: faulty(0)->basic(6)->advanced(54)->superior(354)->self_aware(1254)
         // Differences: 6, 48, 300, 900
         switch (currentTier.getTierName()) {
-            case "faulty":
+            case Constants.TIER_FAULTY:
                 threshold = 0; // Faulty starts at 0
                 break;
-            case "basic":
+            case Constants.TIER_BASIC:
                 threshold = config.dataToNextBasic >= 0 ? config.dataToNextBasic : 6;
                 break;
-            case "advanced":
+            case Constants.TIER_ADVANCED:
                 threshold = config.dataToNextBasic >= 0 ? config.dataToNextBasic : 6;
                 threshold += config.dataToNextAdvanced >= 0 ? config.dataToNextAdvanced : 48;
                 break;
-            case "superior":
+            case Constants.TIER_SUPERIOR:
                 threshold = config.dataToNextBasic >= 0 ? config.dataToNextBasic : 6;
                 threshold += config.dataToNextAdvanced >= 0 ? config.dataToNextAdvanced : 48;
                 threshold += config.dataToNextSuperior >= 0 ? config.dataToNextSuperior : 300;
                 break;
-            case "self_aware":
+            case Constants.TIER_SELF_AWARE:
                 threshold = config.dataToNextBasic >= 0 ? config.dataToNextBasic : 6;
                 threshold += config.dataToNextAdvanced >= 0 ? config.dataToNextAdvanced : 48;
                 threshold += config.dataToNextSuperior >= 0 ? config.dataToNextSuperior : 300;
@@ -573,16 +574,16 @@ public class DataModel {
         ModelConfig config = HostileConfig.getModelConfig(entityId);
         if (config != null) {
             switch (tierName) {
-                case "faulty":
+                case Constants.TIER_FAULTY:
                     if (config.dataToNextBasic >= 0) return config.dataToNextBasic;
                     break;
-                case "basic":
+                case Constants.TIER_BASIC:
                     if (config.dataToNextAdvanced >= 0) return config.dataToNextAdvanced;
                     break;
-                case "advanced":
+                case Constants.TIER_ADVANCED:
                     if (config.dataToNextSuperior >= 0) return config.dataToNextSuperior;
                     break;
-                case "superior":
+                case Constants.TIER_SUPERIOR:
                     if (config.dataToNextSelfAware >= 0) return config.dataToNextSelfAware;
                     break;
             }
@@ -755,14 +756,14 @@ public class DataModel {
         private float xOffset;
         private float yOffset;
         private float zOffset;
-        private int simCost = 128;
+        private int simCost = Constants.SIM_COST_DEFAULT;
         private ItemStack inputItem;
         private ItemStack baseDrop;
         private String triviaKey = "";
         private final List<ItemStack> fabricatorDrops = new ArrayList<>();
         private ModelTier defaultTier;
         private int defaultDataPerKill = 1;
-        private int[] dataPerKillByTier = new int[] { 1, 4, 10, 18 }; // [faulty, basic, advanced, superior]
+        private int[] dataPerKillByTier = Constants.DATA_PER_KILL_DEFAULTS.clone(); // [faulty, basic, advanced, superior]
         private int overrideRequiredData;
 
         public Builder entityId(String entityId) {
@@ -912,7 +913,7 @@ public class DataModel {
             builder.defaultTier = this.defaultTier;
             builder.defaultDataPerKill = this.defaultDataPerKill;
             builder.dataPerKillByTier = this.dataPerKillByTier != null ? this.dataPerKillByTier.clone()
-                : new int[] { 1, 4, 10, 18 };
+                : Constants.DATA_PER_KILL_DEFAULTS.clone();
             builder.overrideRequiredData = this.overrideRequiredData;
             builder.fabricatorDrops.clear();
             builder.fabricatorDrops.addAll(drops);
