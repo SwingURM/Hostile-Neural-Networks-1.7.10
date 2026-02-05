@@ -71,6 +71,12 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
     private static final java.util.Set<String> FAILED_ENTITIES = java.util.Collections
         .newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
+    static {
+        // Hardcoded blacklist for entities with problematic renderers that cause NEI layout issues
+        // Thaumcraft boss entities have renderers that don't support static trophy rendering
+        FAILED_ENTITIES.add("Thaumcraft.TaintacleGiant");
+    }
+
     /**
      * Get the blank icon from DataModelItem's private blankIcon field.
      */
@@ -109,31 +115,36 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
         if (data.length > 0 && data[0] instanceof net.minecraft.client.renderer.RenderBlocks) {
             // Handle position adjustments for different render types
             // Following OpenBlocks ItemRendererTrophy pattern
-            if (type == ItemRenderType.EQUIPPED || type == ItemRenderType.EQUIPPED_FIRST_PERSON) {
-                GL11.glTranslated(EQUIPPED_OFFSET_X, EQUIPPED_OFFSET_Y, EQUIPPED_OFFSET_Z);
-                // Rotate base 180 degrees for hand view
-                GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
-            } else if (type == ItemRenderType.INVENTORY) {
-                GL11.glTranslated(0, INVENTORY_OFFSET_Y, 0);
-                // Extra 90 degree rotation for inventory view
-                GL11.glRotatef(90.0F, 0.0F, 1.0F, 0.0F);
-                // Rotate base 180 degrees
-                GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
-            }
-
-            // Render the base/pedestal cube
-            renderBasePlate(stack);
-
-            // Render the entity on top of the base
-            String entityId = DataModelItem.getEntityId(stack);
-            if (entityId != null) {
-                DataModel model = DataModelRegistry.get(entityId);
-                if (model != null) {
-                    // Get scale from DataModel JSON with config override support
-                    double scale = model.getScaleWithConfig();
-                    // Render entity on top of the base
-                    renderTrophy(entityId, 0, ENTITY_Y_OFFSET, 0, ENTITY_ROTATION, scale);
+            GL11.glPushMatrix();
+            try {
+                if (type == ItemRenderType.EQUIPPED || type == ItemRenderType.EQUIPPED_FIRST_PERSON) {
+                    GL11.glTranslated(EQUIPPED_OFFSET_X, EQUIPPED_OFFSET_Y, EQUIPPED_OFFSET_Z);
+                    // Rotate base 180 degrees for hand view
+                    GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
+                } else if (type == ItemRenderType.INVENTORY) {
+                    GL11.glTranslated(0, INVENTORY_OFFSET_Y, 0);
+                    // Extra 90 degree rotation for inventory view
+                    GL11.glRotatef(90.0F, 0.0F, 1.0F, 0.0F);
+                    // Rotate base 180 degrees
+                    GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
                 }
+
+                // Render the base/pedestal cube
+                renderBasePlate(stack);
+
+                // Render the entity on top of the base
+                String entityId = DataModelItem.getEntityId(stack);
+                if (entityId != null) {
+                    DataModel model = DataModelRegistry.get(entityId);
+                    if (model != null) {
+                        // Get scale from DataModel JSON with config override support
+                        double scale = model.getScaleWithConfig();
+                        // Render entity on top of the base
+                        renderTrophy(entityId, 0, ENTITY_Y_OFFSET, 0, ENTITY_ROTATION, scale);
+                    }
+                }
+            } finally {
+                GL11.glPopMatrix();
             }
         }
     }

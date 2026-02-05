@@ -4,10 +4,7 @@ import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ChatComponentTranslation;
-import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
 
 import cpw.mods.fml.relauncher.Side;
@@ -77,21 +74,6 @@ public class SimChamberBlock extends BlockContainer {
         TileEntity tile = world.getTileEntity(x, y, z);
 
         if (tile instanceof SimChamberTileEntity) {
-            SimChamberTileEntity simTile = (SimChamberTileEntity) tile;
-
-            // Right-click with diamond to add energy (for testing)
-            ItemStack held = player.getHeldItem();
-            if (held != null && held.getItem() == net.minecraft.init.Items.diamond) {
-                simTile.receiveEnergy(100000);
-                String energyMsg = StatCollector.translateToLocal("hostilenetworks.debug.energy_added");
-                if (energyMsg.equals("hostilenetworks.debug.energy_added")) {
-                    energyMsg = "Added 100000 RF. Current: %s/%s";
-                }
-                player.addChatMessage(
-                    new ChatComponentTranslation(energyMsg, simTile.getEnergyStored(), simTile.getMaxEnergyStored()));
-                return true;
-            }
-
             player.openGui(HostileNetworks.instance, HNNGuiHandler.SIM_CHAMBER_GUI, world, x, y, z);
         }
         return true;

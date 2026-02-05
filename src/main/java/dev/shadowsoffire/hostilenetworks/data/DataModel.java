@@ -61,7 +61,8 @@ public class DataModel {
         this.fabricatorDrops = Collections.unmodifiableList(new ArrayList<>(builder.fabricatorDrops));
         this.defaultTier = builder.defaultTier;
         this.defaultDataPerKill = builder.defaultDataPerKill;
-        this.dataPerKillByTier = builder.dataPerKillByTier.clone();
+        this.dataPerKillByTier = builder.dataPerKillByTier != null ? builder.dataPerKillByTier.clone()
+            : Constants.DATA_PER_KILL_DEFAULTS.clone();
         this.overrideRequiredData = builder.overrideRequiredData;
     }
 
@@ -202,10 +203,9 @@ public class DataModel {
         }
 
         // Build a new DataModel with the additional drops
-        return new Builder().entityId(this.entityId)
+        Builder builder = new Builder().entityId(this.entityId)
             .translateKey(this.translateKey)
             .name(this.name)
-            .color(this.color != null ? this.color : EnumChatFormatting.WHITE)
             .scale(this.scale)
             .xOffset(this.xOffset)
             .yOffset(this.yOffset)
@@ -216,9 +216,24 @@ public class DataModel {
             .triviaKey(this.triviaKey)
             .defaultTier(this.defaultTier)
             .defaultDataPerKill(this.defaultDataPerKill)
-            .dataPerKillByTier(this.dataPerKillByTier.clone())
-            .overrideRequiredData(this.overrideRequiredData)
-            .buildWithDrops(existingDrops);
+            .dataPerKillByTier(
+                this.dataPerKillByTier != null ? this.dataPerKillByTier.clone()
+                    : Constants.DATA_PER_KILL_DEFAULTS.clone())
+            .overrideRequiredData(this.overrideRequiredData);
+
+        // Preserve color (hex or enum)
+        if (this.hexColor != null) {
+            builder.color(this.hexColor);
+        } else {
+            builder.color(this.color != null ? this.color : EnumChatFormatting.WHITE);
+        }
+
+        // Preserve variants
+        for (String variant : this.variants) {
+            builder.variant(variant);
+        }
+
+        return builder.buildWithDrops(existingDrops);
     }
 
     /**
@@ -916,6 +931,10 @@ public class DataModel {
             builder.dataPerKillByTier = this.dataPerKillByTier != null ? this.dataPerKillByTier.clone()
                 : Constants.DATA_PER_KILL_DEFAULTS.clone();
             builder.overrideRequiredData = this.overrideRequiredData;
+            // Preserve variants
+            builder.variants.clear();
+            builder.variants.addAll(this.variants);
+            // Set fabricator drops
             builder.fabricatorDrops.clear();
             builder.fabricatorDrops.addAll(drops);
             return new DataModel(builder);
