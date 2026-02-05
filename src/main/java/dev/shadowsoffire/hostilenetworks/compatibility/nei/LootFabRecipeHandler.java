@@ -13,6 +13,8 @@ import org.lwjgl.opengl.GL11;
 
 import codechicken.lib.gui.GuiDraw;
 import codechicken.nei.PositionedStack;
+import codechicken.nei.recipe.IUsageHandler;
+import codechicken.nei.recipe.RecipeCatalysts;
 import codechicken.nei.recipe.TemplateRecipeHandler;
 import dev.shadowsoffire.hostilenetworks.HostileConfig;
 import dev.shadowsoffire.hostilenetworks.data.DataModel;
@@ -50,11 +52,6 @@ public class LootFabRecipeHandler extends TemplateRecipeHandler {
     }
 
     @Override
-    public void loadTransferRects() {
-        // No transfer rects needed - NEI handles recipe transfer automatically
-    }
-
-    @Override
     public void loadCraftingRecipes(String outputId, Object... results) {
         if ("hostilenetworks.loot_fabricator".equals(outputId) && getClass() == LootFabRecipeHandler.class) {
             for (DataModel model : DataModelRegistry.getAll()) {
@@ -84,7 +81,6 @@ public class LootFabRecipeHandler extends TemplateRecipeHandler {
                 ItemStack drop = drops.get(i);
                 if (drop != null && areStacksSameType(drop, result)) {
                     this.arecipes.add(new CachedLootFabRecipe(model, i));
-                    return;
                 }
             }
         }
@@ -112,6 +108,23 @@ public class LootFabRecipeHandler extends TemplateRecipeHandler {
                 }
             }
         }
+    }
+
+    /**
+     * Handle catalyst clicks - when user right-clicks the Loot Fabricator block,
+     * show all recipes that use this machine.
+     */
+    @Override
+    public IUsageHandler getUsageAndCatalystHandler(String inputId, Object... ingredients) {
+        if (inputId.equals("item")) {
+            TemplateRecipeHandler handler = newInstance();
+            ItemStack candidate = (ItemStack) ingredients[0];
+            if (RecipeCatalysts.containsCatalyst(handler, candidate)) {
+                handler.loadCraftingRecipes(getOverlayIdentifier(), (Object) null);
+                return handler;
+            }
+        }
+        return this.getUsageHandler(inputId, ingredients);
     }
 
     @Override

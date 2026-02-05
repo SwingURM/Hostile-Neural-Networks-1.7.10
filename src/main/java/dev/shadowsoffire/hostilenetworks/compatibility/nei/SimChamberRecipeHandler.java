@@ -15,6 +15,8 @@ import org.lwjgl.opengl.GL11;
 
 import codechicken.lib.gui.GuiDraw;
 import codechicken.nei.PositionedStack;
+import codechicken.nei.recipe.IUsageHandler;
+import codechicken.nei.recipe.RecipeCatalysts;
 import codechicken.nei.recipe.TemplateRecipeHandler;
 import dev.shadowsoffire.hostilenetworks.HostileConfig;
 import dev.shadowsoffire.hostilenetworks.data.DataModel;
@@ -30,6 +32,11 @@ import dev.shadowsoffire.hostilenetworks.item.HostileItems;
  * Cycles through different model tiers to show accuracy information.
  */
 public class SimChamberRecipeHandler extends TemplateRecipeHandler {
+
+    // Static variables for tier cycling (matches original HNN logic)
+    private static int tierTicks = -1;
+    private static long lastTickTime = -1;
+    private static ModelTier currentTier = ModelTierRegistry.getMinTier();
 
     @Override
     public String getRecipeName() {
@@ -52,11 +59,6 @@ public class SimChamberRecipeHandler extends TemplateRecipeHandler {
     @Override
     public int recipiesPerPage() {
         return 3;
-    }
-
-    @Override
-    public void loadTransferRects() {
-        // No transfer rects needed - NEI handles recipe transfer automatically
     }
 
     @Override
@@ -104,7 +106,6 @@ public class SimChamberRecipeHandler extends TemplateRecipeHandler {
                 ItemStack baseDrop = model.getBaseDrop();
                 if (baseDrop != null && areStacksSameType(baseDrop, result)) {
                     this.arecipes.add(new CachedSimChamberRecipe(model));
-                    break;
                 }
             }
         }
@@ -131,6 +132,23 @@ public class SimChamberRecipeHandler extends TemplateRecipeHandler {
         }
     }
 
+    /**
+     * Handle catalyst clicks - when user right-clicks the Sim Chamber block,
+     * show all recipes that use this machine.
+     */
+    @Override
+    public IUsageHandler getUsageAndCatalystHandler(String inputId, Object... ingredients) {
+        if (inputId.equals("item")) {
+            TemplateRecipeHandler handler = newInstance();
+            ItemStack candidate = (ItemStack) ingredients[0];
+            if (RecipeCatalysts.containsCatalyst(handler, candidate)) {
+                handler.loadCraftingRecipes(getOverlayIdentifier(), (Object) null);
+                return handler;
+            }
+        }
+        return this.getUsageHandler(inputId, ingredients);
+    }
+
     @Override
     public void drawBackground(int recipe) {
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
@@ -148,9 +166,8 @@ public class SimChamberRecipeHandler extends TemplateRecipeHandler {
         CachedSimChamberRecipe crecipe = (CachedSimChamberRecipe) this.arecipes.get(recipe);
         if (crecipe == null) return;
 
-        // Update tier state
-        crecipe.updateTier();
-        ModelTier tier = crecipe.getTier();
+        // Update tier cycling based on game time (original HNN logic)
+        updateTier(mc);
 
         // Draw animated progress bar: sampling from texture at (0, 43)
         mc.getTextureManager()
@@ -167,7 +184,50 @@ public class SimChamberRecipeHandler extends TemplateRecipeHandler {
         }
 
         // Draw tier info
-        drawTierInfo(mc, tier);
+        drawTierInfo(mc, currentTier);
+    }
+
+    /**
+     * Update the current display tier (cycles every 50 game ticks)
+     * Uses game time to ensure consistent cycling regardless of frame rate
+     */
+    private void updateTier(Minecraft mc) {
+        if (mc.theWorld == null) return;
+
+        long time = mc.theWorld.getWorldTime();
+
+        if (tierTicks < 0) {
+            tierTicks = 0;
+            lastTickTime = time;
+            currentTier = ModelTierRegistry.getMinTier();
+        }
+
+        if (time != lastTickTime) {
+            if (++tierTicks % 50 == 0) {
+                ModelTier tier = currentTier;
+                ModelTier next;
+
+                if (tier == ModelTierRegistry.getMaxTier()) {
+                    next = ModelTierRegistry.getMinTier();
+                } else {
+                    next = ModelTierRegistry.next(tier);
+                }
+
+                // Skip tiers that cannot simulate
+                while (!next.canSimulate()) {
+                    if (next == ModelTierRegistry.getMaxTier()) {
+                        next = ModelTierRegistry.getMinTier();
+                    } else {
+                        next = ModelTierRegistry.next(next);
+                    }
+                    // Prevent infinite loop: if all tiers can't simulate, use current tier
+                    if (next == tier) break;
+                }
+
+                currentTier = next;
+            }
+            lastTickTime = time;
+        }
     }
 
     /**
@@ -213,15 +273,8 @@ public class SimChamberRecipeHandler extends TemplateRecipeHandler {
         private final PositionedStack matrixInput;
         private final PositionedStack baseDropOutput;
         private final PositionedStack predictionOutput;
-        private final DataModel model;
-        private ModelTier tier;
-        private int tierTicks;
 
         public CachedSimChamberRecipe(DataModel model) {
-            this.model = model;
-            this.tier = ModelTierRegistry.getMinTier();
-            this.tierTicks = 0;
-
             // Input: Data Model - relative to background at (4, 4), plus center offset (25,11) = (29,15)
             ItemStack modelStack = DataModelItem.createForEntity(model.getEntityId());
             if (modelStack != null) {
@@ -252,29 +305,6 @@ public class SimChamberRecipeHandler extends TemplateRecipeHandler {
                 this.predictionOutput.setMaxSize(1);
             } else {
                 this.predictionOutput = null;
-            }
-        }
-
-        public DataModel getModel() {
-            return model;
-        }
-
-        public ModelTier getTier() {
-            return tier;
-        }
-
-        public void updateTier() {
-            if (tierTicks >= 50) {
-                tierTicks = 0;
-                ModelTier next = ModelTierRegistry.next(tier);
-                // Skip tiers that cannot simulate
-                while (!next.canSimulate()) {
-                    next = ModelTierRegistry.next(next);
-                    if (next == tier) break;
-                }
-                tier = next;
-            } else {
-                tierTicks++;
             }
         }
 

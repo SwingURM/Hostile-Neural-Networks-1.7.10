@@ -90,7 +90,7 @@ public class MachineItemRenderer implements net.minecraftforge.client.IItemRende
             // Inventory slot rendering - use larger scale for visibility
             GL11.glScalef(1.0F, 1.0F, 1.0F);
             GL11.glRotatef(180F, 0F, 0F, 1F);
-            GL11.glRotatef(180F, 0F, 1F, 0F);
+            GL11.glRotatef(90F, 0F, 1F, 0F);
             GL11.glTranslatef(0F, -0.5F, 0F);
         } else if (type == ItemRenderType.EQUIPPED || type == ItemRenderType.EQUIPPED_FIRST_PERSON) {
             // Hand rendering - rotate to face player

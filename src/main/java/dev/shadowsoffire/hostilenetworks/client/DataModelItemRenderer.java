@@ -1,7 +1,8 @@
 package dev.shadowsoffire.hostilenetworks.client;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemRenderer;
@@ -13,7 +14,6 @@ import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
-import net.minecraft.entity.monster.EntitySlime;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.IIcon;
 import net.minecraft.world.World;
@@ -59,20 +59,17 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
     private static boolean debugLogged = false;
 
     /**
-     * Cache for entities used in trophy rendering.
-     * Prevents flickering for slime and magma cube entities which have random sizes.
-     * Following the OpenBlocks trophy pattern.
-     * Uses LRU eviction to prevent unbounded memory growth.
+     * Cache for successfully created entities.
+     * Used to avoid recreating entities on each render call.
      */
-    private static final java.util.Map<String, Entity> ENTITY_CACHE = new java.util.LinkedHashMap<>(64, 0.75f, true) {
+    private static final Map<String, Entity> ENTITY_CACHE = new ConcurrentHashMap<>();
 
-        private static final long serialVersionUID = 1L;
-
-        @Override
-        protected boolean removeEldestEntry(java.util.Map.Entry<String, Entity> eldest) {
-            return size() > 50; // Limit cache to 50 entries
-        }
-    };
+    /**
+     * Blacklist for entities that fail to render.
+     * Once an entity fails to render, we skip it permanently to avoid spam.
+     */
+    private static final java.util.Set<String> FAILED_ENTITIES = java.util.Collections
+        .newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
     /**
      * Get the blank icon from DataModelItem's private blankIcon field.
@@ -226,6 +223,7 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
     /**
      * Render a trophy-style entity on top of a base block.
      * Uses standardized GUI lighting for consistent appearance across all render contexts.
+     * Entity is rendered statically without animation.
      */
     private void renderTrophy(String entityId, double x, double y, double z, float rotationY, double scale) {
         Entity entity = createEntity(entityId);
@@ -250,9 +248,19 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
                 RenderHelper.enableGUIStandardItemLighting();
                 OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240.0F, 240.0F);
 
-                synchronized (entity) {
+                try {
                     entity.worldObj = renderWorld;
                     renderer.doRender(entity, 0, 0, 0, 0, 0);
+                } catch (NullPointerException e) {
+                    // Some entity renderers (e.g., Chisel's RenderChiselSnowman) may NPE on null item stacks
+                    // when trying to render equipped items - skip these entities
+                    LOG.debug("Entity renderer threw NPE for " + entityId + ", skipping render", e);
+                    FAILED_ENTITIES.add(entityId);
+                } catch (Exception e) {
+                    // If rendering fails, blacklist this entity to avoid repeated errors
+                    LOG.warn("Failed to render entity " + entityId + ", blacklisting", e);
+                    FAILED_ENTITIES.add(entityId);
+                } finally {
                     entity.worldObj = null;
                 }
 
@@ -269,7 +277,12 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
     }
 
     private Entity createEntity(String entityId) {
-        // Check cache first to prevent flickering for slime and magma cube
+        // Skip entities that have failed to render before
+        if (FAILED_ENTITIES.contains(entityId)) {
+            return null;
+        }
+
+        // Check cache first
         Entity cachedEntity = ENTITY_CACHE.get(entityId);
         if (cachedEntity != null) {
             return cachedEntity;
@@ -291,46 +304,13 @@ public class DataModelItemRenderer implements net.minecraftforge.client.IItemRen
         }
 
         if (entity != null) {
-            // Fix for slime and magma cube flickering - set fixed size
-            // Following OpenBlocks TrophyHandler pattern using reflection
-            // entityId is already in camelCase (e.g., "Slime", "LavaSlime")
-            if ("Slime".equals(entityId) || "LavaSlime".equals(entityId)) {
-                if (entity instanceof EntitySlime) {
-                    setFixedSlimeSize(entity);
-                }
-            }
-
             ENTITY_CACHE.put(entityId, entity);
+        } else {
+            // Mark as failed if we couldn't create the entity
+            FAILED_ENTITIES.add(entityId);
         }
 
         return entity;
-    }
-
-    /**
-     * Set slime size to a fixed value of 1 to prevent flickering.
-     * Uses reflection to access the protected setSlimeSize method.
-     */
-    private void setFixedSlimeSize(Entity entity) {
-        // Try method first
-        try {
-            Method setSlimeSize = EntitySlime.class.getDeclaredMethod("setSlimeSize", int.class);
-            setSlimeSize.setAccessible(true);
-            setSlimeSize.invoke(entity, 1);
-            return;
-        } catch (NoSuchMethodException e) {
-            // Method not found, try field
-        } catch (Exception e) {
-            LOG.warn("Failed to call setSlimeSize on slime entity", e);
-        }
-
-        // Fallback: set field directly
-        try {
-            Field slimeSizeField = EntitySlime.class.getDeclaredField("slimeSize");
-            slimeSizeField.setAccessible(true);
-            slimeSizeField.set(entity, 1);
-        } catch (Exception e) {
-            LOG.warn("Failed to set slimeSize field on slime entity", e);
-        }
     }
 
     private String[] createEntityNameVariants(String entityId) {

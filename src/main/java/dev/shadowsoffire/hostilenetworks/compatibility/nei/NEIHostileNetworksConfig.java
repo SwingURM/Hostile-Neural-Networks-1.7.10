@@ -15,6 +15,8 @@ import codechicken.nei.recipe.HandlerInfo;
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.event.FMLInterModComms;
 import dev.shadowsoffire.hostilenetworks.HostileNetworks;
+import dev.shadowsoffire.hostilenetworks.client.gui.LootFabGui;
+import dev.shadowsoffire.hostilenetworks.client.gui.SimChamberGui;
 
 /**
  * NEI configuration for Hostile Neural Networks.
@@ -57,8 +59,11 @@ public class NEIHostileNetworksConfig implements IConfigureNEI {
         // Also register via old API for compatibility
         API.registerRecipeHandler(new SimChamberRecipeHandler());
         API.registerUsageHandler(new SimChamberRecipeHandler());
+        API.setGuiOffset(SimChamberGui.class, 4, 6);
+
         API.registerRecipeHandler(new LootFabRecipeHandler());
         API.registerUsageHandler(new LootFabRecipeHandler());
+        API.setGuiOffset(LootFabGui.class, 0, 0);
 
         // Register handler info for custom tab icons via NEI event
         GuiRecipeTab.handlerAdderFromIMC.put("hostilenetworks.sim_chamber", createSimChamberHandlerInfo());

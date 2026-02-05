@@ -105,6 +105,25 @@ public class MobsInfoCompat {
     }
 
     /**
+     * Get a data model by entity ID, with flexible matching.
+     * Tries exact match first, then case-insensitive match.
+     */
+    private static DataModel findDataModel(String mobName) {
+        // Try exact match first
+        DataModel model = DataModelRegistry.get(mobName);
+        if (model != null) return model;
+
+        // Try case-insensitive match
+        for (String key : DataModelRegistry.getIds()) {
+            if (key.equalsIgnoreCase(mobName)) {
+                return DataModelRegistry.get(key);
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Generate data models from MobsInfo's mob registry.
      */
     @SuppressWarnings("unchecked")
@@ -115,6 +134,25 @@ public class MobsInfoCompat {
             if (generalMobList == null || generalMobList.isEmpty()) {
                 HostileNetworks.LOG.warn("MobsInfo GeneralMobList is empty");
                 return;
+            }
+
+            HostileNetworks.LOG
+                .info("MobsInfo has {} mobs registered, checking for data model matches", generalMobList.size());
+
+            // Check if Zombie exists in MobsInfo
+            Object zombieMob = generalMobList.get("Zombie");
+            if (zombieMob != null) {
+                HostileNetworks.LOG.info("Found Zombie in MobsInfo, checking for existing data model...");
+                HostileNetworks.LOG.info(
+                    "Zombie mob drops count: {}",
+                    ((com.kuba6000.mobsinfo.loader.MobRecipeLoader.GeneralMappedMob) zombieMob).drops.size());
+            } else {
+                HostileNetworks.LOG.warn(
+                    "Zombie NOT found in MobsInfo GeneralMobList! Available keys sample: {}",
+                    generalMobList.keySet()
+                        .stream()
+                        .limit(20)
+                        .collect(java.util.stream.Collectors.toList()));
             }
 
             int registered = 0;
@@ -132,16 +170,29 @@ public class MobsInfoCompat {
                     continue;
                 }
 
-                // Check if model already exists (from JSON datapack)
-                DataModel existingModel = DataModelRegistry.get(mobName);
+                // Check if model already exists (from JSON datapack) - with flexible matching
+                DataModel existingModel = findDataModel(mobName);
                 if (existingModel != null) {
                     // Model exists from JSON - enrich it with MobsInfo drops
                     try {
                         List<ItemStack> mobsInfoDrops = getFabricatorDropsFromMobsInfo(entry.getValue());
+                        HostileNetworks.LOG.debug("MobsInfo drops for {}: {} items", mobName, mobsInfoDrops.size());
+
                         if (mobsInfoDrops != null && !mobsInfoDrops.isEmpty()) {
+                            int existingDropCount = existingModel.getFabricatorDrops()
+                                .size();
                             enrichExistingModelWithDrops(existingModel, mobsInfoDrops);
                             enriched++;
-                            HostileNetworks.LOG.debug("Enriched existing model with MobsInfo drops: " + mobName);
+
+                            DataModel enrichedModel = findDataModel(mobName);
+                            if (enrichedModel != null) {
+                                HostileNetworks.LOG.debug(
+                                    "Enriched model {}: {} -> {} drops",
+                                    mobName,
+                                    existingDropCount,
+                                    enrichedModel.getFabricatorDrops()
+                                        .size());
+                            }
                         }
                     } catch (Exception e) {
                         HostileNetworks.LOG.debug("Failed to enrich model for: " + mobName + " - " + e.getMessage());
@@ -205,6 +256,23 @@ public class MobsInfoCompat {
         com.kuba6000.mobsinfo.loader.MobRecipeLoader.GeneralMappedMob mob = (com.kuba6000.mobsinfo.loader.MobRecipeLoader.GeneralMappedMob) mappedMob;
         ArrayList<com.kuba6000.mobsinfo.api.MobDrop> mobDrops = mob.drops;
 
+        HostileNetworks.LOG.debug("MobsInfo mob drops raw list:");
+        int count = 0;
+        for (com.kuba6000.mobsinfo.api.MobDrop drop : mobDrops) {
+            if (drop.stack != null && drop.stack.getItem() != null) {
+                String itemName = drop.stack.getItem()
+                    .getUnlocalizedName();
+                HostileNetworks.LOG.debug(
+                    "  [{}] {} (chance: {}, stackSize: {})",
+                    ++count,
+                    itemName,
+                    String.format("%.2f", drop.chance),
+                    drop.stack.stackSize);
+            } else {
+                HostileNetworks.LOG.debug("  [{}] null stack (chance: {})", ++count, drop.chance);
+            }
+        }
+
         for (com.kuba6000.mobsinfo.api.MobDrop drop : mobDrops) {
             if (drop.stack != null && drop.stack.getItem() != null) {
                 ItemStack dropStack = drop.stack.copy();
@@ -234,12 +302,64 @@ public class MobsInfoCompat {
      * Adds new drops that don't already exist in the model.
      */
     private static void enrichExistingModelWithDrops(DataModel model, List<ItemStack> newDrops) {
-        DataModel enrichedModel = model.withAdditionalDrops(newDrops);
-        // Re-register the enriched model to replace the original
-        // Note: In a real implementation, we might want to update the registry
-        // For now, the enriched model is available via the return value
-        if (enrichedModel != model) {
-            HostileNetworks.LOG.debug("Enriched model with additional drops: " + model.getEntityId());
+        // Get existing drops to show what's already there
+        List<ItemStack> existingDrops = model.getFabricatorDrops();
+        HostileNetworks.LOG.debug("Existing drops for {}: {} items", model.getEntityId(), existingDrops.size());
+
+        // Build a set of existing item names for duplicate detection
+        java.util.Set<String> existingNames = new java.util.HashSet<>();
+        for (ItemStack existing : existingDrops) {
+            if (existing.getItem() != null) {
+                existingNames.add(
+                    existing.getItem()
+                        .getUnlocalizedName());
+            }
+        }
+
+        // Check each new drop
+        int added = 0;
+        int skipped = 0;
+        for (ItemStack newDrop : newDrops) {
+            if (newDrop.getItem() != null) {
+                String newName = newDrop.getItem()
+                    .getUnlocalizedName();
+                if (existingNames.contains(newName)) {
+                    HostileNetworks.LOG.debug("  SKIP (duplicate): {}", newName);
+                    skipped++;
+                } else {
+                    HostileNetworks.LOG.debug("  ADD: {} (chance not available)", newName);
+                    existingNames.add(newName);
+                    added++;
+                }
+            }
+        }
+
+        HostileNetworks.LOG
+            .debug("Enrichment result for {}: {} added, {} skipped (duplicates)", model.getEntityId(), added, skipped);
+
+        try {
+            HostileNetworks.LOG
+                .debug("Attempting to enrich model {} with {} drops", model.getEntityId(), newDrops.size());
+            HostileNetworks.LOG.debug(
+                "Model dataPerKillByTier: {}",
+                model.getDataPerKillDefaults() != null ? java.util.Arrays.toString(model.getDataPerKillDefaults())
+                    : "null");
+            DataModel enrichedModel = model.withAdditionalDrops(newDrops);
+            // Re-register the enriched model to replace the original
+            if (enrichedModel != model) {
+                DataModelRegistry.register(enrichedModel);
+                HostileNetworks.LOG.debug("Enriched model with additional drops: " + model.getEntityId());
+            }
+        } catch (Exception e) {
+            HostileNetworks.LOG.warn("Failed to enrich model for: {} - {}", model.getEntityId(), e.getMessage());
+            HostileNetworks.LOG.debug(
+                "Model details: entityId={}, scale={}, dataPerKill={}",
+                model.getEntityId(),
+                model.getScale(),
+                model.getDataPerKillDefaults() != null ? java.util.Arrays.toString(model.getDataPerKillDefaults())
+                    : "null");
+            // Print full stack trace
+            e.printStackTrace();
         }
     }
 
